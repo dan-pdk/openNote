@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Login",
-  description: "Realizar login",
+  title: "openNote",
+  description: "Organize suas tarefas, e dos seus colegas também",
 };
 
 export default function RootLayout({
