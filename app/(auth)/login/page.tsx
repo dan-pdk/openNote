@@ -10,8 +10,8 @@ export default function Page() {
             <LoginBackground>
 
 
-                <div>
-                    <h1 className="text-black text-2xl text-center lg:mb-5 dark:text-white lg:text-3xl">Fazer Login</h1>
+                <div className="2xl:scale-135">
+                    <h1 className="text-black text-2xl text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Fazer Login</h1>
 
                     <div className="bg-white dark:bg-[#1D1D1D] dark:border-white/25 dark:bg- border-2 w-84 h-114 border-black/25 rounded-4xl flex flex-col items-center lg:w-90 lg:h-110">
 
@@ -29,12 +29,12 @@ export default function Page() {
 
                         <p className="text-black font-thin mt-3 dark:text-white ">ou</p>
 
-                        <div className="bg-white flex items-center gap-5 border p-1.5 px-3 border-black/15 rounded-4xl mt-3  ">
+                        <button className="bg-white flex items-center gap-5 border p-1.5 px-3 border-black/15 rounded-4xl mt-3 cursor-pointer hover:scale-105 duration-200">
 
                             <Image src={"/google.svg"} width={30} height={30} alt="Google"></Image>
                             <p className="text-black ">Continuar com Google</p>
 
-                        </div>
+                        </button>
                         <div className="flex text-sm gap-3 mt-5 lg:text-base lg:mb-5">
 
                             <p className="text-black dark:text-white">Não tem uma conta?</p>
@@ -68,7 +68,7 @@ function Logo() {
 function LoginBackground({ children }: { children: ReactNode }) {
     return (
         <>
-            <div className="bg-white size-full flex flex-col items-center gap-10 dark:bg-[#1D1D1D] lg:justify-center">
+            <div className="bg-white size-full flex flex-col items-center gap-10 dark:bg-[#1D1D1D] justify-center">
                 {children}
             </div>
         </>
