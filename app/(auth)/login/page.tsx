@@ -9,37 +9,40 @@ export default function Page() {
             <Logo />
             <LoginBackground>
 
-                <h1 className="text-black text-2xl text-center max-lg:mt-14 dark:text-white lg:text-3xl">Fazer Login</h1>
 
-                <div className="bg-white dark:bg-[#1D1D1D] dark:border-white/25 dark:bg- border-2 w-84 h-114 border-black/25 rounded-4xl flex flex-col items-center lg:w-115 lg:h-130">
+                <div>
+                    <h1 className="text-black text-2xl text-center lg:mb-5 dark:text-white lg:text-3xl">Fazer Login</h1>
 
-                    <div className="w-full h-45 flex flex-col items-center justify-center gap-5">
-                        <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 lg:w-90  " placeholder="E-mail"></input>
-                        <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-5 lg:w-90 " placeholder="Senha"></input>
+                    <div className="bg-white dark:bg-[#1D1D1D] dark:border-white/25 dark:bg- border-2 w-84 h-114 border-black/25 rounded-4xl flex flex-col items-center lg:w-90 lg:h-110">
+
+                        <div className="w-full h-45 flex flex-col items-center justify-center gap-5 lg:mt-5">
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 lg:w-70  " placeholder="E-mail"></input>
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-5 lg:w-70 " placeholder="Senha"></input>
+                        </div>
+
+                        <Link href={"#"} className="text-center text-blue-400 underline ">Esqueci minha senha</Link>
+
+                        <input type="button" className="bg-blue-500 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-pointer" value={"Continuar"}>
+                        </input>
+
+                        <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-5 "></div>
+
+                        <p className="text-black font-thin mt-3 dark:text-white ">ou</p>
+
+                        <div className="bg-white flex items-center gap-5 border p-1.5 px-3 border-black/15 rounded-4xl mt-3  ">
+
+                            <Image src={"/google.svg"} width={30} height={30} alt="Google"></Image>
+                            <p className="text-black ">Continuar com Google</p>
+
+                        </div>
+                        <div className="flex text-sm gap-3 mt-5 lg:text-base lg:mb-5">
+
+                            <p className="text-black dark:text-white">Não tem uma conta?</p>
+                            <Link href={"#"} className="text-blue-400 underline"> Crie uma Conta</Link>
+
+                        </div>
+
                     </div>
-
-                    <Link href={"#"} className="text-center text-blue-400 underline ">Esqueci minha senha</Link>
-
-                    <input type="button" className="bg-blue-500 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-pointer  lg:mt-6.5" value={"Continuar"}>
-                    </input>
-
-                    <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-5 "></div>
-
-                    <p className="text-black font-thin mt-3 dark:text-white ">ou</p>
-
-                    <div className="bg-white flex items-center gap-5 border p-1.5 px-3 border-black/15 rounded-4xl mt-3 lg:p-3 lg:px-6 ">
-
-                        <Image src={"/google.svg"} width={30} height={30} alt="Google"></Image>
-                        <p className="text-black ">Continuar com Google</p>
-
-                    </div>
-                    <div className="flex text-sm gap-3 mt-5 lg:text-base lg:mt-10">
-
-                        <p className="text-black dark:text-white">Não tem uma conta?</p>
-                        <Link href={"#"} className="text-blue-400 underline"> Crie uma Conta</Link>
-
-                    </div>
-
                 </div>
 
             </LoginBackground>
