@@ -63,15 +63,16 @@ export default function Page() {
 
 function Logo() {
     return (
-        <div className="w-2/5 flex justify-center lg:p-10">
+        <div className="md:w-2/5 w-full flex justify-center lg:p-10 bg-[#1D1D1D] md:h-full h-36 items-center">
             <div className="lg:hidden">
-                <Image src={"/LogoMobile.svg"} width={340} height={100} alt=""></Image>
+                <Image src="/LogoDesktop.svg" width={220} height={47} alt="Logo" />
             </div>
+            
             <div className="max-lg:hidden">
-                <Image src={"/LogoDesktop.svg"} width={450} height={100} alt=""></Image>
+                <Image src="/LogoDesktop.svg" width={450} height={100} alt="Logo" />
             </div>
         </div>
-    )
+    );
 }
 
 function LoginBackground({ children }: { children: ReactNode }) {
