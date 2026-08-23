@@ -26,16 +26,16 @@ export default function Page() {
                                 <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-5 lg:w-70 " placeholder="Senha"></input>
                             </div>
 
-                            <Link href={"#"} className="text-center text-blue-400 underline ">Esqueci minha senha</Link>
+                            <Link href={"#"} className="text-center text-blue-400 underline">Esqueci minha senha</Link>
 
-                            <input type="button" className="bg-blue-500 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-pointer" value={"Continuar"}>
+                            <input type="button" className="bg-blue-500 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-pointer text-white" value={"Continuar"}>
                             </input>
 
                             <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-5 "></div>
 
                             <p className="text-black font-thin mt-3 dark:text-white ">ou</p>
 
-                            <button className="bg-white flex items-center gap-5 border p-1.5 px-3 border-black/15 rounded-4xl mt-3 cursor-pointer hover:scale-105 duration-200" onClick={() => {signIn("google", {callbackUrl: "/dashboard"})}}>
+                            <button className="bg-white flex items-center gap-5 border p-1.5 px-3 border-black/15 rounded-4xl mt-3 cursor-pointer hover:scale-105 duration-200" onClick={() => { signIn("google", { callbackUrl: "/dashboard" }) }}>
 
                                 <Image src={"/google.svg"} width={30} height={30} alt="Google"></Image>
                                 <p className="text-black ">Continuar com Google</p>
@@ -67,7 +67,7 @@ function Logo() {
             <div className="lg:hidden">
                 <Image src="/LogoDesktop.svg" width={220} height={47} alt="Logo" />
             </div>
-            
+
             <div className="max-lg:hidden">
                 <Image src="/LogoDesktop.svg" width={450} height={100} alt="Logo" />
             </div>
