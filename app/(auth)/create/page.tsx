@@ -17,21 +17,21 @@ export default function Page() {
 
 
                     <div className="2xl:scale-125">
-                        <h1 className="text-black text-sm text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Fazer Login</h1>
+                        <h1 className="text-black text-sm text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Criar conta</h1>
 
                         <div className="bg-white dark:bg-[#1D1D1D] dark:border-white/25 dark:bg- border-2 w-84 h-114 border-black/25 rounded-4xl flex flex-col items-center lg:w-90 lg:h-110">
 
-                            <div className="w-full h-45 flex flex-col items-center justify-center gap-5 lg:mt-5">
-                                <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 lg:w-70  " placeholder="E-mail"></input>
-                                <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-5 lg:w-70 " placeholder="Senha"></input>
+                            <div className="text-xs w-full h-45 flex flex-col items-center justify-center gap-5 lg:mt-5">
+                                <input className=" bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-3 lg:w-70  " placeholder="Nome de usuário"></input>
+                                <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-3 lg:w-70  " placeholder="E-mail"></input>
+                                <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-3 lg:w-70 " placeholder="Senha"></input>
+                                <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-3 lg:w-70 " placeholder="Confimar senha"></input>
                             </div>
 
-                            <Link href={"#"} className="text-center text-blue-400 underline">Esqueci minha senha</Link>
-
-                            <input type="button" className="bg-blue-500 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-pointer text-white" value={"Continuar"}>
+                            <input type="button" className="bg-blue-500 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-pointer text-white" value={"Criar conta"}>
                             </input>
 
-                            <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-5 "></div>
+                            <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-3 "></div>
 
                             <p className="text-black font-thin mt-3 dark:text-white ">ou</p>
 
@@ -43,8 +43,8 @@ export default function Page() {
                             </button>
                             <div className="flex text-sm gap-3 mt-5 lg:text-base lg:mb-5">
 
-                                <p className="text-black dark:text-white">Não tem uma conta?</p>
-                                <Link href={"/create"} className="text-blue-400 underline"> Crie uma Conta</Link>
+                                <p className="text-black dark:text-white">Já tem uma conta?</p>
+                                <Link href={"/login"} className="text-blue-400 underline"> Fazer login</Link>
 
                             </div>
 
