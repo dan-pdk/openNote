@@ -54,7 +54,7 @@ export default function DashboardMenu({ isOpen, onClose, session }: DashboardMen
                     <div className="mt-auto flex items-center gap-3 pt-5 border-t border-black/10 dark:border-white/10">
                         <div className="w-10 h-10 rounded-full bg-black/10 dark:bg-white/10 shrink-0 overflow-hidden flex items-center justify-center">
                             {session.user.image ? (
-                                <img src={session.user.image} alt="" className="w-full h-full object-cover" />
+                                <Image src={session.user.image} loading="eager" alt="" className="w-full h-full object-cover" width={100} height={100}/>
                             ) : (
                                 <span className="text-sm font-medium text-black dark:text-white">{session.user.name?.[0] ?? "?"}</span>
                             )}
