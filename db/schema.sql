@@ -1,5 +1,5 @@
 CREATE TABLE usuarios (
-    id VARCHAR(32) PRIMARY KEY;
+    id VARCHAR(32) PRIMARY KEY,
     
     username VARCHAR(128) NOT NULL UNIQUE,
     email VARCHAR(128) NOT NULL UNIQUE,
@@ -22,15 +22,16 @@ CREATE TABLE tarefas (
     dataCriacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     dataEntrega TIMESTAMP,
 
-    id_categoria VARCHAR(128) REFERENCES category(id) ON DELETE SET NULL,
+    id_categoria INT REFERENCES categorias(id) ON DELETE SET NULL
 );
 
 CREATE TABLE salas (
     id SERIAL PRIMARY KEY,
 
     nome VARCHAR(128) NOT NULL,
-    capacidade TINYINT,
+    capacidade INT,
     tipo VARCHAR(128) NOT NULL,
+    email_do_dono VARCHAR(128),
     
     lider_id VARCHAR(32) REFERENCES usuarios(id)
 );

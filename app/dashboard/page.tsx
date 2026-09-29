@@ -1,8 +1,11 @@
-'use client'
 import Image from "next/image"
-import { useState } from "react"
-import { useSession } from "next-auth/react"
 import DashboardMenu from "@/components/DashboardMenu"
+import Rooms from "@/components/Rooms"
+import Link from "next/link"
+import AddRoomButton from "@/components/AddRoomModal"
+import { getServerSession } from "next-auth"
+import controller from "@/db/controller"
+
 
 const rooms = ["Sala 1", "Sala 2"]
 
@@ -12,9 +15,11 @@ const tasks = [
     { title: "Tarefa 3", date: "05/05" },
 ]
 
-export default function Page() {
-    const { data: session } = useSession()
-    const [menuOpen, setMenuOpen] = useState(false)
+
+export default async function Page() {
+    const session = await getServerSession();
+    const query = `SELECT nome FROM salas WHERE email_do_dono = '${session?.user?.email}';`
+    const rooms = await controller.runQuery(query);
 
     return (
         <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
@@ -30,9 +35,11 @@ export default function Page() {
                     <button aria-label="Adicionar" className="cursor-pointer">
                         <Image src={"/Plus.svg"} width={24} height={24} alt="" className="dark:invert"></Image>
                     </button>
-                    <button aria-label="Abrir menu" className="cursor-pointer" onClick={() => setMenuOpen(true)}>
-                        <Image src={"/Menu.svg"} width={24} height={24} alt="" className="dark:invert"></Image>
-                    </button>
+                    <Link href={"/dashboard?isMenuOpen=true"}>
+                        <button aria-label="Abrir menu" className="cursor-pointer">
+                            <Image src={"/Menu.svg"} width={24} height={24} alt="" className="dark:invert"></Image>
+                        </button>
+                    </Link>
                 </div>
             </header>
 
@@ -50,22 +57,8 @@ export default function Page() {
                         <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">Salas recentes</h2>
 
                         <div className="flex flex-col gap-3">
-                            {rooms.map((room) => (
-                                <button
-                                    key={room}
-                                    className="flex items-center gap-3 bg-[#E2E2E2] dark:bg-[#303030] rounded-xl p-3 text-left hover:scale-[1.02] duration-200 cursor-pointer"
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-black/10 dark:bg-white/15 flex items-center justify-center font-medium text-black dark:text-white shrink-0">
-                                        {room.split(" ")[1]}
-                                    </div>
-                                    <span className="flex-1 font-medium text-black dark:text-white">{room}</span>
-                                    <Image src={"/ChevronRight.svg"} width={20} height={20} alt="" className="dark:invert"></Image>
-                                </button>
-                            ))}
-
-                            <button className="bg-[#E2E2E2] dark:bg-[#303030] rounded-xl p-3 text-center text-black/60 dark:text-white/60 hover:scale-[1.02] duration-200 cursor-pointer">
-                                + Adicionar Sala
-                            </button>
+                            <Rooms rooms={rooms} />
+                            <AddRoomButton />
                         </div>
                     </section>
 
@@ -96,7 +89,8 @@ export default function Page() {
                 </div>
             </main>
 
-            <DashboardMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} session={session} />
+            <DashboardMenu />
         </div>
     )
 }
+
