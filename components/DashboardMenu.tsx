@@ -3,9 +3,11 @@ import Image from "next/image"
 import { signOut } from "next-auth/react"
 import { redirect, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useTheme } from "next-themes"
 
 
 export default function DashboardMenu() {
+    const {theme, setTheme} = useTheme();
     const searchParams = useSearchParams();
     const isOpen = searchParams.get("isMenuOpen");
     const { data: session } = useSession();
@@ -30,7 +32,7 @@ export default function DashboardMenu() {
 
                 <button
                     className="flex items-center gap-4 py-3 text-left hover:scale-105 duration-200 cursor-pointer origin-left"
-                    onClick={() => document.documentElement.classList.toggle("dark")}
+                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 >
                     <Image src={"/Theme.svg"} width={22} height={22} alt="" className="dark:invert"></Image>
                     <span className="text-black dark:text-white">Alternar tema</span>
