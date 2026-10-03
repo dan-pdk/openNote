@@ -12,7 +12,7 @@ export default function AddRoomForm({ visible, closeModal }: { visible: boolean,
                         closeModal()
                     }
                 }}>
-                    <div className="bg-white w-100 h-50 flex items-center translate-y-3/4 justify-center flex-col gap-7 rounded-xl">
+                    <div className="bg-white w-100 h-50 flex items-center translate-y-3/4 justify-center flex-col gap-7 rounded-xl dark:bg-[#1D1D1D]">
                         <input name='roomName' className="bg-[#E2E2E2] w-2/3 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 block" placeholder="Nome da sala" required/>
                         <button type='submit' className="bg-teal-300 px-6 py-3 rounded-lg text-white hover:scale-110 duration-200 cursor-pointer">Adicionar Sala</button>
                     </div>

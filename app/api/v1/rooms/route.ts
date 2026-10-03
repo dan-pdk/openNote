@@ -10,9 +10,9 @@ export async function handler(request: NextApiRequest, response: NextApiResponse
         return NextResponse.json({ message: "Forbidden" }, {status: 403})
     }
 
-    const query = `SELECT nome FROM salas WHERE email_do_dono = '${session.user?.email}';`
+    const query = `SELECT nome FROM salas WHERE email_do_dono = $1`
 
-    const rooms = await controller.runQuery(query);
+    const rooms = await controller.runQuery(query, [session?.user?.email]);
     return NextResponse.json(rooms, {status: 200})
 }
 

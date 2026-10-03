@@ -9,7 +9,7 @@ type Room = {
 
 export default function Rooms({ rooms } : { rooms: Array<Room> }) {
 
-    if (rooms.map) {
+    if (rooms.map && rooms.length > 0) {
         return (
             <>
                 <div className="flex flex-col gap-3">
@@ -31,7 +31,7 @@ export default function Rooms({ rooms } : { rooms: Array<Room> }) {
         )
     } else {
         return (
-            <p>Nada para ver aqui</p>
+            <p className="dark:text-white">Nada para ver aqui</p>
         )
     }
 }
