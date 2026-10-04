@@ -2,15 +2,16 @@
 import controller from "@/db/controller";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
+import authOptions from "@/auth/authOptions";
 
 export default async function createRoom(formData: FormData) {
-    const session = await getServerSession();
-    const email = session?.user?.email
+    const session = await getServerSession(authOptions);
+    const lider_id = session?.user?.id
     const roomName = formData.get("roomName")
 
     const valuesData = {
         nome: roomName,
-        email_do_dono: email,
+        lider_id: lider_id,
         tipo: "default"
     }
 

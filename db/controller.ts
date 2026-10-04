@@ -19,7 +19,7 @@ type queryCommand = {
     query: string
 }
 
-function createQueryCommand() {
+function createQueryCommand() : queryCommand {
     const queryCommand = {} as queryCommand;
     queryCommand.query = ""
 
@@ -78,8 +78,6 @@ function createQueryCommand() {
     return queryCommand
 }
 
-const queryCommand = createQueryCommand();
-
 
 type controller = {
     createQueryCommand: Function,
@@ -91,8 +89,8 @@ function createController() {
 
     controller.createQueryCommand = createQueryCommand;
 
-    async function runQuery(query: string) {
-        const { rows } = await pool.query(query);
+    async function runQuery(query: string, values?: Array<any>) {
+        const { rows } = values ? await pool.query(query, values) : await pool.query(query)
         return rows;
     }
     controller.runQuery = runQuery;

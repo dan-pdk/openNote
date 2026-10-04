@@ -5,6 +5,7 @@ import Link from "next/link"
 import AddRoomButton from "@/components/AddRoomModal"
 import { getServerSession } from "next-auth"
 import controller from "@/db/controller"
+import authOptions from "@/auth/authOptions"
 
 
 const rooms = ["Sala 1", "Sala 2"]
@@ -19,9 +20,10 @@ const tasks = [
 export default async function Page() {
     let rooms: Array<any> = [];
     try {
-        const session = await getServerSession();
-        const query = `SELECT nome FROM salas WHERE email_do_dono = $1`
-        const roomsData = await controller.runQuery(query, [session?.user?.email]);
+        const session = await getServerSession(authOptions);
+        const query = `SELECT nome FROM salas WHERE lider_id = $1`
+        //@ts-ignore
+        const roomsData = await controller.runQuery(query, [session?.user?.id]);
         rooms = roomsData;
     }
 

@@ -1,8 +1,6 @@
 import { Pool } from "pg"
 const env = process.env
 
-console.log(process.env)
-
 const pool = new Pool({
     host: "localhost",
     user: env.DB_USER,
@@ -18,6 +16,7 @@ pool.on('error', (error, client) => {
 
 async function check() {
     console.log((await pool.query("SELECT NOW()")).rows)
+    console.log((await pool.query("SELECT * FROM salas")).rows)
 }
 check()
 

@@ -1,9 +1,9 @@
 CREATE TABLE usuarios (
-    id VARCHAR(32) PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     
     username VARCHAR(128) NOT NULL UNIQUE,
     email VARCHAR(128) NOT NULL UNIQUE,
-    hash_senha VARCHAR(256) NOT NULL,
+    hash_senha VARCHAR(256),
     isAdmin BOOLEAN,
     mirror_foto TEXT
 );
@@ -26,21 +26,20 @@ CREATE TABLE tarefas (
 );
 
 CREATE TABLE salas (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
 
     nome VARCHAR(128) NOT NULL,
     capacidade INT,
     tipo VARCHAR(128) NOT NULL,
-    email_do_dono VARCHAR(128),
     
-    lider_id VARCHAR(32) REFERENCES usuarios(id)
+    lider_id UUID REFERENCES usuarios(id)
 );
 
 CREATE TABLE threads (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(128) NOT NULL UNIQUE,
     
-    autor_id VARCHAR(32) REFERENCES usuarios(id)
+    autor_id UUID REFERENCES usuarios(id)
 );
 
 CREATE TABLE comentarios (
@@ -49,7 +48,7 @@ CREATE TABLE comentarios (
     conteudo TEXT,
     flagged BOOLEAN,
 
-    autor_id VARCHAR(32) REFERENCES usuarios(id),
+    autor_id UUID REFERENCES usuarios(id),
     responde_a INT REFERENCES comentarios(id) ON DELETE SET NULL,
     pertence_a INT REFERENCES threads(id) ON DELETE CASCADE
 );
