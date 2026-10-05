@@ -21,7 +21,7 @@ export default async function Page() {
     let rooms: Array<any> = [];
     try {
         const session = await getServerSession(authOptions);
-        const query = `SELECT nome FROM salas WHERE lider_id = $1`
+        const query = `SELECT id, nome, icone_url FROM salas WHERE lider_id = $1`
         //@ts-ignore
         const roomsData = await controller.runQuery(query, [session?.user?.id]);
         rooms = roomsData;

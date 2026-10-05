@@ -31,8 +31,10 @@ CREATE TABLE salas (
     nome VARCHAR(128) NOT NULL,
     capacidade INT,
     tipo VARCHAR(128) NOT NULL,
-    
-    lider_id UUID REFERENCES usuarios(id)
+    icone_url VARCHAR(1024),
+
+    lider_id UUID,
+    CONSTRAINT fk_lider_id FOREIGN KEY (lider_id) REFERENCES usuarios(id)
 );
 
 CREATE TABLE threads (
@@ -60,4 +62,4 @@ CREATE TABLE anexos (
     url_anexo TEXT,
 
     dataAdicao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+);

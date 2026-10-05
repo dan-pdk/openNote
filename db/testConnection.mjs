@@ -16,7 +16,7 @@ pool.on('error', (error, client) => {
 
 async function check() {
     console.log((await pool.query("SELECT NOW()")).rows)
-    console.log((await pool.query("SELECT * FROM salas")).rows)
+    console.log((await pool.query("SELECT * FROM usuarios")).rows)
 }
 check()
 
