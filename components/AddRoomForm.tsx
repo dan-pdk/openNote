@@ -1,10 +1,11 @@
 'use client'
 import Form from 'next/form'
 import createRoom from '@/actions/createRoom'
-import { ChangeEvent, useState } from 'react'
+import { ChangeEvent, useId, useState } from 'react'
 import { Url } from 'next/dist/shared/lib/router/router'
 
 export default function AddRoomForm({ visible, closeModal }: { visible: boolean, closeModal: Function }) {
+    const imageInputID = useId();
     const [file, setFile] = useState<File | null>(null);
 
     function handleImagePick(event: ChangeEvent<HTMLInputElement>) {
@@ -25,9 +26,14 @@ export default function AddRoomForm({ visible, closeModal }: { visible: boolean,
                 }}>
                     <div className="bg-white w-100 h-130 flex items-center -translate-y-1/3 justify-center flex-col gap-7 rounded-xl dark:bg-[#1D1D1D]">
                         <input name='roomName' className="bg-[#E2E2E2] w-2/3 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 block" placeholder="Nome da sala" required />
-                        <input name='image' onChange={handleImagePick} required type='file' />
-                        <ImagePicker file={file as File}/>
-                        <button type='submit' className="bg-teal-300 px-6 py-3 rounded-lg text-white hover:scale-110 duration-200 cursor-pointer">Adicionar Sala</button>
+                        <input id={imageInputID} className='hidden' name='image' onChange={handleImagePick} required type='file' />
+                        <label htmlFor={imageInputID} className='w-50 h-10 text-white bg-blue-500 font-semibold text-center flex justify-center items-center rounded-md cursor-pointer hover:scale-105 duration-100'>Escolha o ícone</label>
+                        <label htmlFor={imageInputID} className='cursor-pointer hover:scale-105 duration-100'><ImagePicker file={file as File} /></label>
+                        <div className='flex gap-5'>
+                            <button type='submit' className="bg-teal-500 px-6 w-40 py-3 rounded-lg text-white hover:scale-110 duration-200 cursor-pointer">Adicionar Sala</button>
+                            <button onClick={() => {closeModal()}} className="border-box bg-teal-500/10 text-center border-2 border-teal-500 px-6 py-3 w-40 rounded-lg text-white hover:scale-110 duration-200 cursor-pointer">Sair</button>
+                        </div>
+
                     </div>
                 </Form>
             </>
@@ -45,7 +51,7 @@ function ImagePicker({ file }: { file: File }) {
         const url = fileToURL(file);
         return (
             <div className='select-none size-70 border-3 border-white/15 text-9xl text-center flex justify-center items-center rounded-2xl'>
-                <img src={url.toString()} alt={file.name} className='size-full rounded-2xl'/>
+                <img src={url.toString()} alt={file.name} className='size-full rounded-2xl' />
             </div>
         )
     }
