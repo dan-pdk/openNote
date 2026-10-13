@@ -1,10 +1,8 @@
 'use client'
 import Image from "next/image"
 import Link from "next/link"
-import { useSession } from "next-auth/react";
 import { signIn } from "next-auth/react";
 import { ReactNode } from "react"
-import { redirect } from "next/navigation";
 
 export default function Page() {
     return <>

@@ -1,15 +1,18 @@
 'use client'
 import Image from "next/image"
 import { signOut } from "next-auth/react"
-import type { Session } from "next-auth"
+import { redirect, useSearchParams } from "next/navigation"
+import { useSession } from "next-auth/react"
+import { useTheme } from "next-themes"
 
-type DashboardMenuProps = {
-    isOpen: boolean
-    onClose: () => void
-    session: Session | null
-}
 
-export default function DashboardMenu({ isOpen, onClose, session }: DashboardMenuProps) {
+export default function DashboardMenu() {
+    const {theme, setTheme} = useTheme();
+    const searchParams = useSearchParams();
+    const isOpen = searchParams.get("isMenuOpen");
+    const { data: session } = useSession();
+    function onClose() { redirect("/dashboard") }
+
     return (
         <div className={`fixed inset-0 z-50 ${isOpen ? "" : "pointer-events-none"}`}>
             <div
@@ -29,7 +32,7 @@ export default function DashboardMenu({ isOpen, onClose, session }: DashboardMen
 
                 <button
                     className="flex items-center gap-4 py-3 text-left hover:scale-105 duration-200 cursor-pointer origin-left"
-                    onClick={() => document.documentElement.classList.toggle("dark")}
+                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 >
                     <Image src={"/Theme.svg"} width={22} height={22} alt="" className="dark:invert"></Image>
                     <span className="text-black dark:text-white">Alternar tema</span>
@@ -54,7 +57,7 @@ export default function DashboardMenu({ isOpen, onClose, session }: DashboardMen
                     <div className="mt-auto flex items-center gap-3 pt-5 border-t border-black/10 dark:border-white/10">
                         <div className="w-10 h-10 rounded-full bg-black/10 dark:bg-white/10 shrink-0 overflow-hidden flex items-center justify-center">
                             {session.user.image ? (
-                                <Image src={session.user.image} loading="eager" alt="" className="w-full h-full object-cover" width={100} height={100}/>
+                                <Image src={session.user.image} loading="eager" alt="" className="w-full h-full object-cover" width={100} height={100} />
                             ) : (
                                 <span className="text-sm font-medium text-black dark:text-white">{session.user.name?.[0] ?? "?"}</span>
                             )}
