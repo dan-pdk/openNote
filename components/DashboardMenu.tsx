@@ -4,14 +4,16 @@ import { signOut } from "next-auth/react"
 import { redirect, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useTheme } from "next-themes"
+import { usePathname } from "next/navigation"
 
 
 export default function DashboardMenu() {
     const {theme, setTheme} = useTheme();
     const searchParams = useSearchParams();
     const isOpen = searchParams.get("isMenuOpen");
+    const pathname = usePathname();
     const { data: session } = useSession();
-    function onClose() { redirect("/dashboard") }
+    function onClose() { redirect(pathname) }
 
     return (
         <div className={`fixed inset-0 z-50 ${isOpen ? "" : "pointer-events-none"}`}>

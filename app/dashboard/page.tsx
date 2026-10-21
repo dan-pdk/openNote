@@ -1,11 +1,11 @@
 import Image from "next/image"
 import DashboardMenu from "@/components/DashboardMenu"
 import Rooms from "@/components/Rooms"
-import Link from "next/link"
 import AddRoomButton from "@/components/AddRoomModal"
 import { getServerSession } from "next-auth"
 import controller from "@/db/controller"
 import authOptions from "@/auth/authOptions"
+import Header from "@/components/Header"
 
 
 const rooms = ["Sala 1", "Sala 2"]
@@ -31,27 +31,7 @@ export default async function Page() {
 
         return (
             <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
-                <header className="flex items-center justify-between px-4 py-4 lg:px-10">
-                    <div className="w-32 lg:w-44">
-                        <Image src={"/LogoDesktopLight.svg"} width={180} height={38} alt="openNote" className="dark:hidden"></Image>
-                        <Image src={"/LogoDesktop.svg"} width={180} height={38} alt="openNote" className="hidden dark:block"></Image>
-                    </div>
-                    <div className="flex items-center gap-6 lg:gap-8">
-                        <button aria-label="Buscar" className="cursor-pointer">
-                            <Image src={"/Search.svg"} width={24} height={24} alt="" className="dark:invert"></Image>
-                        </button>
-                        <button aria-label="Adicionar" className="cursor-pointer">
-                            <Image src={"/Plus.svg"} width={24} height={24} alt="" className="dark:invert"></Image>
-                        </button>
-                        <Link href={"/dashboard?isMenuOpen=true"}>
-                            <button aria-label="Abrir menu" className="cursor-pointer">
-                                <Image src={"/Menu.svg"} width={24} height={24} alt="" className="dark:invert"></Image>
-                            </button>
-                        </Link>
-                    </div>
-                </header>
-
-                <div className="h-px bg-black/15 dark:bg-white/15 mx-4 lg:mx-10"></div>
+                <Header />
 
                 <main className="px-4 py-6 lg:px-10 lg:max-w-5xl lg:mx-auto">
                     <h1 className="text-2xl font-semibold mb-6 text-black dark:text-white">Início</h1>
