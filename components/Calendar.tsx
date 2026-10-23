@@ -33,12 +33,6 @@ export default function Calendar() {
     )
 }
 
-type daysOfTheWeekIteratorType = {
-    currentDayOfTheWeek: number,
-    setPreviousDay: Function,
-    setNextDay: Function,
-}
-
 function getFirstDayOfTheWeekOfTheMonth() {
     const date = new Date();
 
