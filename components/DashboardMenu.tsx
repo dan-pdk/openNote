@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation"
 
 
 export default function DashboardMenu() {
-    const {theme, setTheme} = useTheme();
+    const {resolvedTheme, setTheme} = useTheme();
     const searchParams = useSearchParams();
     const isOpen = searchParams.get("isMenuOpen");
     const pathname = usePathname();
@@ -34,7 +34,7 @@ export default function DashboardMenu() {
 
                 <button
                     className="flex items-center gap-4 py-3 text-left hover:scale-105 duration-200 cursor-pointer origin-left"
-                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                    onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
                 >
                     <Image src={"/Theme.svg"} width={22} height={22} alt="" className="dark:invert"></Image>
                     <span className="text-black dark:text-white">Alternar tema</span>

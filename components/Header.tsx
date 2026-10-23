@@ -6,7 +6,7 @@ export default function Header() {
 
     return (
         <>
-            <header className="flex items-center justify-between px-4 py-4 lg:px-10">
+            <header className="flex items-center justify-between px-4 py-4 lg:px-10 select-none">
                 <div className="w-32 lg:w-44">
                     <Image src={"/LogoDesktopLight.svg"} width={180} height={38} alt="openNote" className="dark:hidden"></Image>
                     <Image src={"/LogoDesktop.svg"} width={180} height={38} alt="openNote" className="hidden dark:block"></Image>
