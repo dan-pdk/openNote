@@ -40,45 +40,9 @@ type daysOfTheWeekIteratorType = {
 }
 
 function getFirstDayOfTheWeekOfTheMonth() {
-    const date = new Date()
-    const currentDay = date.getDate();
-    const currentDayOfTheWeek = date.getDay();
+    const date = new Date();
 
-    function createDaysOfTheWeekIterator() {
-        const daysOfTheWeekIterator = {} as daysOfTheWeekIteratorType;
-
-        let currentDayOfTheWeek = date.getDay();
-
-        daysOfTheWeekIterator.currentDayOfTheWeek = currentDayOfTheWeek;
-
-        function setPreviousDay() {
-            if (daysOfTheWeekIterator.currentDayOfTheWeek == 0) {
-                daysOfTheWeekIterator.currentDayOfTheWeek = 6;
-            } else {
-                daysOfTheWeekIterator.currentDayOfTheWeek--;
-            }
-
-        }
-        daysOfTheWeekIterator.setPreviousDay = setPreviousDay;
-
-        function setNextDay() {
-            if (daysOfTheWeekIterator.currentDayOfTheWeek === 6) {
-                daysOfTheWeekIterator.currentDayOfTheWeek = 0;
-            } else {
-                daysOfTheWeekIterator.currentDayOfTheWeek++;
-            }
-
-        }
-        daysOfTheWeekIterator.setNextDay = setNextDay;
-
-        return daysOfTheWeekIterator;
-    }
-
-    const daysOfTheWeekIterator = createDaysOfTheWeekIterator();
-
-    for (let i = currentDay; i > 1; i--) {
-        daysOfTheWeekIterator.setPreviousDay();
-    }
-
-    return daysOfTheWeekIterator.currentDayOfTheWeek;
+    const firstDayDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    console.log(firstDayDate.getDay());
+    return firstDayDate.getDay()
 }
