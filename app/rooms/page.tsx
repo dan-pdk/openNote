@@ -10,13 +10,13 @@ export default function Page() {
     const month = months[monthNumber]
 
     return (
-        <>
+        <div className="dark:bg-[#1D1D1D] min-h-screen">
             <Header />
             <DashboardMenu />
-            <div className="flex mx-auto items-center flex-col min-h-full">
+            <div className="flex mx-auto items-center flex-col min-h-full ">
                 <h1 className="text-center font-semibold text-2xl mt-16 text-black dark:text-white">{month}</h1>
                 <Calendar />
             </div>
-        </>
+        </div>
     )
 }
