@@ -10,6 +10,12 @@ export default function Calendar() {
     const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
     const month = months[monthNumber]
 
+    function getMaxDaysOfTheMonth() {
+        const newDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+        return newDate.getDate();
+    }
+    const maxDaysOfTheMonth = getMaxDaysOfTheMonth()
+
     function getFirstDayOfTheWeekOfTheMonth() {
         const firstDayDate = new Date(date.getFullYear(), date.getMonth(), 1);
         console.log(firstDayDate.getDay())
@@ -18,7 +24,7 @@ export default function Calendar() {
 
     function createTSXDays() {
         const days = [];
-        for (let i = 1; i <= 31; i++) {
+        for (let i = 1; i <= maxDaysOfTheMonth; i++) {
             const key = `${date.getFullYear()}-${date.getMonth() + 1}-${i}`
             days.push(<div key={key} style={i === 1 ? { gridColumnStart: firstDayOfTheWeekOfTheMonth + 1 } : undefined} className="hover:bg-white/15 aspect-square rounded-full duration-200 text-center cursor-pointer p-4">
                 <li className="select-none" >{i}</li>
@@ -30,9 +36,15 @@ export default function Calendar() {
     }
 
     function goToNextMonth() {
-        const newDate = new Date(date.getFullYear(), date.getMonth(), 1);
+        const newDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         newDate.setMonth(newDate.getMonth() + 1);
         setDate(newDate)
+    }
+
+    function goToPreviousMonth() {
+        const newDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        newDate.setMonth(newDate.getMonth() - 1);
+        setDate(newDate);
     }
 
     function createTSXDaysOfTheWeek() {
@@ -44,9 +56,10 @@ export default function Calendar() {
 
     return (
         <>
-            <div className="flex mt-16 items-center gap-20">
-                <span className="font-semibold text-2xl select-none cursor-pointer"> &lt; </span>
-                <h1 className="text-center font-semibold text-2xl text-black dark:text-white">{month}</h1>
+            <div className="flex mt-16 items-center gap-20 text-4xl">{date.getFullYear()}</div>
+            <div className="flex mt-10 justify-center gap-20">
+                <span onClick={goToPreviousMonth} className="font-semibold text-2xl select-none cursor-pointer"> &lt; </span>
+                <h1 className="text-center min-w-35 max-w-35 font-semibold text-2xl text-black dark:text-white">{month}</h1>
                 <span className="font-semibold text-2xl select-none cursor-pointer" onClick={goToNextMonth}> &gt; </span>
             </div>
             <div className="list-none grid grid-cols-7 gap-1 text-center text-xl mt-12 ">
