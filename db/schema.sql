@@ -15,16 +15,6 @@ CREATE TABLE categorias (
     cor VARCHAR(7) NOT NULL
 );
 
-CREATE TABLE tarefas (
-    id SERIAL PRIMARY KEY,
-    
-    nome VARCHAR(128) NOT NULL,
-    dataCriacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    dataEntrega TIMESTAMP,
-
-    id_categoria INT REFERENCES categorias(id) ON DELETE SET NULL
-);
-
 CREATE TABLE salas (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
 
@@ -35,6 +25,17 @@ CREATE TABLE salas (
 
     lider_id UUID,
     CONSTRAINT fk_lider_id FOREIGN KEY (lider_id) REFERENCES usuarios(id)
+);
+
+CREATE TABLE tarefas (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    
+    nome VARCHAR(128) NOT NULL,
+    dataCriacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    dataEntrega TIMESTAMP,
+
+    id_categoria INT REFERENCES categorias(id) ON DELETE SET NULL,
+    id_sala UUID REFERENCES salas(id) ON DELETE SET NULL
 );
 
 CREATE TABLE threads (

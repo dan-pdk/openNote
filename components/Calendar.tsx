@@ -1,14 +1,34 @@
 'use client'
+import { UUID } from "crypto";
 import { useState } from "react";
 
-export default function Calendar() {
+type taskType = {
+    id: string,
+    name: string,
+    dueDate: string,
+}
+
+export default function Calendar({ tasks }: { tasks: Array<taskType> }) {
     const [date, setDate] = useState(new Date());
-    const day = date.getDate();
+    const currentDay = date.getDate();
+    const currentYear = date.getFullYear();
     const daysOfTheWeek = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
     const firstDayOfTheWeekOfTheMonth = getFirstDayOfTheWeekOfTheMonth();
-    const monthNumber = date.getMonth();
+    const currentMonthNumber = date.getMonth();
     const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
-    const month = months[monthNumber]
+    const month = months[currentMonthNumber]
+    let currentMonthTasks: Array<taskType> = [];
+    console.log(tasks)
+    if (tasks.length !== 0) {
+        currentMonthTasks = tasks.filter(task => {
+            const dueDate = task.dueDate
+            const dueDateDayInfo = dueDate.split(" ")[0];
+            const [year, month, day] = dueDateDayInfo.split("-");
+            if (Number(year) === currentYear && Number(month) === currentMonthNumber + 1) {
+                return true
+            }
+        })
+    }
 
     function getMaxDaysOfTheMonth() {
         const newDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
@@ -18,7 +38,6 @@ export default function Calendar() {
 
     function getFirstDayOfTheWeekOfTheMonth() {
         const firstDayDate = new Date(date.getFullYear(), date.getMonth(), 1);
-        console.log(firstDayDate.getDay())
         return firstDayDate.getDay()
     }
 
@@ -26,7 +45,20 @@ export default function Calendar() {
         const days = [];
         for (let i = 1; i <= maxDaysOfTheMonth; i++) {
             const key = `${date.getFullYear()}-${date.getMonth() + 1}-${i}`
-            days.push(<div key={key} style={i === 1 ? { gridColumnStart: firstDayOfTheWeekOfTheMonth + 1 } : undefined} className="hover:bg-white/15 aspect-square rounded-full duration-200 text-center cursor-pointer p-4">
+            function getHasTasks() {
+                if (currentMonthTasks.length !== 0 ) {
+                    currentMonthTasks.forEach(task => {
+                        if (Number(task.dueDate.split(" ")[0].split(" ")[2]) === i) {
+                            return true
+                        }
+                    })
+                }
+                return false
+            }
+            const hasTasks = getHasTasks();
+            const className = "aspect-square rounded-full duration-200 text-center cursor-pointer p-4" + (hasTasks ? " hover:bg-red/15 bg-red" : " hover:bg-white/15")
+            console.log(className)
+            days.push(<div key={key} style={i === 1 ? { gridColumnStart: firstDayOfTheWeekOfTheMonth + 1 } : undefined} className={className}>
                 <li className="select-none" >{i}</li>
             </div>
             )
