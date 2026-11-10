@@ -1,6 +1,7 @@
 'use client'
 import { UUID } from "crypto";
-import { useState } from "react";
+import { MouseEventHandler, useState } from "react";
+import AddTaskForm from "./AddTaskForm";
 
 type taskType = {
     id: string,
@@ -10,13 +11,13 @@ type taskType = {
 
 export default function Calendar({ tasks }: { tasks: Array<taskType> }) {
     const [date, setDate] = useState(new Date());
-    const currentDay = date.getDate();
     const currentYear = date.getFullYear();
-    const daysOfTheWeek = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
     const firstDayOfTheWeekOfTheMonth = getFirstDayOfTheWeekOfTheMonth();
     const currentMonthNumber = date.getMonth();
     const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
-    const month = months[currentMonthNumber]
+    const month = months[currentMonthNumber];
+    const [modalDate, setModalDate] = useState(new Date())
+    const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     let currentMonthTasks: Array<taskType> = [];
     console.log(tasks)
     if (tasks.length !== 0) {
@@ -35,12 +36,12 @@ export default function Calendar({ tasks }: { tasks: Array<taskType> }) {
         return newDate.getDate();
     }
     const maxDaysOfTheMonth = getMaxDaysOfTheMonth()
-
+    
     function getFirstDayOfTheWeekOfTheMonth() {
         const firstDayDate = new Date(date.getFullYear(), date.getMonth(), 1);
         return firstDayDate.getDay()
     }
-
+    
     function createTSXDays() {
         const days = [];
         for (let i = 1; i <= maxDaysOfTheMonth; i++) {
@@ -57,9 +58,20 @@ export default function Calendar({ tasks }: { tasks: Array<taskType> }) {
             }
             const hasTasks = getHasTasks();
             const className = "aspect-square rounded-full duration-200 text-center cursor-pointer p-4" + (hasTasks ? " hover:bg-red/15 bg-red" : " hover:bg-white/15")
-            console.log(className)
-            days.push(<div key={key} style={i === 1 ? { gridColumnStart: firstDayOfTheWeekOfTheMonth + 1 } : undefined} className={className}>
-                <li className="select-none" >{i}</li>
+
+            function updateModalDate() {
+                const newDate = new Date(date.getFullYear(), date.getMonth(), i)
+                return newDate
+                setModalDate(newDate)
+            }
+            
+            function openModal() {
+                updateModalDate();
+                setIsTaskModalOpen(true);
+            }
+            
+            days.push(<div onClick={openModal} key={key} style={i === 1 ? { gridColumnStart: firstDayOfTheWeekOfTheMonth + 1 } : undefined} className={className}>
+                <button className="cursor-pointer select-none">{i}</button>
             </div>
             )
         }
@@ -97,10 +109,20 @@ export default function Calendar({ tasks }: { tasks: Array<taskType> }) {
             <div className="list-none grid grid-cols-7 gap-1 text-center text-xl mt-12 ">
                 {createTSXDaysOfTheWeek()}
                 {createTSXDays()}
+               <AddTaskModal isOpen={isTaskModalOpen} closeModal={() => {setIsTaskModalOpen(false)}} modalDate={modalDate}/>
             </div>
+
         </>
     )
 }
 
-
-
+function AddTaskModal({ isOpen, closeModal, modalDate } : { isOpen: boolean, closeModal: Function, modalDate: Date }) {
+    if (isOpen) {
+        return (
+            <AddTaskForm></AddTaskForm>
+    )
+    } else {
+        <>
+        </>
+    }
+}
