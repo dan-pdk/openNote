@@ -1,5 +1,5 @@
 CREATE TABLE usuarios (
-    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    id_usuarios UUID PRIMARY KEY DEFAULT uuidv7(),
     
     username VARCHAR(128) NOT NULL UNIQUE,
     email VARCHAR(128) NOT NULL UNIQUE,
@@ -16,7 +16,7 @@ CREATE TABLE categorias (
 );
 
 CREATE TABLE tarefas (
-    id SERIAL PRIMARY KEY,
+    id_tarefas SERIAL PRIMARY KEY,
     
     nome VARCHAR(128) NOT NULL,
     dataCriacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -26,7 +26,7 @@ CREATE TABLE tarefas (
 );
 
 CREATE TABLE salas (
-    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    id_salas UUID PRIMARY KEY DEFAULT uuidv7(),
 
     nome VARCHAR(128) NOT NULL,
     capacidade INT,
@@ -38,25 +38,25 @@ CREATE TABLE salas (
 );
 
 CREATE TABLE threads (
-    id SERIAL PRIMARY KEY,
+    id_threads SERIAL PRIMARY KEY,
     nome VARCHAR(128) NOT NULL UNIQUE,
     
-    autor_id UUID REFERENCES usuarios(id)
+    autor_id UUID REFERENCES usuarios(id_usuarios)
 );
 
 CREATE TABLE comentarios (
-    id SERIAL PRIMARY KEY,
+    id_comentarios SERIAL PRIMARY KEY,
 
     conteudo TEXT,
     flagged BOOLEAN,
 
-    autor_id UUID REFERENCES usuarios(id),
-    responde_a INT REFERENCES comentarios(id) ON DELETE SET NULL,
-    pertence_a INT REFERENCES threads(id) ON DELETE CASCADE
+    autor_id UUID REFERENCES usuarios(id_usuarios),
+    responde_a INT REFERENCES comentarios(id_comentarios) ON DELETE SET NULL,
+    pertence_a INT REFERENCES threads(id_threads) ON DELETE CASCADE
 );
 
 CREATE TABLE anexos (
-    id SERIAL PRIMARY KEY,
+    id_anexos SERIAL PRIMARY KEY,
 
     nome VARCHAR(128) NOT NULL,
     url_anexo TEXT,
