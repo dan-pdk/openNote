@@ -19,7 +19,6 @@ export default function Calendar({ tasks }: { tasks: Array<taskType> }) {
     const [modalDate, setModalDate] = useState(new Date())
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     let currentMonthTasks: Array<taskType> = [];
-    console.log(tasks)
     if (tasks.length !== 0) {
         currentMonthTasks = tasks.filter(task => {
             const dueDate = task.dueDate
@@ -61,7 +60,6 @@ export default function Calendar({ tasks }: { tasks: Array<taskType> }) {
 
             function updateModalDate() {
                 const newDate = new Date(date.getFullYear(), date.getMonth(), i)
-                return newDate
                 setModalDate(newDate)
             }
             
@@ -109,17 +107,17 @@ export default function Calendar({ tasks }: { tasks: Array<taskType> }) {
             <div className="list-none grid grid-cols-7 gap-1 text-center text-xl mt-12 ">
                 {createTSXDaysOfTheWeek()}
                 {createTSXDays()}
-               <AddTaskModal isOpen={isTaskModalOpen} closeModal={() => {setIsTaskModalOpen(false)}} modalDate={modalDate}/>
+               <AddTaskModal isOpen={isTaskModalOpen} closeModal={() => {setIsTaskModalOpen(false)}} modalDate={modalDate} setModalDate={setModalDate}/>
             </div>
 
         </>
     )
 }
 
-function AddTaskModal({ isOpen, closeModal, modalDate } : { isOpen: boolean, closeModal: Function, modalDate: Date }) {
+function AddTaskModal({ isOpen, closeModal, modalDate, setModalDate } : { isOpen: boolean, closeModal: Function, modalDate: Date, setModalDate: Function }) {
     if (isOpen) {
         return (
-            <AddTaskForm></AddTaskForm>
+            <AddTaskForm closeModal={closeModal} modalDate={modalDate} setModalDate={setModalDate}></AddTaskForm>
     )
     } else {
         <>

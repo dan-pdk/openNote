@@ -33,6 +33,7 @@ CREATE TABLE tarefas (
     nome VARCHAR(128) NOT NULL,
     dataCriacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     dataEntrega TIMESTAMP,
+    tarefa_description TEXT,
 
     id_categoria INT REFERENCES categorias(id) ON DELETE SET NULL,
     id_sala UUID REFERENCES salas(id) ON DELETE SET NULL
