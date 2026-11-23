@@ -16,7 +16,6 @@ CREATE TABLE categorias (
 CREATE TABLE salas (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
     nome VARCHAR(128) NOT NULL,
-    capacidade INT,
     tipo VARCHAR(32) NOT NULL DEFAULT 'restrita' CHECK (tipo IN ('restrita', 'livre')),
     icone_url VARCHAR(1024),
     lider_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,

@@ -17,6 +17,7 @@ pool.on('error', (error, client) => {
 async function check() {
     console.log((await pool.query("SELECT NOW()")).rows)
     console.log((await pool.query("SELECT * FROM usuarios")).rows)
+    console.log((await pool.query("SELECT * FROM sala_membros WHERE id_usuario = $1", ["01a2099d-0ebd-7584-b829-6efce93afa1c"])));
 }
 check()
 
