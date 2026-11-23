@@ -1,104 +1,91 @@
 import { Pool } from 'pg';
-const env = process.env
 
+const globalForPg = globalThis as unknown as { pool: Pool | undefined };
 
-const pool = new Pool({
-    host: "localhost",
-    user: env.DB_USER,
-    password: env.DB_PASSWORD,
-    database: env.DB_NAME,
-    port: 5432,
-    idleTimeoutMillis: 30000
-})
+const pool =
+  globalForPg.pool ??
+  new Pool({
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: Number(process.env.DB_PORT) || 5432,
+    max: 10,
+    idleTimeoutMillis: 30000,
+  });
 
-type queryCommand = {
-    insert: Function,
-    values: Function,
-    resolve: Function,
-
-    query: string
+if (process.env.NODE_ENV !== 'production') {
+  globalForPg.pool = pool;
 }
 
-function createQueryCommand() : queryCommand {
-    const queryCommand = {} as queryCommand;
-    queryCommand.query = ""
+type QueryResultObject = {
+  text: string;
+  values: any[];
+};
 
-    function insert(table: string) {
-        queryCommand.query += `INSERT INTO ${table} `;
-        return queryCommand;
-    }
-    queryCommand.insert = insert
+type QueryCommand = {
+  insert: (table: string) => QueryCommand;
+  values: (valuesData: Record<string, any>) => QueryCommand;
+  returning: (columns?: string) => QueryCommand;
+  resolve: () => QueryResultObject;
+  query: string;
+  params: any[];
+};
 
-    function values(valuesData: Record<string, any>) {
-        const keys = Object.keys(valuesData);
-        const dataValues = Object.values(valuesData);
+function createQueryCommand(): QueryCommand {
+  const command: QueryCommand = {
+    query: '',
+    params: [],
+    insert(table: string) {
+      command.query += `INSERT INTO ${table} `;
+      return command;
+    },
+    values(valuesData: Record<string, any>) {
+      const entries = Object.entries(valuesData).filter(
+        ([_, val]) => val !== undefined
+      );
+      const keys = entries.map(([key]) => key);
+      const vals = entries.map(([_, val]) => val);
 
+      const placeholders = vals.map((_, index) => `$${index + 1}`);
 
-        let keysAsQuery = "(";
-        keys.forEach((key: string, index: number) => {
-            const isLastKey = index == keys.length - 1;
-            if (isLastKey) {
-                keysAsQuery += key;
-            } else {
-                keysAsQuery += `${key}, `;
-            }
-        })
-        keysAsQuery += ")";
+      command.query += `(${keys.join(', ')}) VALUES (${placeholders.join(', ')})`;
+      command.params = vals;
+      return command;
+    },
+    returning(columns = '*') {
+      command.query += ` RETURNING ${columns}`;
+      return command;
+    },
+    resolve() {
+      return {
+        text: `${command.query};`,
+        values: command.params,
+      };
+    },
+  };
 
-        let valuesAsQuery = "VALUES (";
-        dataValues.forEach((value: string | number, index: number) => {
-            const isLastKey = index == keys.length - 1;
-            if (typeof value === "string") {
-                if (isLastKey) {
-                    valuesAsQuery += `'${value}'`;
-                } else {
-                    valuesAsQuery += `'${value}', `;
-                }
-            } else {
-                if (isLastKey) {
-                    valuesAsQuery += value;
-                } else {
-                    valuesAsQuery += `${value}, `;
-                }
-            }
-        })
-        valuesAsQuery += ")";
-
-        queryCommand.query += `${keysAsQuery} ${valuesAsQuery}`
-        return queryCommand;
-    }
-    queryCommand.values = values
-
-    function resolve() {
-        queryCommand.query += ";";
-        return queryCommand.query;
-    }
-    queryCommand.resolve = resolve
-
-    return queryCommand
+  return command;
 }
 
+async function runQuery<T = any>(
+  query: string | QueryResultObject,
+  values?: Array<any>
+): Promise<T[]> {
+  if (typeof query === 'object') {
+    const { rows } = await pool.query(query.text, query.values);
+    return rows;
+  }
 
-type controller = {
-    createQueryCommand: Function,
-    runQuery: Function
+  const { rows } = values
+    ? await pool.query(query, values)
+    : await pool.query(query);
+  return rows;
 }
 
-function createController() {
-    const controller = {} as controller;
-
-    controller.createQueryCommand = createQueryCommand;
-
-    async function runQuery(query: string, values?: Array<any>) {
-        const { rows } = values ? await pool.query(query, values) : await pool.query(query)
-        return rows;
-    }
-    controller.runQuery = runQuery;
-
-    return controller
-}
-
-const controller = createController();
+const controller = {
+  createQueryCommand,
+  runQuery,
+};
 
 export default controller;
-
