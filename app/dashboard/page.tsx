@@ -2,11 +2,13 @@ import { Suspense } from "react"
 import Image from "next/image"
 import DashboardMenu from "@/components/DashboardMenu"
 import Rooms from "@/components/Rooms"
-import AddRoomButton from "@/components/AddRoomModal"
 import { getServerSession } from "next-auth"
 import controller from "@/db/controller"
 import authOptions from "@/auth/authOptions"
 import Header from "@/components/Header"
+import AddRoomButton from "@/components/AddRoomModal"
+import Link from "next/link"
+import GenericWideButton from "@/components/GenericWideButton"
 
 export const dynamic = 'force-dynamic';
 
@@ -55,8 +57,9 @@ export default async function Page() {
 
                             <div className="flex flex-col gap-3">
                                 <Rooms rooms={rooms.slice(-3).reverse()} />
-                                {rooms.length > 3 && <span className="text-xs font-medium text-black/50 dark:text-white/50 tracking-wide text-end">...{rooms.length - 3} mais</span>}
+                                {rooms.length > 3 && <Link href="/rooms" className="self-end flex items-end justify-end w-fit"><span className="underline cursor-pointer text-xs font-medium text-black/50 dark:text-white/50 tracking-wide text-end">...e {rooms.length - 3} mais</span></Link>}
                                 <AddRoomButton />
+                                <GenericWideButton label="Ver Todas" href="/rooms"></GenericWideButton>
                             </div>
                         </section>
 
