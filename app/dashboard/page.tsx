@@ -23,10 +23,11 @@ export default async function Page() {
         //@ts-ignore
         if (session?.user?.id) {
             const query = `
-                SELECT DISTINCT s.id, s.nome, s.icone_url 
+                SELECT DISTINCT s.id, s.nome, s.icone_url, s.created_at
                 FROM salas s
                 LEFT JOIN sala_membros sm ON s.id = sm.id_sala
-                WHERE s.lider_id = $1 OR sm.id_usuario = $1
+                WHERE s.lider_id = $1 OR sm.id_usuario = $1 
+                ORDER BY s.created_at;
             `;
             //@ts-ignore
             const roomsData = await controller.runQuery(query, [session.user.id]);
@@ -53,7 +54,8 @@ export default async function Page() {
                             <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">Salas recentes</h2>
 
                             <div className="flex flex-col gap-3">
-                                <Rooms rooms={rooms} />
+                                <Rooms rooms={rooms.slice(-3)} />
+                                {rooms.length > 3 && <span className="text-xs font-medium text-black/50 dark:text-white/50 tracking-wide text-end">...{rooms.length - 3} mais</span>}
                                 <AddRoomButton />
                             </div>
                         </section>
