@@ -54,7 +54,7 @@ export default async function Page() {
                             <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">Salas recentes</h2>
 
                             <div className="flex flex-col gap-3">
-                                <Rooms rooms={rooms.slice(-3)} />
+                                <Rooms rooms={rooms.slice(-3).reverse()} />
                                 {rooms.length > 3 && <span className="text-xs font-medium text-black/50 dark:text-white/50 tracking-wide text-end">...{rooms.length - 3} mais</span>}
                                 <AddRoomButton />
                             </div>
