@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import Image from "next/image"
 import DashboardMenu from "@/components/DashboardMenu"
 import Rooms from "@/components/Rooms"
@@ -7,8 +8,7 @@ import controller from "@/db/controller"
 import authOptions from "@/auth/authOptions"
 import Header from "@/components/Header"
 
-
-const rooms = ["Sala 1", "Sala 2"]
+export const dynamic = 'force-dynamic';
 
 const tasks = [
     { title: "Tarefa 1", date: "28/03" },
@@ -16,20 +16,28 @@ const tasks = [
     { title: "Tarefa 3", date: "05/05" },
 ]
 
-
 export default async function Page() {
     let rooms: Array<any> = [];
     try {
         const session = await getServerSession(authOptions);
-        const query = `SELECT id, nome, icone_url FROM salas WHERE lider_id = $1`
         //@ts-ignore
-        const roomsData = await controller.runQuery(query, [session?.user?.id]);
-        rooms = roomsData;
+        if (session?.user?.id) {
+            const query = `
+                SELECT DISTINCT s.id, s.nome, s.icone_url 
+                FROM salas s
+                LEFT JOIN sala_membros sm ON s.id = sm.id_sala
+                WHERE s.lider_id = $1 OR sm.id_usuario = $1
+            `;
+            //@ts-ignore
+            const roomsData = await controller.runQuery(query, [session.user.id]);
+            rooms = roomsData || [];
+        }
+    } catch (error) {
+        console.error("Erro ao carregar salas no dashboard. ", error);
     }
 
-    finally {
-
-        return (
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-white dark:bg-[#1D1D1D]" />}>
             <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
                 <Header />
 
@@ -61,7 +69,7 @@ export default async function Page() {
                                             key={task.title}
                                             className="flex items-center gap-3 bg-[#E2E2E2] dark:bg-[#303030] rounded-xl p-3"
                                         >
-                                            <Image src={"/Task.svg"} width={24} height={24} alt="" className="dark:invert shrink-0"></Image>
+                                            <Image src={"/Task.svg"} width={24} height={24} alt="" className="dark:invert shrink-0" />
                                             <span className="flex-1 font-medium text-black dark:text-white">{task.title}</span>
                                             <span className="text-sm text-black/50 dark:text-white/50">{task.date}</span>
                                         </div>
@@ -71,7 +79,7 @@ export default async function Page() {
 
                             <button className="mt-4 self-end bg-teal-400 text-white rounded-full pl-5 pr-4 py-3 flex items-center gap-1 font-semibold shadow-lg hover:scale-105 duration-200 cursor-pointer">
                                 Calendário
-                                <Image src={"/ChevronRight.svg"} width={18} height={18} alt="" className="invert"></Image>
+                                <Image src={"/ChevronRight.svg"} width={18} height={18} alt="" className="invert" />
                             </button>
                         </section>
                     </div>
@@ -79,7 +87,6 @@ export default async function Page() {
 
                 <DashboardMenu />
             </div>
-        )
-    }
+        </Suspense>
+    )
 }
-
