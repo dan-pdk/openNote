@@ -22,7 +22,6 @@ export default async function Page() {
     let rooms: Array<any> = [];
     try {
         const session = await getServerSession(authOptions);
-        //@ts-ignore
         if (session?.user?.id) {
             const query = `
                 SELECT DISTINCT s.id, s.nome, s.icone_url, s.created_at
@@ -31,7 +30,6 @@ export default async function Page() {
                 WHERE s.lider_id = $1 OR sm.id_usuario = $1 
                 ORDER BY s.created_at;
             `;
-            //@ts-ignore
             const roomsData = await controller.runQuery(query, [session.user.id]);
             rooms = roomsData || [];
         }

@@ -18,7 +18,7 @@ Desligar e remover conteúdo do container do banco:
 
 
 ## Para acessar o terminal interativo:
-> docker exec -it opennote_db psql -U postgres_user -d open_note_data_base
+> docker exec -it opennote_db psql -U POSTGRES -d postgres
 
 
 ## Comandos úteis no terminal interativo:

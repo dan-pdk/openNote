@@ -24,7 +24,7 @@ export default function AddRoomForm({ visible, closeModal }: { visible: boolean,
                         closeModal();
                     }
                 }}>
-                    <div className="bg-white w-100 h-130 flex items-center -translate-y-1/3 justify-center flex-col gap-7 rounded-xl dark:bg-[#1D1D1D]">
+                    <div className="bg-white w-100 h-130 flex items-center justify-center flex-col gap-7 rounded-xl dark:bg-[#1D1D1D]">
                         <input name='roomName' className="bg-[#E2E2E2] w-2/3 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 block" placeholder="Nome da sala" required />
                         <input id={imageInputID} className='hidden' name='image' onChange={handleImagePick} type='file' />
                         <label htmlFor={imageInputID} className='w-50 h-10 text-white bg-blue-500 font-semibold text-center flex justify-center items-center rounded-md cursor-pointer hover:scale-105 duration-100'>Escolha o ícone</label>
