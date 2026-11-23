@@ -35,6 +35,6 @@ export default function Rooms({ rooms }: { rooms: Array<Room> }) {
     }
 
     return (
-        <p className="dark:text-white">Nada para ver aqui</p>
+        <p className="text-black/50 dark:text-white/50 text-center py-4">Nada para ver aqui</p>
     )
 }

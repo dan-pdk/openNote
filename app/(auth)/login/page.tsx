@@ -14,11 +14,11 @@ export default function Page() {
                 <div className="2xl:scale-125">
                     <h1 className="text-black text-sm text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Fazer Login</h1>
 
-                    <div className="bg-white dark:bg-[#1D1D1D] dark:border-white/25 dark:bg- border-2 w-84 h-114 border-black/25 rounded-4xl flex flex-col items-center lg:w-90 lg:h-110">
+                    <div className="bg-white dark:bg-[#1D1D1D] dark:border-white/25 border-2 w-84 h-114 border-black/25 rounded-4xl flex flex-col items-center lg:w-90 lg:h-110">
 
                         <div className="w-full h-45 flex flex-col items-center justify-center gap-5 lg:mt-5">
-                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 lg:w-70  " placeholder="E-mail"></input>
-                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-5 lg:w-70 " placeholder="Senha"></input>
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] text-black dark:text-white placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 lg:w-70" placeholder="E-mail"></input>
+                            <input type="password" className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] text-black dark:text-white dark:placeholder:text-white/65 placeholder:text-black/50 pl-5 lg:w-70" placeholder="Senha"></input>
                         </div>
 
                         <Link href={"#"} className="text-center text-blue-400 underline">Esqueci minha senha</Link>

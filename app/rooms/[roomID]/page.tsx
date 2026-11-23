@@ -14,7 +14,7 @@ export default async function Page({ params } : { params : Promise<{ roomID: str
     const tasks : Array<taskType> = await controller.runQuery(`SELECT FROM tarefas WHERE id_sala = $1`, [roomID]);
 
     return (
-        <div className="dark:bg-[#1D1D1D] min-h-screen">
+        <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
             <Header />
             <DashboardMenu />
             <div className="flex mx-auto items-center flex-col min-h-full ">

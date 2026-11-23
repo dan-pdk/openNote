@@ -5,14 +5,21 @@ import { redirect, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useTheme } from "next-themes"
 import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
 
 
 export default function DashboardMenu() {
     const {resolvedTheme, setTheme} = useTheme();
+    const [mounted, setMounted] = useState(false);
     const searchParams = useSearchParams();
     const isOpen = searchParams.get("isMenuOpen");
     const pathname = usePathname();
     const { data: session } = useSession();
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     function onClose() { redirect(pathname) }
 
     return (
@@ -37,7 +44,9 @@ export default function DashboardMenu() {
                     onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
                 >
                     <Image src={"/Theme.svg"} width={22} height={22} alt="" className="dark:invert"></Image>
-                    <span className="text-black dark:text-white">Alternar tema</span>
+                    <span className="text-black dark:text-white">
+                        {mounted ? (resolvedTheme === 'dark' ? 'Modo Claro' : 'Modo Escuro') : 'Alternar tema'}
+                    </span>
                 </button>
 
                 <button className="flex items-center gap-4 py-3 text-left hover:scale-105 duration-200 cursor-pointer origin-left">

@@ -56,7 +56,7 @@ export default function Calendar({ tasks }: { tasks: Array<taskType> }) {
                 return false
             }
             const hasTasks = getHasTasks();
-            const className = "aspect-square rounded-full duration-200 text-center cursor-pointer p-4" + (hasTasks ? " hover:bg-red/15 bg-red" : " hover:bg-white/15")
+            const className = "aspect-square rounded-full duration-200 text-center cursor-pointer p-4 text-black dark:text-white" + (hasTasks ? " hover:bg-red/15 bg-red text-white" : " hover:bg-black/10 dark:hover:bg-white/15")
 
             function updateModalDate() {
                 const newDate = new Date(date.getFullYear(), date.getMonth(), i)
@@ -98,8 +98,8 @@ export default function Calendar({ tasks }: { tasks: Array<taskType> }) {
 
     return (
         <>
-            <div className="flex mt-16 items-center gap-20 text-4xl">{date.getFullYear()}</div>
-            <div className="flex mt-10 justify-center gap-20">
+            <div className="flex mt-16 items-center gap-20 text-4xl text-black dark:text-white font-bold">{date.getFullYear()}</div>
+            <div className="flex mt-10 justify-center gap-20 text-black dark:text-white">
                 <span onClick={goToPreviousMonth} className="font-semibold text-2xl select-none cursor-pointer"> &lt; </span>
                 <h1 className="text-center min-w-35 max-w-35 font-semibold text-2xl text-black dark:text-white">{month}</h1>
                 <span className="font-semibold text-2xl select-none cursor-pointer" onClick={goToNextMonth}> &gt; </span>
