@@ -19,7 +19,8 @@ CREATE TABLE salas (
     capacidade INT,
     tipo VARCHAR(32) NOT NULL DEFAULT 'restrita' CHECK (tipo IN ('restrita', 'livre')),
     icone_url VARCHAR(1024),
-    lider_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE
+    lider_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    created_at TIMESTAMP default CURRENT_TIMESTAMP
 );
 
 CREATE TABLE sala_membros (
