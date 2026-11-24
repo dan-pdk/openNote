@@ -12,8 +12,13 @@ export default async function Page() {
     const query = "SELECT SALA.*, MEMBRO.data_entrada FROM salas AS SALA INNER JOIN sala_membros AS MEMBRO ON SALA.id = MEMBRO.id_sala WHERE MEMBRO.id_usuario = $1";
     const rows = await controller.runQuery(query, [userId]);
     const parsedRooms = rows.map(room => {
-      const {id, nome, icone_url} = room;
-      return {id, nome, icone_url}
+      const { id, nome, icone_url, lider_id } = room;
+      return {
+        id,
+        nome,
+        icone_url,
+        isLeader: Boolean(userId && lider_id === userId)
+      };
     });
 
     console.log(parsedRooms)

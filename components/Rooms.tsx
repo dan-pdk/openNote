@@ -1,5 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
+import { Lock, LockOpen } from "lucide-react"
 
 type Room = {
     nome: string,
@@ -33,14 +34,16 @@ export default function Rooms({ rooms }: { rooms: Array<Room> }) {
                         <span className="flex-1 font-medium text-black dark:text-white">{room.nome}</span>
 
                         <span
-                                className={`text-xs font-medium px-2.5 py-0.5 rounded-full shrink-0 ${
-                                    isRestricted
-                                        ? 'bg-[#E60000]/15 text-[#E60000] dark:bg-[#E60000]/20 dark:text-red-400'
-                                        : 'bg-[#139C1A]/15 text-[#139C1A] dark:bg-[#139C1A]/20 dark:text-green-400'
-                                }`}
-                            >
-                                {isRestricted ? 'Restrita' : 'Livre'}
-                            </span>
+                            title={isRestricted ? "Restrita" : "Livre"}
+                            aria-label={isRestricted ? "Restrita" : "Livre"}
+                            className={`p-1.5 text-center flex justify-center items-center rounded-full shrink-0 ${
+                                isRestricted
+                                    ? 'bg-[#E60000]/15 text-[#E60000] dark:bg-[#E60000]/20 dark:text-red-400'
+                                    : 'bg-[#139C1A]/15 text-[#139C1A] dark:bg-[#139C1A]/20 dark:text-green-400'
+                            }`}
+                        >
+                            {isRestricted ? <Lock className="w-4 h-4" /> : <LockOpen className="w-4 h-4" />}
+                        </span>
 
                         <Image src={"/ChevronRight.svg"} width={20} height={20} alt="" className="dark:invert" />
                     </Link>

@@ -1,32 +1,61 @@
 'use client'
 import Form from 'next/form'
 import createRoom from '@/actions/createRoom'
+import joinRoom from '@/actions/joinRoom'
 import { ChangeEvent, useId, useState } from 'react'
 import { Url } from 'next/dist/shared/lib/router/router'
+import { useRouter } from 'next/navigation'
 
-export default function AddRoomForm({ visible, closeModal }: { visible: boolean, closeModal: Function }) {
+export default function AddRoomForm({ visible, closeModal }: { visible: boolean, closeModal: () => void }) {
+    const router = useRouter();
     const imageInputID = useId();
     const [file, setFile] = useState<File | null>(null);
     const [isRestricted, setIsRestricted] = useState(false);
+    const [joinErrorMessage, setJoinErrorMessage] = useState<string | null>(null);
+    const [isJoiningRoom, setIsJoiningRoom] = useState(false);
 
     function handleImagePick(event: ChangeEvent<HTMLInputElement>) {
         if (event.target.files && event.target.files[0]) {
-            const file = event.target.files[0];
-            setFile(file)
+            const pickedFile = event.target.files[0];
+            setFile(pickedFile)
+        }
+    }
+
+    function handleCloseModal() {
+        setFile(null);
+        setJoinErrorMessage(null);
+        closeModal();
+    }
+
+    async function handleJoinRoomSubmit(formData: FormData) {
+        setIsJoiningRoom(true);
+        setJoinErrorMessage(null);
+
+        const result = await joinRoom(formData);
+
+        setIsJoiningRoom(false);
+
+        if (result?.error) {
+            setJoinErrorMessage(result.error);
+            return;
+        }
+
+        if (result?.success) {
+            handleCloseModal();
+            router.refresh();
         }
     }
 
     if (visible) {
         return (
             <>
-                <Form action={createRoom} className="bg-black/35 absolute w-screen h-screen z-20 top-0 left-0 flex justify-center items-center" onClick={event => {
+                <div className="bg-black/35 absolute w-screen h-screen z-20 top-0 left-0 flex justify-center items-center" onClick={event => {
                     if (event.target == event.currentTarget) {
-                        setFile(null);
-                        closeModal();
+                        handleCloseModal();
                     }
                 }}>
                     <div className='w-fit flex gap-5'>
-                        <div className="bg-white w-105 h-150 flex items-center justify-center flex-col gap-5 rounded-xl dark:bg-[#1D1D1D]">
+                        <Form action={createRoom} className="bg-white w-105 h-150 flex items-center justify-center flex-col gap-5 rounded-xl dark:bg-[#1D1D1D]">
                             <h1 className='text-4xl pt-2'>Criar uma sala</h1>
                             <input name='roomName' className="bg-[#E2E2E2] w-2/3 h-14 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 block" placeholder="Nome da sala" required />
                             <input id={imageInputID} className='hidden' name='image' onChange={handleImagePick} type='file' />
@@ -48,16 +77,28 @@ export default function AddRoomForm({ visible, closeModal }: { visible: boolean,
                             <label htmlFor={imageInputID} className='cursor-pointer hover:scale-105 duration-100'><ImagePicker file={file as File} /></label>
                             <div className='flex gap-5'>
                                 <button type='submit' className="bg-teal-500 px-6 w-40 py-3 rounded-lg text-white hover:scale-110 duration-200 cursor-pointer">Adicionar Sala</button>
-                                <button onClick={() => {closeModal()}} className="border-box bg-teal-500/10 text-center border-2 border-teal-500 px-6 py-3 w-40 rounded-lg text-white hover:scale-110 duration-200 cursor-pointer">Sair</button>
+                                <button type='button' onClick={handleCloseModal} className="border-box bg-teal-500/10 text-center border-2 border-teal-500 px-6 py-3 w-40 rounded-lg text-white hover:scale-110 duration-200 cursor-pointer">Sair</button>
                             </div>
-                        </div>
-                        <div className="bg-white w-105 h-150 flex items-center justify-center flex-col gap-7 rounded-xl dark:bg-[#1D1D1D]">
+                        </Form>
+                        <form action={handleJoinRoomSubmit} className="bg-white w-105 h-150 flex items-center justify-center flex-col gap-7 rounded-xl dark:bg-[#1D1D1D]">
                             <h1 className='text-4xl pt-2'>Entrar em uma sala</h1>
-                        </div>
-                        
-
+                            <span className='italic font-light text-center px-8'>Insira o código UUID da sala para participar</span>
+                            <input name='roomId' type='text' required pattern='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' title='Informe um UUID válido (ex: 0195a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b)' placeholder='UUID da sala' className="bg-[#E2E2E2] w-2/3 h-14 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 px-5 block"
+                            />
+                            {joinErrorMessage && (
+                                <p role='alert' className='text-sm text-red-600 dark:text-red-400 text-center px-6'>
+                                    {joinErrorMessage}
+                                </p>
+                            )}
+                            <div className='flex gap-5'>
+                                <button type='submit' disabled={isJoiningRoom} className="bg-teal-500 px-6 w-40 py-3 rounded-lg text-white hover:scale-110 duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                                    {isJoiningRoom ? "Entrando..." : "Entrar na Sala"}
+                                </button>
+                                <button type='button' onClick={handleCloseModal} className="border-box bg-teal-500/10 text-center border-2 border-teal-500 px-6 py-3 w-40 rounded-lg text-white hover:scale-110 duration-200 cursor-pointer">Sair</button>
+                            </div>
+                        </form>
                     </div>
-                </Form>
+                </div>
             </>
         )
     }
