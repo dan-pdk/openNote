@@ -24,7 +24,7 @@ export default async function Page() {
         const session = await getServerSession(authOptions);
         if (session?.user?.id) {
             const query = `
-                SELECT DISTINCT s.id, s.nome, s.icone_url, s.created_at
+                SELECT DISTINCT s.id, s.nome, s.icone_url, s.tipo, s.created_at
                 FROM salas s
                 LEFT JOIN sala_membros sm ON s.id = sm.id_sala
                 WHERE s.lider_id = $1 OR sm.id_usuario = $1 

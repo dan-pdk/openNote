@@ -12,7 +12,7 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
     if (Array.isArray(rooms) && rooms.length > 0) {
         return (
             <div className="flex flex-col gap-3">
-                {rooms.map((room: Room) => (
+                {rooms.reverse().map((room: Room) => (
                     <Link
                         key={room.id}
                         href={`/rooms/${room.id}`}
