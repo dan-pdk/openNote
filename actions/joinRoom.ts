@@ -11,48 +11,75 @@ type JoinRoomResult = {
     roomId?: string;
 };
 
-const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuidValidationRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export default async function joinRoom(formData: FormData): Promise<JoinRoomResult> {
-    const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
+export default async function joinRoom(formDataPayload: FormData): Promise<JoinRoomResult> {
+    const userSession = await getServerSession(authOptions);
+    const authenticatedUserId = userSession?.user?.id;
 
-    if (!session || !userId || !uuidPattern.test(userId)) {
+    if (!userSession || !authenticatedUserId || typeof authenticatedUserId !== "string" || authenticatedUserId.length !== 36 || !uuidValidationRegex.test(authenticatedUserId)) {
         return { error: "Usuário não autenticado." };
     }
 
-    const rawRoomId = formData.get("roomId")?.toString().trim() ?? "";
+    if (!formDataPayload || typeof formDataPayload.get !== "function") {
+        return { error: "Dados de requisição inválidos." };
+    }
 
-    if (!uuidPattern.test(rawRoomId)) {
+    const roomIdentifierEntry = formDataPayload.get("roomId");
+
+    if (typeof roomIdentifierEntry !== "string") {
         return { error: "Código UUID inválido." };
     }
 
-    const parsedRoomId = rawRoomId.toLowerCase();
+    const trimmedRoomIdentifier = roomIdentifierEntry.trim();
+
+    if (trimmedRoomIdentifier.length !== 36 || !uuidValidationRegex.test(trimmedRoomIdentifier)) {
+        return { error: "Código UUID inválido." };
+    }
+
+    const normalizedRoomIdentifier = trimmedRoomIdentifier.toLowerCase();
 
     try {
-        const existingRooms = await controller.runQuery<{ id: string }>(
-            "SELECT id FROM salas WHERE id = $1;",
-            [parsedRoomId]
+        const targetRoomsList = await controller.runQuery<{ id: string; lider_id: string }>(
+            "SELECT id, lider_id FROM salas WHERE id = $1;",
+            [normalizedRoomIdentifier]
         );
 
-        if (existingRooms.length === 0) {
+        if (targetRoomsList.length === 0) {
             return { error: "Sala não encontrada." };
         }
 
-        const insertedMemberships = await controller.runQuery<{ id_sala: string }>(
-            "INSERT INTO sala_membros (id_usuario, id_sala) VALUES ($1, $2) ON CONFLICT (id_usuario, id_sala) DO NOTHING RETURNING id_sala;",
-            [userId, parsedRoomId]
+        const targetRoom = targetRoomsList[0];
+
+        if (targetRoom.lider_id.toLowerCase() === authenticatedUserId.toLowerCase()) {
+            return { error: "Você já é o líder desta sala." };
+        }
+
+        const existingMembershipsList = await controller.runQuery<{ id_sala: string }>(
+            "SELECT id_sala FROM sala_membros WHERE id_usuario = $1 AND id_sala = $2;",
+            [authenticatedUserId, normalizedRoomIdentifier]
         );
 
-        if (insertedMemberships.length === 0) {
+        if (existingMembershipsList.length > 0) {
+            return { error: "Você já participa desta sala." };
+        }
+
+        const insertedMembershipsList = await controller.runQuery<{ id_sala: string }>(
+            "INSERT INTO sala_membros (id_usuario, id_sala) VALUES ($1, $2) ON CONFLICT (id_usuario, id_sala) DO NOTHING RETURNING id_sala;",
+            [authenticatedUserId, normalizedRoomIdentifier]
+        );
+
+        if (insertedMembershipsList.length === 0) {
             return { error: "Você já participa desta sala." };
         }
 
         revalidatePath("/dashboard");
         revalidatePath("/rooms");
+        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
 
-        return { success: true, roomId: parsedRoomId };
-    } catch {
-        return { error: "Não foi possível entrar na sala. Faz o L." };
+        return { success: true, roomId: normalizedRoomIdentifier };
+    } catch (databaseOperationError) {
+        console.error("Erro ao processar ingresso na sala:", databaseOperationError);
+        return { error: "Não foi possível processar a entrada na sala." };
     }
 }

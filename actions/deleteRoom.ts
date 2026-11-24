@@ -10,52 +10,45 @@ type DeleteRoomResult = {
     error?: string;
 };
 
-const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuidValidationRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export default async function deleteRoom(roomId: string): Promise<DeleteRoomResult> {
-    const session = await getServerSession(authOptions);
-    const userId = session?.user?.id;
+export default async function deleteRoom(targetRoomIdentifier: string): Promise<DeleteRoomResult> {
+    const userSession = await getServerSession(authOptions);
+    const authenticatedUserId = userSession?.user?.id;
 
-    if (!session || !userId || !uuidPattern.test(userId)) {
+    if (!userSession || !authenticatedUserId || typeof authenticatedUserId !== "string" || authenticatedUserId.length !== 36 || !uuidValidationRegex.test(authenticatedUserId)) {
         return { error: "Usuário não autenticado." };
     }
 
-    const trimmedRoomId = typeof roomId === "string" ? roomId.trim() : "";
-
-    if (!uuidPattern.test(trimmedRoomId)) {
+    if (typeof targetRoomIdentifier !== "string") {
         return { error: "Identificador de sala inválido." };
     }
 
-    const parsedRoomId = trimmedRoomId.toLowerCase();
+    const trimmedRoomIdentifier = targetRoomIdentifier.trim();
+
+    if (trimmedRoomIdentifier.length !== 36 || !uuidValidationRegex.test(trimmedRoomIdentifier)) {
+        return { error: "Identificador de sala inválido." };
+    }
+
+    const normalizedRoomIdentifier = trimmedRoomIdentifier.toLowerCase();
 
     try {
-        const existingRooms = await controller.runQuery<{ lider_id: string }>(
-            "SELECT lider_id FROM salas WHERE id = $1;",
-            [parsedRoomId]
-        );
-
-        if (existingRooms.length === 0) {
-            return { error: "Sala não encontrada." };
-        }
-
-        if (existingRooms[0].lider_id !== userId) {
-            return { error: "Apenas o líder pode deletar esta sala." };
-        }
-
-        const deletedRooms = await controller.runQuery<{ id: string }>(
+        const deletedRoomsList = await controller.runQuery<{ id: string }>(
             "DELETE FROM salas WHERE id = $1 AND lider_id = $2 RETURNING id;",
-            [parsedRoomId, userId]
+            [normalizedRoomIdentifier, authenticatedUserId]
         );
 
-        if (deletedRooms.length === 0) {
-            return { error: "Não foi possível deletar a sala." };
+        if (deletedRoomsList.length === 0) {
+            return { error: "Sala não encontrada ou você não tem permissão para deletá-la." };
         }
 
         revalidatePath("/dashboard");
         revalidatePath("/rooms");
+        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
 
         return { success: true };
-    } catch {
+    } catch (databaseOperationError) {
+        console.error("Erro ao deletar sala:", databaseOperationError);
         return { error: "Não foi possível deletar a sala." };
     }
 }
