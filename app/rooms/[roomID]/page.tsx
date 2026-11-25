@@ -4,22 +4,23 @@ import Header from "@/components/Header"
 import controller from "@/db/controller";
 
 type taskType = {
-    id: string,
-    name : string,
-    dueDate: string,
+  id: string,
+  nome: string,
+  data_entrega: Date,
 }
 
-export default async function Page({ params } : { params : Promise<{ roomID: string }> }) {
-    const { roomID } = await params;
-    const tasks : Array<taskType> = await controller.runQuery(`SELECT FROM tarefas WHERE id_sala = $1`, [roomID]);
+export default async function Page({ params }: { params: Promise<{ roomID: string }> }) {
+  const { roomID } = await params;
+  const tasks: Array<taskType> = await controller.runQuery(`SELECT * FROM tarefas WHERE id_sala = $1`, [roomID]);
+  console.log(tasks[0])
 
-    return (
-        <div className="dark:bg-[#1D1D1D] min-h-screen">
-            <Header />
-            <DashboardMenu />
-            <div className="flex mx-auto items-center flex-col min-h-full ">
-                <Calendar tasks={tasks}/>
-            </div>
-        </div>
-    )
+  return (
+    <div className="dark:bg-[#1D1D1D] min-h-screen">
+      <Header />
+      <DashboardMenu />
+      <div className="flex mx-auto items-center flex-col min-h-full ">
+        <Calendar tasks={tasks} />
+      </div>
+    </div>
+  )
 }

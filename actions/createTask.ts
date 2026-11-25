@@ -19,9 +19,10 @@ export default async function createTask(roomId: string, formData: FormData) {
 
     const valuesData = {
         nome: taskName,
-        dataEntrega: formatDate(date),
-        dataCriacao: (new Date()).toISOString(),
-        tarefa_description: description,
+        data_Entrega: formatDate(date),
+        data_Criacao: (new Date()).toISOString(),
+        descricao: description,
+        id_sala: roomId
     }
 
     /*function validadeAuthorization() {
