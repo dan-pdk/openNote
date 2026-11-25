@@ -110,8 +110,8 @@ export default function AddRoomForm({ visible, closeModal }: { visible: boolean,
                         </form>
                         <form action={handleJoinRoomSubmit} className="bg-white w-105 h-150 flex items-center justify-center flex-col gap-7 rounded-xl dark:bg-[#1D1D1D]">
                             <h1 className='text-4xl pt-2'>Entrar em uma sala</h1>
-                            <span className='italic font-light text-center px-8'>Insira o código UUID da sala para participar</span>
-                            <input name='roomId' type='text' required pattern='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' title='Informe um UUID válido (ex: 0195a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b)' placeholder='UUID da sala' className="bg-[#E2E2E2] w-2/3 h-14 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 px-5 block"
+                            <span className='italic font-light text-center px-8'>Insira o ID da sala para participar</span>
+                            <input name='roomId' type='text' required pattern='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' title='Informe um ID válido (ex: 0195a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b)' placeholder='ID da sala' className="bg-[#E2E2E2] w-2/3 h-14 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 px-5 block"
                             />
                             {joinErrorMessage && (
                                 <p role='alert' className='text-sm text-red-600 dark:text-red-400 text-center px-6'>

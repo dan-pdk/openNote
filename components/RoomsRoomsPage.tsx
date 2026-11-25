@@ -166,8 +166,8 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                             href="/dashboard"
                             className="inline-flex items-center gap-1.5 text-xs font-medium text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition-colors mb-2"
                         >
-                            <ArrowLeft className="w-3.5 h-3.5" />
-                            <span>Voltar ao início</span>
+                            <ArrowLeft className="w-4 h-4 " />
+                            <span className="fodase">Voltar</span>
                         </Link>
                         <div className="flex items-baseline gap-3">
                             <h1 className="text-2xl font-semibold text-black dark:text-white">Salas</h1>
@@ -175,9 +175,6 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                                 {filteredRooms.length} de {safeRooms.length}
                             </span>
                         </div>
-                        <p className="text-sm text-black/60 dark:text-white/60 mt-1">
-                            Gerencie suas salas, filtre por tipo ou busque pelo nome.
-                        </p>
                     </div>
 
                     <div className="flex flex-col sm:shrink-0">
