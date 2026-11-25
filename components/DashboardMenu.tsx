@@ -1,5 +1,6 @@
 'use client'
 import Image from "next/image"
+import Link from "next/link"
 import { signOut } from "next-auth/react"
 import { redirect, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -56,7 +57,10 @@ export default function DashboardMenu() {
                 </button>
 
                 {session?.user ? (
-                    <div className="mt-auto flex items-center gap-3 pt-5 border-t border-black/10 dark:border-white/10">
+                    <Link
+                        href="/profile"
+                        className="mt-auto flex items-center gap-3 pt-5 border-t border-black/10 dark:border-white/10 hover:opacity-80 transition-opacity"
+                    >
                         <div className="w-10 h-10 rounded-full bg-black/10 dark:bg-white/10 shrink-0 overflow-hidden flex items-center justify-center">
                             {session.user.image ? (
                                 <Image src={session.user.image} loading="eager" alt="" className="w-full h-full object-cover" width={100} height={100} />
@@ -68,7 +72,7 @@ export default function DashboardMenu() {
                             <p className="font-medium truncate text-black dark:text-white">{session.user.name}</p>
                             <p className="text-sm text-black/50 dark:text-white/50 truncate">{session.user.email}</p>
                         </div>
-                    </div>
+                    </Link>
                 ) : null}
             </div>
         </div>

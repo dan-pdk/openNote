@@ -199,7 +199,7 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                             href="/dashboard"
                             className="inline-flex items-center gap-1.5 text-xs font-medium text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition-colors mb-2"
                         >
-                            <ArrowLeft className="w-4 h-4 " />
+                            <ArrowLeft className="w-3 h-3" />
                             <span className="fodase">Voltar</span>
                         </Link>
                         <div className="flex items-baseline gap-3">
@@ -396,8 +396,8 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                                         <button
                                             type="button"
                                             onClick={() => handleOpenDeletePrompt(room)}
-                                            title="Deletar sala"
-                                            aria-label={`Deletar sala ${room.nome}`}
+                                            title="Excluir sala"
+                                            aria-label={`Excluir sala ${room.nome}`}
                                             className="p-1.5 rounded-lg text-black/60 hover:text-[#E60000] hover:bg-[#E60000]/10 dark:text-white/60 dark:hover:text-red-400 dark:hover:bg-[#E60000]/20 transition-colors cursor-pointer shrink-0"
                                         >
                                             <Trash2 className="w-4 h-4" />
@@ -425,13 +425,13 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                     <div className="bg-[#E2E2E2]/60 dark:bg-[#303030]/60 rounded-xl p-8 flex flex-col items-center justify-center text-center gap-3">
                         <p className="font-medium text-black dark:text-white">
                             {hasActiveFilters
-                                ? "Nenhuma sala corresponde aos filtros aplicados"
+                                ? "Nenhuma sala foi encontrada"
                                 : "Você ainda não participa de nenhuma sala"}
                         </p>
                         <p className="text-sm text-black/60 dark:text-white/60 max-w-md">
                             {hasActiveFilters
-                                ? "Tente buscar por outro nome ou altere o filtro de tipo de sala."
-                                : "Crie uma nova sala ou entre em uma existente usando o código UUID."}
+                                ? "Tente mudar o filtro ou pesquisar por outro nome."
+                                : "Crie uma nova sala ou entre em uma."}
                         </p>
                         {hasActiveFilters && (
                             <button
@@ -462,7 +462,7 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                         className="bg-white dark:bg-[#1D1D1D] rounded-xl p-6 w-full max-w-sm shadow-xl flex flex-col gap-4 border border-black/10 dark:border-white/10"
                     >
                         <h2 id="delete-room-title" className="text-lg font-semibold text-black dark:text-white">
-                            Deletar sala
+                            Excluir sala
                         </h2>
                         <p className="text-sm text-black/70 dark:text-white/70">
                             Tem certeza que deseja excluir a sala &ldquo;{roomPendingDeletion.nome}&rdquo;? Todas as tarefas, comentários e membros vinculados serão removidos permanentemente.
@@ -487,7 +487,7 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                                 disabled={isDeletingRoom}
                                 className="bg-[#E60000] px-4 py-2 rounded-lg text-sm font-medium text-white hover:scale-105 duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {isDeletingRoom ? "Deletando..." : "Deletar"}
+                                {isDeletingRoom ? "Excluindo..." : "Excluir"}
                             </button>
                         </div>
                     </div>
