@@ -16,12 +16,7 @@ export default async function leaveRoom(targetRoomIdentifier: string): Promise<L
     const userSession = await getServerSession(authOptions);
     const authenticatedUserId = userSession?.user?.id;
 
-    if (
-        !userSession ||
-        !authenticatedUserId ||
-        typeof authenticatedUserId !== "string" ||
-        authenticatedUserId.length !== 36 ||
-        !uuidValidationRegex.test(authenticatedUserId)
+    if (!userSession || !authenticatedUserId || typeof authenticatedUserId !== "string" || authenticatedUserId.length !== 36 || !uuidValidationRegex.test(authenticatedUserId)
     ) {
         return { error: "Usuário não autenticado." };
     }

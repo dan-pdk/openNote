@@ -209,12 +209,7 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                                 >
                                     Cancelar
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={handleConfirmDelete}
-                                    disabled={isDeletingRoom}
-                                    className="bg-[#E60000] px-4 py-2 rounded-lg text-sm font-medium text-white hover:scale-105 duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
+                                <button type="button" onClick={handleConfirmDelete} disabled={isDeletingRoom} className="bg-[#E60000] px-4 py-2 rounded-lg text-sm font-medium text-white hover:scale-105 duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                                     {isDeletingRoom ? "Deletando..." : "Deletar"}
                                 </button>
                             </div>
