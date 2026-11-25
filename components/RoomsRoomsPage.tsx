@@ -106,9 +106,9 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                 setCopiedRoomIdentifier((currentIdentifier) =>
                     currentIdentifier === roomIdentifier ? null : currentIdentifier
                 );
-            }, 2000);
+            }, 2067);
         } catch (clipboardError) {
-            console.error("Erro ao copiar link da sala:", clipboardError);
+            console.error("Erro ao copiar link da sala. ", clipboardError);
         }
     }
 
@@ -122,14 +122,11 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                         const isRoomLinkCopied = copiedRoomIdentifier === room.id;
 
                         return (
-                            <div
-                                key={room.id}
-                                className="flex items-center gap-3 bg-[#E2E2E2] dark:bg-[#303030] rounded-xl p-3 text-left hover:scale-[1.02] duration-200"
-                            >
+                            <div key={room.id}
+                                className="flex items-center gap-3 bg-[#E2E2E2] dark:bg-[#303030] rounded-xl p-3 text-left hover:scale-[1.02] duration-200">
                                 <Link
                                     href={`/rooms/${room.id}`}
-                                    className="flex flex-1 items-center gap-3 min-w-0 cursor-pointer"
-                                >
+                                    className="flex flex-1 items-center gap-3 min-w-0 cursor-pointer">
                                     {!room.icone_url ? (
                                         <div className="w-10 h-10 rounded-full bg-black/10 dark:bg-white/15 flex items-center justify-center font-medium text-black dark:text-white shrink-0">
                                             {room.nome.charAt(0).toUpperCase()}
@@ -146,8 +143,7 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                                     onClick={() => handleCopyRoomLink(room.id)}
                                     title={isRoomLinkCopied ? "Link copiado!" : "Copiar link da sala"}
                                     aria-label={`Copiar link da sala ${room.nome}`}
-                                    className="p-1.5 rounded-lg text-black/60 hover:text-black hover:bg-black/10 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/10 transition-colors cursor-pointer shrink-0"
-                                >
+                                    className="p-1.5 rounded-lg text-black/60 hover:text-black hover:bg-black/10 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/10 transition-colors cursor-pointer shrink-0">
                                     {isRoomLinkCopied ? (
                                         <Check className="w-4 h-4 text-[#139C1A] dark:text-green-400" />
                                     ) : (
@@ -157,12 +153,7 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
 
                                 {room.isLeader ? (
                                     <button
-                                        type="button"
-                                        onClick={() => handleOpenDeletePrompt(room)}
-                                        title="Deletar sala"
-                                        aria-label={`Deletar sala ${room.nome}`}
-                                        className="p-1.5 rounded-lg text-black/60 hover:text-[#E60000] hover:bg-[#E60000]/10 dark:text-white/60 dark:hover:text-red-400 dark:hover:bg-[#E60000]/20 transition-colors cursor-pointer shrink-0"
-                                    >
+                                        type="button" onClick={() => handleOpenDeletePrompt(room)} title="Deletar sala" aria-label={`Deletar sala ${room.nome}`} className="p-1.5 rounded-lg text-black/60 hover:text-[#E60000] hover:bg-[#E60000]/10 dark:text-white/60 dark:hover:text-red-400 dark:hover:bg-[#E60000]/20 transition-colors cursor-pointer shrink-0">
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 ) : (
@@ -204,7 +195,7 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                                 Deletar sala
                             </h2>
                             <p className="text-sm text-black/70 dark:text-white/70">
-                                Tem certeza que deseja deletar &ldquo;{roomPendingDeletion.nome}&rdquo;? Todas as tarefas, anexos, comentários e membros vinculados serão removidos permanentemente.
+                                Tem certeza que deseja excluir a sala &ldquo;{roomPendingDeletion.nome}&rdquo;? Todas as tarefas, comentários e membros vinculados serão removidos permanentemente.
                             </p>
                             {deleteErrorMessage && (
                                 <p role="alert" className="text-sm text-[#E60000] dark:text-red-400">
@@ -212,9 +203,7 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                                 </p>
                             )}
                             <div className="flex justify-end gap-3 mt-1">
-                                <button
-                                    type="button"
-                                    onClick={handleCancelDelete}
+                                <button type="button" onClick={handleCancelDelete}
                                     disabled={isDeletingRoom}
                                     className="border-2 border-black/20 dark:border-white/20 px-4 py-2 rounded-lg text-sm font-medium text-black dark:text-white hover:scale-105 duration-200 cursor-pointer disabled:opacity-50"
                                 >
