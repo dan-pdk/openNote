@@ -222,8 +222,8 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                             type="text"
                             value={searchQuery}
                             onChange={(event) => setSearchQuery(event.target.value)}
-                            placeholder="Buscar sala por nome..."
-                            aria-label="Buscar sala por nome"
+                            placeholder="Buscar sala..."
+                            aria-label="Buscar sala"
                             className="w-full bg-[#E2E2E2] dark:bg-[#303030] rounded-xl py-3 pl-10 pr-10 text-sm text-black dark:text-white placeholder:text-black/50 dark:placeholder:text-white/65 focus:outline-none focus:ring-2 focus:ring-teal-400"
                         />
                         {searchQuery.length > 0 && (
