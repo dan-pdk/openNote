@@ -3,11 +3,11 @@
 import deleteRoom from "@/actions/deleteRoom";
 import leaveRoom from "@/actions/leaveRoom";
 import AddRoomButton from "@/components/AddRoomModal";
-import { ArrowLeft, Check, Copy, Lock, LockOpen, LogOut, Search, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, Copy, Lock, LockOpen, LogOut, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type RoomType = "livre" | "restrita";
 type RoomTypeFilter = "todas" | RoomType;
@@ -22,8 +22,10 @@ type Room = {
 
 export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
     const router = useRouter();
+    const filterMenuRef = useRef<HTMLDivElement | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedType, setSelectedType] = useState<RoomTypeFilter>("todas");
+    const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
     const [roomPendingDeletion, setRoomPendingDeletion] = useState<Room | null>(null);
     const [isDeletingRoom, setIsDeletingRoom] = useState(false);
     const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
@@ -63,9 +65,40 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
         });
     }, [safeRooms, searchQuery, selectedType]);
 
+    useEffect(() => {
+        if (!isFilterMenuOpen) {
+            return;
+        }
+
+        function handleClickOutside(event: MouseEvent) {
+            if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
+                setIsFilterMenuOpen(false);
+            }
+        }
+
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === "Escape") {
+                setIsFilterMenuOpen(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isFilterMenuOpen]);
+
     function handleClearFilters() {
         setSearchQuery("");
         setSelectedType("todas");
+    }
+
+    function handleSelectFilterType(type: RoomTypeFilter) {
+        setSelectedType(type);
+        setIsFilterMenuOpen(false);
     }
 
     function handleOpenDeletePrompt(room: Room) {
@@ -182,7 +215,7 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-3">
                     <div className="relative flex-1">
                         <Search className="w-4 h-4 text-black/50 dark:text-white/50 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                         <input
@@ -205,50 +238,91 @@ export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
                         )}
                     </div>
 
-                    <div role="group" aria-label="Filtrar por tipo de sala" className="flex items-center gap-2 flex-wrap">
+                    <div ref={filterMenuRef} className="relative shrink-0">
                         <button
                             type="button"
-                            onClick={() => setSelectedType("todas")}
-                            aria-pressed={selectedType === "todas"}
-                            className={`px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer flex items-center gap-2 ${
-                                selectedType === "todas"
-                                    ? "bg-teal-400 text-black shadow-sm"
-                                    : "bg-[#E2E2E2] dark:bg-[#303030] text-black/70 dark:text-white/70 hover:scale-[1.02]"
-                            }`}
-                        >
-                            <span>Todas</span>
-                            <span className="text-xs opacity-75">{roomCounts.todas}</span>
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => setSelectedType("livre")}
-                            aria-pressed={selectedType === "livre"}
-                            className={`px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                            onClick={() => setIsFilterMenuOpen((previous) => !previous)}
+                            aria-expanded={isFilterMenuOpen}
+                            aria-haspopup="menu"
+                            aria-label="Filtrar por tipo de sala"
+                            title="Filtrar por tipo de sala"
+                            className={`relative p-3 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center ${
                                 selectedType === "livre"
                                     ? "bg-[#139C1A]/20 text-[#139C1A] dark:bg-[#139C1A]/25 dark:text-green-400 ring-1 ring-[#139C1A]/40"
-                                    : "bg-[#E2E2E2] dark:bg-[#303030] text-black/70 dark:text-white/70 hover:scale-[1.02]"
+                                    : selectedType === "restrita"
+                                      ? "bg-[#E60000]/20 text-[#E60000] dark:bg-[#E60000]/25 dark:text-red-400 ring-1 ring-[#E60000]/40"
+                                      : "bg-[#E2E2E2] dark:bg-[#303030] text-black/70 dark:text-white/70 hover:scale-[1.02]"
                             }`}
                         >
-                            <LockOpen className="w-4 h-4" />
-                            <span>Livre</span>
-                            <span className="text-xs opacity-75">{roomCounts.livre}</span>
+                            <SlidersHorizontal className="w-5 h-5" />
+                            {selectedType !== "todas" && (
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-current" />
+                            )}
                         </button>
 
-                        <button
-                            type="button"
-                            onClick={() => setSelectedType("restrita")}
-                            aria-pressed={selectedType === "restrita"}
-                            className={`px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
-                                selectedType === "restrita"
-                                    ? "bg-[#E60000]/20 text-[#E60000] dark:bg-[#E60000]/25 dark:text-red-400 ring-1 ring-[#E60000]/40"
-                                    : "bg-[#E2E2E2] dark:bg-[#303030] text-black/70 dark:text-white/70 hover:scale-[1.02]"
-                            }`}
-                        >
-                            <Lock className="w-4 h-4" />
-                            <span>Restrita</span>
-                            <span className="text-xs opacity-75">{roomCounts.restrita}</span>
-                        </button>
+                        {isFilterMenuOpen && (
+                            <div
+                                role="menu"
+                                aria-label="Opções de filtro por tipo de sala"
+                                className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-[#1D1D1D] border border-black/10 dark:border-white/10 shadow-xl p-1.5 z-20 flex flex-col gap-1"
+                            >
+                                <button
+                                    type="button"
+                                    role="menuitemradio"
+                                    aria-checked={selectedType === "todas"}
+                                    onClick={() => handleSelectFilterType("todas")}
+                                    className={`w-full px-3 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between transition-colors cursor-pointer ${
+                                        selectedType === "todas"
+                                            ? "bg-teal-400/20 text-black dark:text-white"
+                                            : "text-black/75 dark:text-white/75 hover:bg-black/5 dark:hover:bg-white/10"
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <span>Todas</span>
+                                        <span className="text-xs opacity-65">({roomCounts.todas})</span>
+                                    </span>
+                                    {selectedType === "todas" && <Check className="w-4 h-4 text-teal-500" />}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    role="menuitemradio"
+                                    aria-checked={selectedType === "livre"}
+                                    onClick={() => handleSelectFilterType("livre")}
+                                    className={`w-full px-3 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between transition-colors cursor-pointer ${
+                                        selectedType === "livre"
+                                            ? "bg-[#139C1A]/15 text-[#139C1A] dark:bg-[#139C1A]/20 dark:text-green-400"
+                                            : "text-black/75 dark:text-white/75 hover:bg-black/5 dark:hover:bg-white/10"
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <LockOpen className="w-4 h-4" />
+                                        <span>Livre</span>
+                                        <span className="text-xs opacity-65">({roomCounts.livre})</span>
+                                    </span>
+                                    {selectedType === "livre" && <Check className="w-4 h-4" />}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    role="menuitemradio"
+                                    aria-checked={selectedType === "restrita"}
+                                    onClick={() => handleSelectFilterType("restrita")}
+                                    className={`w-full px-3 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between transition-colors cursor-pointer ${
+                                        selectedType === "restrita"
+                                            ? "bg-[#E60000]/15 text-[#E60000] dark:bg-[#E60000]/20 dark:text-red-400"
+                                            : "text-black/75 dark:text-white/75 hover:bg-black/5 dark:hover:bg-white/10"
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <Lock className="w-4 h-4" />
+                                        <span>Restrita</span>
+                                        <span className="text-xs opacity-65">({roomCounts.restrita})</span>
+                                    </span>
+                                    {selectedType === "restrita" && <Check className="w-4 h-4" />}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
