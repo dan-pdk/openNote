@@ -74,3 +74,11 @@ CREATE TABLE comentarios (
     responde_a INT REFERENCES comentarios(id) ON DELETE SET NULL,
     pertence_a INT NOT NULL REFERENCES threads(id) ON DELETE CASCADE
 );
+
+CREATE TABLE sala_mensagens (
+    id SERIAL PRIMARY KEY,
+    conteudo TEXT NOT NULL,
+    autor_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    id_sala UUID NOT NULL REFERENCES salas(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
