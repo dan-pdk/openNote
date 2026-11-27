@@ -26,6 +26,8 @@ CREATE TABLE sala_membros (
     id_usuario UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     id_sala UUID NOT NULL REFERENCES salas(id) ON DELETE CASCADE,
     data_entrada TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    pode_criar_tarefas BOOLEAN NOT NULL DEFAULT TRUE,
+    pode_comentar BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id_usuario, id_sala)
 );
 
@@ -35,8 +37,18 @@ CREATE TABLE tarefas (
     data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     data_entrega TIMESTAMP,
     descricao TEXT,
+    cor VARCHAR(7) NOT NULL DEFAULT '#14B8A6',
+    concluida BOOLEAN NOT NULL DEFAULT FALSE,
+    criador_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
     id_categoria INT REFERENCES categorias(id) ON DELETE SET NULL,
     id_sala UUID NOT NULL REFERENCES salas(id) ON DELETE CASCADE
+);
+
+CREATE TABLE tarefa_conclusoes (
+    id_usuario UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    id_tarefa UUID NOT NULL REFERENCES tarefas(id) ON DELETE CASCADE,
+    data_conclusao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_usuario, id_tarefa)
 );
 
 CREATE TABLE anexos (

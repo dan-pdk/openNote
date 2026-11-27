@@ -46,8 +46,6 @@ export default function DashboardMenu() {
                     <span className="text-black dark:text-white">Configurações</span>
                 </button>
 
-                <div className="h-px bg-black/10 dark:bg-white/10 my-3"></div>
-
                 <button
                     className="flex items-center gap-4 py-3 text-left hover:scale-105 duration-200 cursor-pointer origin-left"
                     onClick={() => signOut({ callbackUrl: "/login" })}
@@ -59,7 +57,7 @@ export default function DashboardMenu() {
                 {session?.user ? (
                     <Link
                         href="/profile"
-                        className="mt-auto flex items-center gap-3 pt-5 border-t border-black/10 dark:border-white/10 hover:opacity-80 transition-opacity"
+                        className="mt-auto flex items-center gap-3 pt-5 hover:opacity-80 transition-opacity"
                     >
                         <div className="w-10 h-10 rounded-full bg-black/10 dark:bg-white/10 shrink-0 overflow-hidden flex items-center justify-center">
                             {session.user.image ? (

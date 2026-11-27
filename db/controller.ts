@@ -83,9 +83,42 @@ async function runQuery<T = any>(
   return rows;
 }
 
+async function runInTransaction<T>(
+  transactionCallback: (
+    queryExecutor: <RowType = Record<string, unknown>>(
+      queryText: string,
+      queryValues?: unknown[]
+    ) => Promise<RowType[]>
+  ) => Promise<T>
+): Promise<T> {
+  const databaseClient = await pool.connect();
+  try {
+    await databaseClient.query('BEGIN');
+    const transactionResult = await transactionCallback(
+      async <RowType = Record<string, unknown>>(
+        queryText: string,
+        queryValues?: unknown[]
+      ) => {
+        const { rows } = queryValues
+          ? await databaseClient.query(queryText, queryValues)
+          : await databaseClient.query(queryText);
+        return rows as RowType[];
+      }
+    );
+    await databaseClient.query('COMMIT');
+    return transactionResult;
+  } catch (transactionError) {
+    await databaseClient.query('ROLLBACK');
+    throw transactionError;
+  } finally {
+    databaseClient.release();
+  }
+}
+
 const controller = {
   createQueryCommand,
   runQuery,
+  runInTransaction,
 };
 
 export default controller;
