@@ -75,10 +75,10 @@ export default function ProfileView({ profilePayload }: { profilePayload: Profil
                             </div>
 
                             <div className="flex flex-col gap-2 text-sm text-black/75 dark:text-white/75">
-                                <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0">
+                                {/* <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0">
                                     <Mail className="w-4 h-4 shrink-0 text-black/50 dark:text-white/50" />
                                     <span className="truncate">{profileUser.email}</span>
-                                </div>
+                                </div> */}
 
                                 <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0">
                                     <User className="w-4 h-4 shrink-0 text-black/50 dark:text-white/50" />
