@@ -30,7 +30,7 @@ const PORTUGUESE_MONTHS = [
     "Dezembro",
 ];
 
-const WEEKDAY_INITIALS = ["D", "S", "T", "Q", "Q", "S", "S"];
+const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 export default function Calendar({
     roomId,
@@ -119,40 +119,40 @@ export default function Calendar({
         : [];
 
     return (
-        <section className="flex flex-col items-center w-full max-w-xl mx-auto py-4">
-            <div className="text-3xl sm:text-4xl font-semibold text-black dark:text-white">
+        <section className="flex flex-col items-center w-full max-w-3xl mx-auto bg-[#F9F9F9] dark:bg-[#232323] rounded-3xl p-5 sm:p-8 shadow-sm">
+            <div className="text-sm font-semibold tracking-widest uppercase text-black/45 dark:text-white/45">
                 {currentYear}
             </div>
 
-            <div className="flex mt-6 items-center justify-center gap-10 sm:gap-16">
+            <div className="flex mt-1 items-center justify-between w-full max-w-md">
                 <button
                     type="button"
                     onClick={handleGoToPreviousMonth}
                     aria-label="Mês anterior"
-                    className="p-2 rounded-full text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors select-none cursor-pointer"
+                    className="p-2.5 rounded-full text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors select-none cursor-pointer"
                 >
                     <ChevronLeft className="w-6 h-6" />
                 </button>
-                <h2 className="text-center min-w-36 font-semibold text-2xl text-black dark:text-white">
+                <h2 className="text-center font-bold text-2xl sm:text-3xl text-black dark:text-white">
                     {currentMonthLabel}
                 </h2>
                 <button
                     type="button"
                     onClick={handleGoToNextMonth}
                     aria-label="Próximo mês"
-                    className="p-2 rounded-full text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors select-none cursor-pointer"
+                    className="p-2.5 rounded-full text-black dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors select-none cursor-pointer"
                 >
                     <ChevronRight className="w-6 h-6" />
                 </button>
             </div>
 
-            <div className="w-full list-none grid grid-cols-7 gap-1 sm:gap-2 text-center text-lg sm:text-xl mt-10">
-                {WEEKDAY_INITIALS.map((weekdayInitial, weekdayIndex) => (
+            <div className="w-full list-none grid grid-cols-7 gap-2 sm:gap-3 text-center text-lg sm:text-2xl mt-8">
+                {WEEKDAY_LABELS.map((weekdayLabel, weekdayIndex) => (
                     <div
-                        key={`${weekdayIndex}-${weekdayInitial}`}
-                        className="select-none mb-3 font-medium text-red-500"
+                        key={`${weekdayIndex}-${weekdayLabel}`}
+                        className="select-none mb-2 text-xs sm:text-sm font-semibold uppercase tracking-wider text-red-500"
                     >
-                        {weekdayInitial}
+                        {weekdayLabel}
                     </div>
                 ))}
                 {dayCells}

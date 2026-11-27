@@ -8,6 +8,7 @@ import {
     CheckCircle2,
     Circle,
     ExternalLink,
+    Pencil,
     Plus,
     Trash2,
     User,
@@ -42,6 +43,7 @@ export default function DayTasksModal({
 }: DayTasksModalProps) {
     const router = useRouter();
     const [isCreatingNewTask, setIsCreatingNewTask] = useState(false);
+    const [editingTask, setEditingTask] = useState<RoomTaskItem | null>(null);
     const [taskIdPendingDelete, setTaskIdPendingDelete] = useState<string | null>(
         null
     );
@@ -125,6 +127,17 @@ export default function DayTasksModal({
               ? "1 tarefa"
               : `${tasksForDay.length} tarefas`;
 
+    const isFormActive =
+        (isCreatingNewTask && canCreateTasks) || editingTask !== null;
+
+    const modalTitle = editingTask
+        ? "Editar Tarefa"
+        : isCreatingNewTask
+          ? "Nova Tarefa"
+          : formattedDateHeading;
+
+    const modalSubtitle = isFormActive ? formattedDateHeading : taskCountLabel;
+
     return (
         <div
             className="fixed inset-0 z-30 bg-black/40 flex items-center justify-center p-4"
@@ -138,7 +151,7 @@ export default function DayTasksModal({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="day-tasks-modal-title"
-                className="bg-white dark:bg-[#1D1D1D] rounded-xl w-full max-w-lg max-h-[90vh] shadow-xl border border-black/10 dark:border-white/10 flex flex-col overflow-hidden"
+                className="bg-white dark:bg-[#1D1D1D] rounded-xl w-full max-w-lg max-h-[90vh] shadow-xl flex flex-col overflow-hidden"
             >
                 <div className="flex items-start justify-between gap-4 px-6 py-4">
                     <div className="flex flex-col min-w-0">
@@ -146,14 +159,10 @@ export default function DayTasksModal({
                             id="day-tasks-modal-title"
                             className="text-lg font-semibold text-black dark:text-white truncate"
                         >
-                            {isCreatingNewTask
-                                ? "Nova Tarefa"
-                                : formattedDateHeading}
+                            {modalTitle}
                         </h2>
                         <span className="text-xs text-black/50 dark:text-white/50">
-                            {isCreatingNewTask
-                                ? formattedDateHeading
-                                : taskCountLabel}
+                            {modalSubtitle}
                         </span>
                     </div>
 
@@ -168,7 +177,17 @@ export default function DayTasksModal({
                 </div>
 
                 <div className="px-6 py-4 overflow-y-auto flex-1">
-                    {isCreatingNewTask && canCreateTasks ? (
+                    {editingTask ? (
+                        <AddTaskForm
+                            key={editingTask.id}
+                            roomId={roomId}
+                            initialDate={editingTask.dataEntrega}
+                            currentUserName={currentUserName}
+                            initialTask={editingTask}
+                            onCancel={() => setEditingTask(null)}
+                            onSuccess={() => setEditingTask(null)}
+                        />
+                    ) : isCreatingNewTask && canCreateTasks ? (
                         <AddTaskForm
                             roomId={roomId}
                             initialDate={selectedDateString}
@@ -189,7 +208,7 @@ export default function DayTasksModal({
 
                             {tasksForDay.length > 0 ? (
                                 tasksForDay.map((taskItem) => {
-                                    const canDeleteTask =
+                                    const canManageTask =
                                         isRoomLeader ||
                                         (taskItem.criadorId !== null &&
                                             taskItem.criadorId === currentUserId);
@@ -245,7 +264,7 @@ export default function DayTasksModal({
                                                     </button>
 
                                                     <h3
-                                                        className={`font-semibold text-black dark:text-white break-words ${
+                                                        className={`font-semibold text-black dark:text-white wrap-break-word ${
                                                             taskItem.concluida
                                                                 ? "line-through opacity-60"
                                                                 : ""
@@ -255,8 +274,8 @@ export default function DayTasksModal({
                                                     </h3>
                                                 </div>
 
-                                                {canDeleteTask && (
-                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                {canManageTask && (
+                                                    <div className="flex items-center gap-1 shrink-0">
                                                         {isConfirmingDelete ? (
                                                             <>
                                                                 <button
@@ -291,22 +310,44 @@ export default function DayTasksModal({
                                                                 </button>
                                                             </>
                                                         ) : (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setActionErrorMessage(
-                                                                        null
-                                                                    );
-                                                                    setTaskIdPendingDelete(
-                                                                        taskItem.id
-                                                                    );
-                                                                }}
-                                                                title="Remover tarefa"
-                                                                aria-label={`Remover tarefa ${taskItem.nome}`}
-                                                                className="p-1.5 rounded-lg text-black/60 hover:text-[#E60000] hover:bg-[#E60000]/10 dark:text-white/60 dark:hover:text-red-400 dark:hover:bg-[#E60000]/20 transition-colors cursor-pointer"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setActionErrorMessage(
+                                                                            null
+                                                                        );
+                                                                        setTaskIdPendingDelete(
+                                                                            null
+                                                                        );
+                                                                        setEditingTask(
+                                                                            taskItem
+                                                                        );
+                                                                    }}
+                                                                    title="Editar tarefa"
+                                                                    aria-label={`Editar tarefa ${taskItem.nome}`}
+                                                                    className="p-1.5 rounded-lg text-black/60 hover:text-teal-600 hover:bg-teal-500/10 dark:text-white/60 dark:hover:text-teal-400 dark:hover:bg-teal-500/20 transition-colors cursor-pointer"
+                                                                >
+                                                                    <Pencil className="w-4 h-4" />
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setActionErrorMessage(
+                                                                            null
+                                                                        );
+                                                                        setTaskIdPendingDelete(
+                                                                            taskItem.id
+                                                                        );
+                                                                    }}
+                                                                    title="Remover tarefa"
+                                                                    aria-label={`Remover tarefa ${taskItem.nome}`}
+                                                                    className="p-1.5 rounded-lg text-black/60 hover:text-[#E60000] hover:bg-[#E60000]/10 dark:text-white/60 dark:hover:text-red-400 dark:hover:bg-[#E60000]/20 transition-colors cursor-pointer"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </>
                                                         )}
                                                     </div>
                                                 )}
@@ -367,7 +408,7 @@ export default function DayTasksModal({
                     )}
                 </div>
 
-                {!isCreatingNewTask && (
+                {!isFormActive && (
                     <div className="px-6 py-4 flex items-center justify-between gap-3">
                         {canCreateTasks ? (
                             <button

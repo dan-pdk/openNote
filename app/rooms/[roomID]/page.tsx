@@ -1,18 +1,22 @@
 import authOptions from "@/auth/authOptions";
+import joinRoom from "@/actions/joinRoom";
 import Calendar from "@/components/Calendar";
 import DashboardMenu from "@/components/DashboardMenu";
 import Header from "@/components/Header";
+import RoomMembersPanel, {
+  RoomMemberItem,
+} from "@/components/RoomMembersPanel";
 import controller from "@/db/controller";
 import {
-    DEFAULT_TASK_COLOR,
-    isValidUuid,
-    normalizeTaskColor,
-    normalizeUuid,
-    RoomTaskItem,
-    TaskLinkItem,
-    validateAndNormalizeExternalUrl,
+  DEFAULT_TASK_COLOR,
+  isValidUuid,
+  normalizeTaskColor,
+  normalizeUuid,
+  RoomTaskItem,
+  TaskLinkItem,
+  validateAndNormalizeExternalUrl,
 } from "@/lib/tasks";
-import { ArrowLeft, Lock, LockOpen } from "lucide-react";
+import { ArrowLeft, Crown, Lock, LockOpen, UserPlus } from "lucide-react";
 import { getServerSession } from "next-auth";
 import Image from "next/image";
 import Link from "next/link";
@@ -22,90 +26,174 @@ import { Suspense } from "react";
 export const dynamic = "force-dynamic";
 
 type RoomAccessRow = {
-    id: string;
-    nome: string;
-    tipo: string;
-    icone_url: string | null;
-    lider_id: string;
-    membro_usuario_id: string | null;
-    pode_criar_tarefas: boolean | null;
+  id: string;
+  nome: string;
+  tipo: string;
+  icone_url: string | null;
+  lider_id: string;
+  lider_username: string;
+  lider_foto: string | null;
+  membro_usuario_id: string | null;
+  pode_criar_tarefas: boolean | null;
+};
+
+type MemberRow = {
+  id: string;
+  username: string;
+  mirror_foto: string | null;
+  pode_criar_tarefas: boolean;
+  pode_comentar: boolean;
 };
 
 type TaskRow = {
-    id: string;
-    nome: string;
-    descricao: string | null;
-    data_entrega_str: string;
-    cor: string | null;
-    concluida: boolean;
-    criador_id: string | null;
-    autor_nome: string | null;
+  id: string;
+  nome: string;
+  descricao: string | null;
+  data_entrega_str: string;
+  cor: string | null;
+  concluida: boolean;
+  criador_id: string | null;
+  autor_nome: string | null;
 };
 
 type AttachmentRow = {
-    id: number;
-    nome: string;
-    url_anexo: string;
-    id_tarefa: string;
+  id: number;
+  nome: string;
+  url_anexo: string;
+  id_tarefa: string;
 };
 
 export default async function Page({
-    params,
+  params,
 }: {
-    params: Promise<{ roomID: string }>;
+  params: Promise<{ roomID: string }>;
 }) {
-    const userSession = await getServerSession(authOptions);
-    const authenticatedUserId = userSession?.user?.id;
+  const userSession = await getServerSession(authOptions);
+  const authenticatedUserId = userSession?.user?.id;
 
-    if (!userSession || !isValidUuid(authenticatedUserId)) {
-        redirect("/login");
-    }
+  if (!userSession || !isValidUuid(authenticatedUserId)) {
+    redirect("/login");
+  }
 
-    const { roomID } = await params;
-    if (!isValidUuid(roomID)) {
-        notFound();
-    }
+  const { roomID } = await params;
+  if (!isValidUuid(roomID)) {
+    notFound();
+  }
 
-    const normalizedUserId = normalizeUuid(authenticatedUserId);
-    const normalizedRoomIdentifier = normalizeUuid(roomID);
+  const normalizedUserId = normalizeUuid(authenticatedUserId);
+  const normalizedRoomIdentifier = normalizeUuid(roomID);
 
-    const roomRows = await controller.runQuery<RoomAccessRow>(
-        `SELECT
+  const roomRows = await controller.runQuery<RoomAccessRow>(
+    `SELECT
             s.id,
             s.nome,
             s.tipo,
             s.icone_url,
             s.lider_id,
+            lider.username AS lider_username,
+            lider.mirror_foto AS lider_foto,
             sm.id_usuario AS membro_usuario_id,
             sm.pode_criar_tarefas
          FROM salas s
+         INNER JOIN usuarios lider ON lider.id = s.lider_id
          LEFT JOIN sala_membros sm
             ON sm.id_sala = s.id AND sm.id_usuario = $2
          WHERE s.id = $1;`,
-        [normalizedRoomIdentifier, normalizedUserId]
+    [normalizedRoomIdentifier, normalizedUserId],
+  );
+
+  if (roomRows.length === 0) {
+    notFound();
+  }
+
+  const targetRoom = roomRows[0];
+  const normalizedLeaderId = normalizeUuid(targetRoom.lider_id);
+  const isRoomLeader = normalizedLeaderId === normalizedUserId;
+  const isRoomMember = targetRoom.membro_usuario_id !== null;
+  const roomType = targetRoom.tipo === "livre" ? "livre" : "restrita";
+  const isRestrictedRoom = roomType === "restrita";
+
+  if (!isRoomLeader && !isRoomMember) {
+    async function handleConfirmJoinRoom() {
+      "use server";
+      const formData = new FormData();
+      formData.set("roomId", normalizedRoomIdentifier);
+      await joinRoom(formData);
+    }
+
+    return (
+      <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
+        <Header />
+        <DashboardMenu />
+
+        <main className="px-4 py-12 max-w-md mx-auto flex flex-col items-center text-center gap-6">
+          {!targetRoom.icone_url ? (
+            <div className="w-24 h-24 rounded-full bg-[#E2E2E2] dark:bg-[#303030] flex items-center justify-center text-4xl font-bold text-black dark:text-white">
+              {targetRoom.nome.charAt(0).toUpperCase()}
+            </div>
+          ) : (
+            <Image
+              width={192}
+              height={192}
+              quality={95}
+              src={targetRoom.icone_url}
+              alt={targetRoom.nome}
+              className="w-24 h-24 rounded-full object-cover"
+            />
+          )}
+
+          <div className="flex flex-col items-center gap-2">
+            <span
+              className={`px-3 py-1 text-xs font-semibold flex items-center gap-1.5 rounded-full ${
+                isRestrictedRoom
+                  ? "bg-[#E60000]/15 text-[#E60000] dark:bg-[#E60000]/20 dark:text-red-400"
+                  : "bg-[#139C1A]/15 text-[#139C1A] dark:bg-[#139C1A]/20 dark:text-green-400"
+              }`}
+            >
+              {isRestrictedRoom ? (
+                <Lock className="w-3.5 h-3.5" />
+              ) : (
+                <LockOpen className="w-3.5 h-3.5" />
+              )}
+              <span>{isRestrictedRoom ? "Sala Restrita" : "Sala Livre"}</span>
+            </span>
+
+            <h1 className="text-2xl font-bold text-black dark:text-white">
+              {targetRoom.nome}
+            </h1>
+            <p className="text-sm text-black/60 dark:text-white/60">
+              Líder: {targetRoom.lider_username}
+            </p>
+          </div>
+
+          <form action={handleConfirmJoinRoom} className="w-full flex flex-col gap-3">
+            <button
+              type="submit"
+              className="w-full py-3 px-5 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Entrar na sala</span>
+            </button>
+
+            <Link
+              href="/rooms"
+              className="w-full py-2.5 px-5 rounded-xl text-sm font-medium text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+            >
+              Voltar para minhas salas
+            </Link>
+          </form>
+        </main>
+      </div>
     );
+  }
 
-    if (roomRows.length === 0) {
-        notFound();
-    }
+  const canCreateTasks =
+    isRoomLeader ||
+    (roomType === "livre" && targetRoom.pode_criar_tarefas !== false);
 
-    const targetRoom = roomRows[0];
-    const isRoomLeader =
-        targetRoom.lider_id.toLowerCase() === normalizedUserId;
-    const isRoomMember = targetRoom.membro_usuario_id !== null;
-
-    if (!isRoomLeader && !isRoomMember) {
-        notFound();
-    }
-
-    const roomType = targetRoom.tipo === "livre" ? "livre" : "restrita";
-    const canCreateTasks =
-        isRoomLeader ||
-        (roomType === "livre" && targetRoom.pode_criar_tarefas !== false);
-
-    const [taskRows, attachmentRows] = await Promise.all([
-        controller.runQuery<TaskRow>(
-            `SELECT
+  const [taskRows, attachmentRows, memberRows] = await Promise.all([
+    controller.runQuery<TaskRow>(
+      `SELECT
                 t.id,
                 t.nome,
                 t.descricao,
@@ -120,118 +208,184 @@ export default async function Page({
                 ON tc.id_tarefa = t.id AND tc.id_usuario = $2
              WHERE t.id_sala = $1 AND t.data_entrega IS NOT NULL
              ORDER BY t.data_entrega ASC, t.data_criacao ASC;`,
-            [normalizedRoomIdentifier, normalizedUserId]
-        ),
-        controller.runQuery<AttachmentRow>(
-            `SELECT a.id, a.nome, a.url_anexo, a.id_tarefa
+      [normalizedRoomIdentifier, normalizedUserId],
+    ),
+    controller.runQuery<AttachmentRow>(
+      `SELECT a.id, a.nome, a.url_anexo, a.id_tarefa
              FROM anexos a
              INNER JOIN tarefas t ON t.id = a.id_tarefa
              WHERE t.id_sala = $1
              ORDER BY a.data_adicao ASC, a.id ASC;`,
-            [normalizedRoomIdentifier]
-        ),
-    ]);
+      [normalizedRoomIdentifier],
+    ),
+    controller.runQuery<MemberRow>(
+      `SELECT
+                u.id,
+                u.username,
+                u.mirror_foto,
+                sm.pode_criar_tarefas,
+                sm.pode_comentar
+             FROM sala_membros sm
+             INNER JOIN usuarios u ON u.id = sm.id_usuario
+             WHERE sm.id_sala = $1
+             ORDER BY (u.id = $2) DESC, sm.data_entrada ASC, u.username ASC;`,
+      [normalizedRoomIdentifier, normalizedLeaderId],
+    ),
+  ]);
 
-    const linksByTaskId = new Map<string, TaskLinkItem[]>();
-    for (const attachmentRow of attachmentRows) {
-        const safeUrl = validateAndNormalizeExternalUrl(attachmentRow.url_anexo);
-        if (!safeUrl) {
-            continue;
-        }
+  const orderedMembers: RoomMemberItem[] = [];
+  const leaderInMembers = memberRows.find(
+    (row) => normalizeUuid(row.id) === normalizedLeaderId,
+  );
 
-        const existingLinks = linksByTaskId.get(attachmentRow.id_tarefa) ?? [];
-        existingLinks.push({
-            id: attachmentRow.id,
-            nome: attachmentRow.nome,
-            url_anexo: safeUrl,
-        });
-        linksByTaskId.set(attachmentRow.id_tarefa, existingLinks);
+  orderedMembers.push({
+    id: normalizedLeaderId,
+    username: leaderInMembers?.username || targetRoom.lider_username,
+    mirrorFoto: leaderInMembers?.mirror_foto ?? targetRoom.lider_foto,
+    isLeader: true,
+    podeCriarTarefas: true,
+    podeComentar: true,
+  });
+
+  for (const memberRow of memberRows) {
+    const normalizedMemberId = normalizeUuid(memberRow.id);
+    if (normalizedMemberId === normalizedLeaderId) {
+      continue;
     }
 
-    const roomTasks: RoomTaskItem[] = taskRows.map((taskRow) => ({
-        id: taskRow.id,
-        nome: taskRow.nome,
-        descricao: taskRow.descricao,
-        dataEntrega: taskRow.data_entrega_str,
-        cor: normalizeTaskColor(taskRow.cor) ?? DEFAULT_TASK_COLOR,
-        concluida: Boolean(taskRow.concluida),
-        criadorId: taskRow.criador_id ? normalizeUuid(taskRow.criador_id) : null,
-        autorNome: taskRow.autor_nome?.trim() || "Usuário removido",
-        links: linksByTaskId.get(taskRow.id) ?? [],
-    }));
+    orderedMembers.push({
+      id: normalizedMemberId,
+      username: memberRow.username,
+      mirrorFoto: memberRow.mirror_foto,
+      isLeader: false,
+      podeCriarTarefas: Boolean(memberRow.pode_criar_tarefas),
+      podeComentar: Boolean(memberRow.pode_comentar),
+    });
+  }
 
-    const isRestrictedRoom = roomType === "restrita";
+  const linksByTaskId = new Map<string, TaskLinkItem[]>();
+  for (const attachmentRow of attachmentRows) {
+    const safeUrl = validateAndNormalizeExternalUrl(attachmentRow.url_anexo);
+    if (!safeUrl) {
+      continue;
+    }
 
-    return (
-        <Suspense fallback={<div className="min-h-screen bg-white dark:bg-[#1D1D1D]" />}>
-            <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
-                <Header />
-                <DashboardMenu />
+    const existingLinks = linksByTaskId.get(attachmentRow.id_tarefa) ?? [];
+    existingLinks.push({
+      id: attachmentRow.id,
+      nome: attachmentRow.nome,
+      url_anexo: safeUrl,
+    });
+    linksByTaskId.set(attachmentRow.id_tarefa, existingLinks);
+  }
 
-                <main className="px-4 py-6 lg:px-10 lg:max-w-5xl lg:mx-auto flex flex-col gap-6">
-                    <div>
-                        <Link
-                            href="/rooms"
-                            className="inline-flex items-center gap-1.5 text-xs font-medium text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition-colors mb-2"
-                        >
-                            <ArrowLeft className="w-3 h-3" />
-                            <span>Voltar</span>
-                        </Link>
+  const roomTasks: RoomTaskItem[] = taskRows.map((taskRow) => ({
+    id: taskRow.id,
+    nome: taskRow.nome,
+    descricao: taskRow.descricao,
+    dataEntrega: taskRow.data_entrega_str,
+    cor: normalizeTaskColor(taskRow.cor) ?? DEFAULT_TASK_COLOR,
+    concluida: Boolean(taskRow.concluida),
+    criadorId: taskRow.criador_id ? normalizeUuid(taskRow.criador_id) : null,
+    autorNome: taskRow.autor_nome?.trim() || "Usuário removido",
+    links: linksByTaskId.get(taskRow.id) ?? [],
+  }));
 
-                        <div className="flex items-center justify-between gap-4 flex-wrap">
-                            <div className="flex items-center gap-3 min-w-0">
-                                {!targetRoom.icone_url ? (
-                                    <div className="w-10 h-10 rounded-full bg-[#E2E2E2] dark:bg-[#303030] flex items-center justify-center font-semibold text-black dark:text-white shrink-0">
-                                        {targetRoom.nome.charAt(0).toUpperCase()}
-                                    </div>
-                                ) : (
-                                    <Image
-                                        width={40}
-                                        height={40}
-                                        src={targetRoom.icone_url}
-                                        alt={targetRoom.nome}
-                                        className="w-10 h-10 rounded-full object-cover shrink-0"
-                                    />
-                                )}
+  return (
+    <Suspense
+      fallback={<div className="min-h-screen bg-white dark:bg-[#1D1D1D]" />}
+    >
+      <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
+        <Header />
+        <DashboardMenu />
 
-                                <div className="flex flex-col min-w-0">
-                                    <h1 className="text-2xl font-semibold text-black dark:text-white truncate">
-                                        {targetRoom.nome}
-                                    </h1>
-                                    <span className="text-xs text-black/50 dark:text-white/50">
-                                        {isRoomLeader ? "Líder" : "Membro"}
-                                    </span>
-                                </div>
-                            </div>
+        <main className="px-4 py-6 lg:px-10 max-w-7xl mx-auto flex flex-col gap-8">
+          <div>
+            <Link
+              href="/rooms"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition-colors mb-4"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Voltar</span>
+            </Link>
 
-                            <span
-                                title={isRestrictedRoom ? "Sala restrita" : "Sala livre"}
-                                className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 rounded-full shrink-0 ${
-                                    isRestrictedRoom
-                                        ? "bg-[#E60000]/15 text-[#E60000] dark:bg-[#E60000]/20 dark:text-red-400"
-                                        : "bg-[#139C1A]/15 text-[#139C1A] dark:bg-[#139C1A]/20 dark:text-green-400"
-                                }`}
-                            >
-                                {isRestrictedRoom ? (
-                                    <Lock className="w-3.5 h-3.5" />
-                                ) : (
-                                    <LockOpen className="w-3.5 h-3.5" />
-                                )}
-                                <span>{isRestrictedRoom ? "Restrita" : "Livre"}</span>
-                            </span>
-                        </div>
-                    </div>
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-4 sm:gap-5 min-w-0">
+                {!targetRoom.icone_url ? (
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#E2E2E2] dark:bg-[#303030] flex items-center justify-center text-3xl sm:text-4xl font-bold text-black dark:text-white shrink-0 shadow-sm">
+                    {targetRoom.nome.charAt(0).toUpperCase()}
+                  </div>
+                ) : (
+                  <Image
+                    width={192}
+                    height={192}
+                    quality={95}
+                    src={targetRoom.icone_url}
+                    alt={targetRoom.nome}
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shrink-0 shadow-sm"
+                  />
+                )}
 
-                    <Calendar
-                        roomId={normalizedRoomIdentifier}
-                        tasks={roomTasks}
-                        currentUserId={normalizedUserId}
-                        currentUserName={userSession.user?.name?.trim() || "Você"}
-                        isRoomLeader={isRoomLeader}
-                        canCreateTasks={canCreateTasks}
-                    />
-                </main>
+                <div className="flex flex-col gap-1 min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-black dark:text-white truncate">
+                    {targetRoom.nome}
+                  </h1>
+                  <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-black/55 dark:text-white/55">
+                    {isRoomLeader && (
+                      <Crown
+                        strokeWidth={1.75}
+                        className="w-3.5 h-3.5 text-black/55 dark:text-white/55"
+                      />
+                    )}
+                    <span>
+                      {isRoomLeader
+                        ? "Você é o líder desta sala"
+                        : `Líder: ${targetRoom.lider_username}`}
+                    </span>
+                  </span>
+                </div>
+              </div>
+
+              <span
+                title={isRestrictedRoom ? "Sala restrita" : "Sala livre"}
+                className={`px-3.5 py-1.5 text-xs font-semibold flex items-center gap-1.5 rounded-full shrink-0 ${
+                  isRestrictedRoom
+                    ? "bg-[#E60000]/15 text-[#E60000] dark:bg-[#E60000]/20 dark:text-red-400"
+                    : "bg-[#139C1A]/15 text-[#139C1A] dark:bg-[#139C1A]/20 dark:text-green-400"
+                }`}
+              >
+                {isRestrictedRoom ? (
+                  <Lock className="w-3.5 h-3.5" />
+                ) : (
+                  <LockOpen className="w-3.5 h-3.5" />
+                )}
+                <span>{isRestrictedRoom ? "Restrita" : "Livre"}</span>
+              </span>
             </div>
-        </Suspense>
-    );
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-8 items-start">
+            <div className="w-full flex justify-center">
+              <Calendar
+                roomId={normalizedRoomIdentifier}
+                tasks={roomTasks}
+                currentUserId={normalizedUserId}
+                currentUserName={userSession.user?.name?.trim() || "Você"}
+                isRoomLeader={isRoomLeader}
+                canCreateTasks={canCreateTasks}
+              />
+            </div>
+
+            <RoomMembersPanel
+              roomId={normalizedRoomIdentifier}
+              roomType={roomType}
+              members={orderedMembers}
+              currentUserId={normalizedUserId}
+              isRoomLeader={isRoomLeader}
+            />
+          </div>
+        </main>
+      </div>
+    </Suspense>
+  );
 }

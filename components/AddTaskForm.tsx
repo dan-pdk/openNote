@@ -1,8 +1,10 @@
 "use client";
 
 import createTask from "@/actions/createTask";
+import updateTask from "@/actions/updateTask";
 import {
     DEFAULT_TASK_COLOR,
+    RoomTaskItem,
     TASK_COLOR_OPTIONS,
     TASK_DESCRIPTION_MAX_LENGTH,
     TASK_LINK_LIMIT,
@@ -11,7 +13,7 @@ import {
     TaskLinkDraft,
     validateAndNormalizeExternalUrl,
 } from "@/lib/tasks";
-import { Check, Link2, Plus, User, X } from "lucide-react";
+import { Check, Link2, Plus, Save, User, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
@@ -19,6 +21,7 @@ type AddTaskFormProps = {
     roomId: string;
     initialDate: string;
     currentUserName: string;
+    initialTask?: RoomTaskItem;
     onCancel: () => void;
     onSuccess: () => void;
 };
@@ -27,17 +30,32 @@ export default function AddTaskForm({
     roomId,
     initialDate,
     currentUserName,
+    initialTask,
     onCancel,
     onSuccess,
 }: AddTaskFormProps) {
     const router = useRouter();
-    const [taskName, setTaskName] = useState("");
-    const [taskDate, setTaskDate] = useState(initialDate);
-    const [description, setDescription] = useState("");
-    const [selectedColor, setSelectedColor] = useState(DEFAULT_TASK_COLOR);
-    const [linkDrafts, setLinkDrafts] = useState<TaskLinkDraft[]>([
-        { nome: "", url: "" },
-    ]);
+    const isEditing = Boolean(initialTask);
+
+    const [taskName, setTaskName] = useState(initialTask?.nome ?? "");
+    const [taskDate, setTaskDate] = useState(
+        initialTask?.dataEntrega ?? initialDate
+    );
+    const [description, setDescription] = useState(
+        initialTask?.descricao ?? ""
+    );
+    const [selectedColor, setSelectedColor] = useState(
+        initialTask?.cor ?? DEFAULT_TASK_COLOR
+    );
+    const [linkDrafts, setLinkDrafts] = useState<TaskLinkDraft[]>(() => {
+        if (initialTask && initialTask.links.length > 0) {
+            return initialTask.links.map((link) => ({
+                nome: link.nome,
+                url: link.url_anexo,
+            }));
+        }
+        return [{ nome: "", url: "" }];
+    });
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -90,7 +108,8 @@ export default function AddTaskForm({
 
         const nonEmptyLinks = linkDrafts.filter(
             (linkDraft) =>
-                linkDraft.url.trim().length > 0 || linkDraft.nome.trim().length > 0
+                linkDraft.url.trim().length > 0 ||
+                linkDraft.nome.trim().length > 0
         );
 
         for (const linkDraft of nonEmptyLinks) {
@@ -116,7 +135,9 @@ export default function AddTaskForm({
         formDataPayload.set("color", selectedColor);
         formDataPayload.set("links", JSON.stringify(nonEmptyLinks));
 
-        const actionResult = await createTask(roomId, formDataPayload);
+        const actionResult = initialTask
+            ? await updateTask(roomId, initialTask.id, formDataPayload)
+            : await createTask(roomId, formDataPayload);
 
         setIsSubmitting(false);
 
@@ -139,7 +160,7 @@ export default function AddTaskForm({
                     Autor:
                 </span>
                 <span className="font-semibold text-black dark:text-white truncate">
-                    {currentUserName}
+                    {initialTask ? initialTask.autorNome : currentUserName}
                 </span>
             </div>
 
@@ -157,7 +178,7 @@ export default function AddTaskForm({
                     value={taskName}
                     onChange={(event) => setTaskName(event.target.value)}
                     maxLength={TASK_NAME_MAX_LENGTH}
-                    placeholder="Ex: Entregar trabalho de Matemática"
+                    placeholder="Nome da tarefa..."
                     required
                     className="bg-[#E2E2E2] dark:bg-[#303030] w-full h-11 rounded-lg px-4 text-sm text-black dark:text-white placeholder:text-black/50 dark:placeholder:text-white/65 focus:outline-none focus:ring-2 focus:ring-teal-400"
                 />
@@ -215,7 +236,7 @@ export default function AddTaskForm({
             <div className="flex flex-col gap-1.5">
                 <label
                     htmlFor="task-description-input"
-                    className="text-xs font-medium text-black/60 dark:text-white/60 uppercase tracking-wide"
+                    className="text-xs font-medium text-black/60 dark:text-white/60 tracking-wide"
                 >
                     Descrição
                 </label>
@@ -226,7 +247,7 @@ export default function AddTaskForm({
                     onChange={(event) => setDescription(event.target.value)}
                     maxLength={TASK_DESCRIPTION_MAX_LENGTH}
                     rows={3}
-                    placeholder="Detalhes da tarefa (opcional)"
+                    placeholder="Detalhes da tarefa..."
                     className="bg-[#E2E2E2] dark:bg-[#303030] rounded-lg w-full text-sm p-3 text-black dark:text-white placeholder:text-black/50 dark:placeholder:text-white/65 focus:outline-none focus:ring-2 focus:ring-teal-400 resize-y"
                 />
             </div>
@@ -235,7 +256,7 @@ export default function AddTaskForm({
                 <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-black/60 dark:text-white/60 uppercase tracking-wide inline-flex items-center gap-1.5">
                         <Link2 className="w-3.5 h-3.5" />
-                        Links clicáveis
+                        Links
                     </span>
                     {linkDrafts.length < TASK_LINK_LIMIT && (
                         <button
@@ -315,7 +336,7 @@ export default function AddTaskForm({
                     type="button"
                     onClick={onCancel}
                     disabled={isSubmitting}
-                    className="border-2 border-black/20 dark:border-white/20 px-4 py-2.5 rounded-lg text-sm font-medium text-black dark:text-white hover:scale-105 duration-200 cursor-pointer disabled:opacity-50"
+                    className="px-4 py-2.5 rounded-lg text-sm font-medium text-black dark:text-white hover:scale-105 duration-200 cursor-pointer disabled:opacity-50"
                 >
                     Voltar
                 </button>
@@ -324,7 +345,17 @@ export default function AddTaskForm({
                     disabled={isSubmitting}
                     className="bg-teal-500 px-5 py-2.5 rounded-lg text-sm font-medium text-white hover:scale-105 duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {isSubmitting ? "Salvando..." : "Adicionar Tarefa"}
+                    {isSubmitting ? (
+                        "Salvando..."
+                    ) : isEditing ? (
+                        <div className="flex gap-2 items-center">
+                            <Save className="w-4 h-4" /> Salvar Alterações
+                        </div>
+                    ) : (
+                        <div className="flex gap-2 items-center">
+                            <Plus className="w-4 h-4" /> Adicionar Tarefa
+                        </div>
+                    )}
                 </button>
             </div>
         </form>
