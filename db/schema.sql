@@ -5,9 +5,10 @@ CREATE TABLE usuarios (
     hash_senha VARCHAR(256),
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     mirror_foto TEXT,
-    show_email BOOLEAN NOT NULL DEFAULT FALSE
+    show_email BOOLEAN NOT NULL DEFAULT FALSE,
+    google_username VARCHAR(128),
+    google_foto TEXT
 );
-
 CREATE TABLE categorias (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(128) NOT NULL,
