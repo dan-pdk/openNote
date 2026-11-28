@@ -1,8 +1,9 @@
 'use client'
 
 import AddRoomForm from '@/components/AddRoomForm'
+import DeleteAccountModal from '@/components/DeleteAccountModal'
 import SettingsPopup, { MouseAnchorPosition } from '@/components/SettingsPopup'
-import { FolderKanban, PlusCircle } from 'lucide-react'
+import { FolderKanban, PlusCircle, Trash2 } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import Image from 'next/image'
@@ -20,6 +21,7 @@ export default function DashboardMenu() {
     const isOpen = searchParams.get('isMenuOpen') === 'true'
     const [isAddRoomModalOpen, setIsAddRoomModalOpen] = useState(false)
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+    const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false)
     const [settingsAnchor, setSettingsAnchor] = useState<MouseAnchorPosition>(null)
 
     const onClose = useCallback(() => {
@@ -52,7 +54,12 @@ export default function DashboardMenu() {
         }
 
         function handleKeyDown(event: KeyboardEvent) {
-            if (event.key === 'Escape' && !isAddRoomModalOpen && !isSettingsOpen) {
+            if (
+                event.key === 'Escape' &&
+                !isAddRoomModalOpen &&
+                !isSettingsOpen &&
+                !isDeleteAccountModalOpen
+            ) {
                 onClose()
             }
         }
@@ -61,11 +68,16 @@ export default function DashboardMenu() {
         return () => {
             document.removeEventListener('keydown', handleKeyDown)
         }
-    }, [isOpen, isAddRoomModalOpen, isSettingsOpen, onClose])
+    }, [isOpen, isAddRoomModalOpen, isSettingsOpen, isDeleteAccountModalOpen, onClose])
 
     function handleOpenAddRoomModal() {
         onClose()
         setIsAddRoomModalOpen(true)
+    }
+
+    function handleOpenDeleteAccountModal() {
+        onClose()
+        setIsDeleteAccountModalOpen(true)
     }
 
     function handleOpenSettingsPopup(event: MouseEvent<HTMLButtonElement>) {
@@ -155,6 +167,15 @@ export default function DashboardMenu() {
                         <span className="text-[#FF005E]">Sair</span>
                     </button>
 
+                    <button
+                        type="button"
+                        className="flex items-center gap-4 py-3 text-left hover:scale-105 duration-200 cursor-pointer origin-left"
+                        onClick={handleOpenDeleteAccountModal}
+                    >
+                        <Trash2 className="w-5.5 h-5.5 text-[#E60000] shrink-0" />
+                        <span className="text-[#E60000]">Deletar conta</span>
+                    </button>
+
                     {session?.user ? (
                         <Link
                             href="/profile"
@@ -193,6 +214,11 @@ export default function DashboardMenu() {
                 isOpen={isSettingsOpen}
                 anchorPosition={settingsAnchor}
                 onClose={() => setIsSettingsOpen(false)}
+            />
+
+            <DeleteAccountModal
+                isOpen={isDeleteAccountModalOpen}
+                onClose={() => setIsDeleteAccountModalOpen(false)}
             />
         </>
     )

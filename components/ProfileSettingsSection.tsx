@@ -5,6 +5,7 @@ import {
     updateUserAvatar,
     updateUsername,
 } from "@/actions/updateUserSettings";
+import DeleteAccountModal from "@/components/DeleteAccountModal";
 import {
     MAX_FONT_SCALE,
     MIN_FONT_SCALE,
@@ -19,6 +20,7 @@ import {
     Minus,
     Plus,
     Sparkles,
+    Trash2,
     Type,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -58,6 +60,7 @@ export default function ProfileSettingsSection({
     const [isSavingName, setIsSavingName] = useState(false);
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
     const [isUpdatingEmailVisibility, setIsUpdatingEmailVisibility] = useState(false);
+    const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
     const [feedbackMessage, setFeedbackMessage] = useState<{
         type: "error" | "success";
         text: string;
@@ -174,227 +177,254 @@ export default function ProfileSettingsSection({
     }
 
     return (
-        <section className="flex flex-col gap-3">
-            <div>
-                <span className="text-xs font-medium text-black/50 dark:text-white/50 uppercase tracking-wide">
-                    Conta e Preferências
-                </span>
-                <h2 className="text-lg font-semibold text-black dark:text-white">
-                    Configurações
-                </h2>
-            </div>
+        <>
+            <section className="flex flex-col gap-3">
+                <div>
+                    <span className="text-xs font-medium text-black/50 dark:text-white/50 uppercase tracking-wide">
+                        Conta e Preferências
+                    </span>
+                    <h2 className="text-lg font-semibold text-black dark:text-white">
+                        Configurações
+                    </h2>
+                </div>
 
-            <div className="bg-[#E2E2E2] dark:bg-[#303030] rounded-2xl p-5 sm:p-6 flex flex-col gap-5">
-                {feedbackMessage && (
-                    <p
-                        role="status"
-                        className={`text-xs font-medium rounded-xl px-3.5 py-2.5 ${
-                            feedbackMessage.type === "error"
-                                ? "bg-red-500/15 text-red-700 dark:text-red-300"
-                                : "bg-teal-500/15 text-teal-800 dark:text-teal-200"
-                        }`}
-                    >
-                        {feedbackMessage.text}
-                    </p>
-                )}
+                <div className="bg-[#E2E2E2] dark:bg-[#303030] rounded-2xl p-5 sm:p-6 flex flex-col gap-5">
+                    {feedbackMessage && (
+                        <p
+                            role="status"
+                            className={`text-xs font-medium rounded-xl px-3.5 py-2.5 ${
+                                feedbackMessage.type === "error"
+                                    ? "bg-red-500/15 text-red-700 dark:text-red-300"
+                                    : "bg-teal-500/15 text-teal-800 dark:text-teal-200"
+                            }`}
+                        >
+                            {feedbackMessage.text}
+                        </p>
+                    )}
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="w-12 h-12 rounded-full bg-black/10 dark:bg-white/15 overflow-hidden flex items-center justify-center shrink-0">
-                            {displayedImage ? (
-                                <Image
-                                    src={displayedImage}
-                                    alt={displayedName}
-                                    width={48}
-                                    height={48}
-                                    unoptimized={displayedImage.startsWith("/uploads/")}
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <span className="text-base font-semibold text-black dark:text-white">
-                                    {displayedName.charAt(0).toUpperCase()}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3.5 min-w-0">
+                            <div className="w-12 h-12 rounded-full bg-black/10 dark:bg-white/15 overflow-hidden flex items-center justify-center shrink-0">
+                                {displayedImage ? (
+                                    <Image
+                                        src={displayedImage}
+                                        alt={displayedName}
+                                        width={48}
+                                        height={48}
+                                        unoptimized={displayedImage.startsWith("/uploads/")}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <span className="text-base font-semibold text-black dark:text-white">
+                                        {displayedName.charAt(0).toUpperCase()}
+                                    </span>
+                                )}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-sm font-medium text-black dark:text-white">
+                                    Foto de perfil
                                 </span>
-                            )}
+                                <span className="text-xs text-black/55 dark:text-white/55">
+                                    PNG, JPG, WEBP ou GIF (máx. 5 MB)
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-medium text-black dark:text-white">
-                                Foto de perfil
-                            </span>
-                            <span className="text-xs text-black/55 dark:text-white/55">
-                                PNG, JPG, WEBP ou GIF (máx. 5 MB)
-                            </span>
+
+                        <div className="shrink-0">
+                            <input
+                                id={avatarInputId}
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp,image/gif"
+                                onChange={handleAvatarChange}
+                                disabled={isUploadingAvatar}
+                                className="hidden"
+                            />
+                            <label
+                                htmlFor={avatarInputId}
+                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#1D1D1D] text-black dark:text-white hover:bg-teal-500 hover:text-white dark:hover:bg-teal-500 transition-colors cursor-pointer ${
+                                    isUploadingAvatar ? "opacity-60 pointer-events-none" : ""
+                                }`}
+                            >
+                                {isUploadingAvatar ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <Camera className="w-4 h-4" />
+                                )}
+                                <span>{isUploadingAvatar ? "Enviando..." : "Alterar foto"}</span>
+                            </label>
                         </div>
                     </div>
 
-                    <div className="shrink-0">
-                        <input
-                            id={avatarInputId}
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp,image/gif"
-                            onChange={handleAvatarChange}
-                            disabled={isUploadingAvatar}
-                            className="hidden"
-                        />
+                    <form onSubmit={handleNameSubmit} className="flex flex-col gap-2">
                         <label
-                            htmlFor={avatarInputId}
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#1D1D1D] text-black dark:text-white hover:bg-teal-500 hover:text-white dark:hover:bg-teal-500 transition-colors cursor-pointer ${
-                                isUploadingAvatar ? "opacity-60 pointer-events-none" : ""
-                            }`}
+                            htmlFor={usernameInputId}
+                            className="text-sm font-medium text-black dark:text-white"
                         >
-                            {isUploadingAvatar ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                                <Camera className="w-4 h-4" />
-                            )}
-                            <span>{isUploadingAvatar ? "Enviando..." : "Alterar foto"}</span>
+                            Nome de usuário
                         </label>
-                    </div>
-                </div>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                            <input
+                                id={usernameInputId}
+                                type="text"
+                                value={draftName}
+                                onChange={(e) => setDraftName(e.target.value)}
+                                maxLength={128}
+                                minLength={2}
+                                required
+                                disabled={isSavingName}
+                                className="flex-1 h-10 rounded-xl bg-white dark:bg-[#1D1D1D] px-3.5 text-sm text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            />
+                            <button
+                                type="submit"
+                                disabled={isSavingName || !hasNameChanged}
+                                className="h-10 px-4 rounded-xl bg-teal-500 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-teal-600 transition-colors cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed shrink-0"
+                            >
+                                {isSavingName ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <Check className="w-4 h-4" />
+                                )}
+                                <span>{isSavingName ? "Salvando..." : "Salvar nome"}</span>
+                            </button>
+                        </div>
+                    </form>
 
-
-                <form onSubmit={handleNameSubmit} className="flex flex-col gap-2">
-                    <label
-                        htmlFor={usernameInputId}
-                        className="text-sm font-medium text-black dark:text-white"
-                    >
-                        Nome de usuário
-                    </label>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                        <input
-                            id={usernameInputId}
-                            type="text"
-                            value={draftName}
-                            onChange={(e) => setDraftName(e.target.value)}
-                            maxLength={128}
-                            minLength={2}
-                            required
-                            disabled={isSavingName}
-                            className="flex-1 h-10 rounded-xl bg-white dark:bg-[#1D1D1D] px-3.5 text-sm text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-                        />
-                        <button
-                            type="submit"
-                            disabled={isSavingName || !hasNameChanged}
-                            className="h-10 px-4 rounded-xl bg-teal-500 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-teal-600 transition-colors cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed shrink-0"
-                        >
-                            {isSavingName ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-start gap-3 min-w-0">
+                            {showEmail ? (
+                                <Eye className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
                             ) : (
-                                <Check className="w-4 h-4" />
+                                <EyeOff className="w-4 h-4 text-black/55 dark:text-white/55 shrink-0 mt-0.5" />
                             )}
-                            <span>{isSavingName ? "Salvando..." : "Salvar nome"}</span>
-                        </button>
-                    </div>
-                </form>
-
-
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-start gap-3 min-w-0">
-                        {showEmail ? (
-                            <Eye className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
-                        ) : (
-                            <EyeOff className="w-4 h-4 text-black/55 dark:text-white/55 shrink-0 mt-0.5" />
-                        )}
-                        <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-medium text-black dark:text-white">
-                                Mostrar e-mail no perfil
-                            </span>
-                            <span className="text-xs text-black/55 dark:text-white/55">
-                                {userEmail
-                                    ? showEmail
-                                        ? `Visível como ${userEmail}`
-                                        : `Oculto (${userEmail} aparece apenas para você)`
-                                    : "Define se outros usuários podem ver seu e-mail"}
-                            </span>
-                        </div>
-                    </div>
-
-                    <button
-                        type="button"
-                        role="switch"
-                        aria-checked={showEmail}
-                        aria-label="Mostrar e-mail no perfil"
-                        disabled={isUpdatingEmailVisibility}
-                        onClick={handleToggleShowEmail}
-                        className={`relative w-11 h-6 rounded-full p-0.5 transition-colors cursor-pointer shrink-0 disabled:opacity-50 ${
-                            showEmail
-                                ? "bg-teal-500"
-                                : "bg-black/20 dark:bg-[#1D1D1D]"
-                        }`}
-                    >
-                        <span
-                            className={`block w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                                showEmail ? "translate-x-5" : "translate-x-0"
-                            }`}
-                        />
-                    </button>
-                </div>
-
-                <div className="h-px bg-black/10 dark:bg-white/10" />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex items-center justify-between gap-2 bg-white/70 dark:bg-[#1D1D1D]/70 rounded-xl px-3.5 py-2.5">
-                        <div className="flex items-center gap-2 text-black dark:text-white">
-                            <Type className="w-4 h-4 text-black/60 dark:text-white/60 shrink-0" />
-                            <span className="text-xs font-medium">Tamanho da fonte</span>
-                        </div>
-
-                        <div className="flex items-center gap-1 bg-[#E2E2E2] dark:bg-[#303030] rounded-lg p-0.5">
-                            <button
-                                type="button"
-                                onClick={decreaseFontScale}
-                                disabled={fontScale <= MIN_FONT_SCALE}
-                                aria-label="Diminuir fonte"
-                                className="p-1.5 rounded-md text-black dark:text-white hover:bg-white dark:hover:bg-[#1D1D1D] disabled:opacity-35 transition-colors cursor-pointer disabled:cursor-not-allowed"
-                            >
-                                <Minus className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                                type="button"
-                                onClick={resetFontScale}
-                                title="Restaurar tamanho padrão (100%)"
-                                className="px-1.5 text-[11px] font-semibold tabular-nums text-black dark:text-white hover:text-teal-600 dark:hover:text-teal-400 cursor-pointer"
-                            >
-                                {fontScale}%
-                            </button>
-                            <button
-                                type="button"
-                                onClick={increaseFontScale}
-                                disabled={fontScale >= MAX_FONT_SCALE}
-                                aria-label="Aumentar fonte"
-                                className="p-1.5 rounded-md text-black dark:text-white hover:bg-white dark:hover:bg-[#1D1D1D] disabled:opacity-35 transition-colors cursor-pointer disabled:cursor-not-allowed"
-                            >
-                                <Plus className="w-3.5 h-3.5" />
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 bg-white/70 dark:bg-[#1D1D1D]/70 rounded-xl px-3.5 py-2.5">
-                        <div className="flex items-center gap-2 text-black dark:text-white">
-                            <Sparkles className="w-4 h-4 text-black/60 dark:text-white/60 shrink-0" />
-                            <span className="text-xs font-medium">Reduzir animações</span>
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-sm font-medium text-black dark:text-white">
+                                    Mostrar e-mail no perfil
+                                </span>
+                                <span className="text-xs text-black/55 dark:text-white/55">
+                                    {userEmail
+                                        ? showEmail
+                                            ? `Visível como ${userEmail}`
+                                            : `Oculto (${userEmail} aparece apenas para você)`
+                                        : "Define se outros usuários podem ver seu e-mail"}
+                                </span>
+                            </div>
                         </div>
 
                         <button
                             type="button"
                             role="switch"
-                            aria-checked={reduceMotion}
-                            aria-label="Reduzir animações"
-                            onClick={() => setReduceMotion(!reduceMotion)}
-                            className={`relative w-10 h-5.5 rounded-full p-0.5 transition-colors cursor-pointer shrink-0 ${
-                                reduceMotion
+                            aria-checked={showEmail}
+                            aria-label="Mostrar e-mail no perfil"
+                            disabled={isUpdatingEmailVisibility}
+                            onClick={handleToggleShowEmail}
+                            className={`relative w-11 h-6 rounded-full p-0.5 transition-colors cursor-pointer shrink-0 disabled:opacity-50 ${
+                                showEmail
                                     ? "bg-teal-500"
-                                    : "bg-[#E2E2E2] dark:bg-[#303030]"
+                                    : "bg-black/20 dark:bg-[#1D1D1D]"
                             }`}
                         >
                             <span
-                                className={`block w-4.5 h-4.5 rounded-full bg-white shadow transition-transform ${
-                                    reduceMotion ? "translate-x-4.5" : "translate-x-0"
+                                className={`block w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                                    showEmail ? "translate-x-5" : "translate-x-0"
                                 }`}
                             />
                         </button>
                     </div>
+
+                    <div className="h-px bg-black/10 dark:bg-white/10" />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between gap-2 bg-white/70 dark:bg-[#1D1D1D]/70 rounded-xl px-3.5 py-2.5">
+                            <div className="flex items-center gap-2 text-black dark:text-white">
+                                <Type className="w-4 h-4 text-black/60 dark:text-white/60 shrink-0" />
+                                <span className="text-xs font-medium">Tamanho da fonte</span>
+                            </div>
+
+                            <div className="flex items-center gap-1 bg-[#E2E2E2] dark:bg-[#303030] rounded-lg p-0.5">
+                                <button
+                                    type="button"
+                                    onClick={decreaseFontScale}
+                                    disabled={fontScale <= MIN_FONT_SCALE}
+                                    aria-label="Diminuir fonte"
+                                    className="p-1.5 rounded-md text-black dark:text-white hover:bg-white dark:hover:bg-[#1D1D1D] disabled:opacity-35 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                >
+                                    <Minus className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={resetFontScale}
+                                    title="Restaurar tamanho padrão (100%)"
+                                    className="px-1.5 text-[11px] font-semibold tabular-nums text-black dark:text-white hover:text-teal-600 dark:hover:text-teal-400 cursor-pointer"
+                                >
+                                    {fontScale}%
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={increaseFontScale}
+                                    disabled={fontScale >= MAX_FONT_SCALE}
+                                    aria-label="Aumentar fonte"
+                                    className="p-1.5 rounded-md text-black dark:text-white hover:bg-white dark:hover:bg-[#1D1D1D] disabled:opacity-35 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                >
+                                    <Plus className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 bg-white/70 dark:bg-[#1D1D1D]/70 rounded-xl px-3.5 py-2.5">
+                            <div className="flex items-center gap-2 text-black dark:text-white">
+                                <Sparkles className="w-4 h-4 text-black/60 dark:text-white/60 shrink-0" />
+                                <span className="text-xs font-medium">Reduzir animações</span>
+                            </div>
+
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={reduceMotion}
+                                aria-label="Reduzir animações"
+                                onClick={() => setReduceMotion(!reduceMotion)}
+                                className={`relative w-10 h-5.5 rounded-full p-0.5 transition-colors cursor-pointer shrink-0 ${
+                                    reduceMotion
+                                        ? "bg-teal-500"
+                                        : "bg-[#E2E2E2] dark:bg-[#303030]"
+                                }`}
+                            >
+                                <span
+                                    className={`block w-4.5 h-4.5 rounded-full bg-white shadow transition-transform ${
+                                        reduceMotion ? "translate-x-4.5" : "translate-x-0"
+                                    }`}
+                                />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="h-px bg-black/10 dark:bg-white/10" />
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-medium text-[#E60000] dark:text-red-400">
+                                Excluir conta
+                            </span>
+                            <span className="text-xs text-black/55 dark:text-white/55">
+                                Remove permanentemente sua conta, salas criadas, tarefas e dados associados.
+                            </span>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setIsDeleteAccountModalOpen(true)}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-[#E60000] text-white hover:scale-105 duration-200 transition-transform cursor-pointer shrink-0"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            <span>Deletar conta</span>
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
+
+            <DeleteAccountModal
+                isOpen={isDeleteAccountModalOpen}
+                onClose={() => setIsDeleteAccountModalOpen(false)}
+            />
+        </>
     );
 }
