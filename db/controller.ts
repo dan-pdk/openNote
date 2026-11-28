@@ -4,19 +4,26 @@ const globalForPg = globalThis as unknown as { pool: Pool | undefined };
 
 const pool =
   globalForPg.pool ??
-  new Pool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: Number(process.env.DB_PORT) || 5432,
-    max: 10,
-    idleTimeoutMillis: 30000,
-  });
+  new Pool(
+    process.env.DATABASE_URL
+      ? {
+          connectionString: process.env.DATABASE_URL,
+          ssl: { rejectUnauthorized: false },
+          max: 5,
+          idleTimeoutMillis: 30000,
+        }
+      : {
+          host: process.env.DB_HOST || 'localhost',
+          user: process.env.DB_USER,
+          password: process.env.DB_PASSWORD,
+          database: process.env.DB_NAME,
+          port: Number(process.env.DB_PORT) || 5432,
+          max: 10,
+          idleTimeoutMillis: 30000,
+        }
+  );
 
-if (process.env.NODE_ENV !== 'production') {
-  globalForPg.pool = pool;
-}
+globalForPg.pool = pool;
 
 type QueryResultObject = {
   text: string;
@@ -83,9 +90,42 @@ async function runQuery<T = any>(
   return rows;
 }
 
+async function runInTransaction<T>(
+  transactionCallback: (
+    queryExecutor: <RowType = Record<string, unknown>>(
+      queryText: string,
+      queryValues?: unknown[]
+    ) => Promise<RowType[]>
+  ) => Promise<T>
+): Promise<T> {
+  const databaseClient = await pool.connect();
+  try {
+    await databaseClient.query('BEGIN');
+    const transactionResult = await transactionCallback(
+      async <RowType = Record<string, unknown>>(
+        queryText: string,
+        queryValues?: unknown[]
+      ) => {
+        const { rows } = queryValues
+          ? await databaseClient.query(queryText, queryValues)
+          : await databaseClient.query(queryText);
+        return rows as RowType[];
+      }
+    );
+    await databaseClient.query('COMMIT');
+    return transactionResult;
+  } catch (transactionError) {
+    await databaseClient.query('ROLLBACK');
+    throw transactionError;
+  } finally {
+    databaseClient.release();
+  }
+}
+
 const controller = {
   createQueryCommand,
   runQuery,
+  runInTransaction,
 };
 
 export default controller;

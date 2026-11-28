@@ -1,0 +1,385 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: public/**, package-loc.json, .env*
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+migrations/
+  001_tasks_system.sql
+controller.ts
+docker-compose.yml
+instructions.md
+schema.sql
+testConnection.mjs
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="migrations/001_tasks_system.sql">
+ALTER TABLE sala_membros
+    ADD COLUMN IF NOT EXISTS pode_criar_tarefas BOOLEAN NOT NULL DEFAULT TRUE,
+    ADD COLUMN IF NOT EXISTS pode_comentar BOOLEAN NOT NULL DEFAULT TRUE;
+
+ALTER TABLE tarefas
+    ADD COLUMN IF NOT EXISTS cor VARCHAR(7) NOT NULL DEFAULT '#14B8A6',
+    ADD COLUMN IF NOT EXISTS concluida BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS criador_id UUID REFERENCES usuarios(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS tarefa_conclusoes (
+    id_usuario UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    id_tarefa UUID NOT NULL REFERENCES tarefas(id) ON DELETE CASCADE,
+    data_conclusao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_usuario, id_tarefa)
+);
+</file>
+
+<file path="controller.ts">
+import { Pool } from 'pg';
+
+const globalForPg = globalThis as unknown as { pool: Pool | undefined };
+
+const pool =
+  globalForPg.pool ??
+  new Pool({
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: Number(process.env.DB_PORT) || 5432,
+    max: 10,
+    idleTimeoutMillis: 30000,
+  });
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForPg.pool = pool;
+}
+
+type QueryResultObject = {
+  text: string;
+  values: any[];
+};
+
+type QueryCommand = {
+  insert: (table: string) => QueryCommand;
+  values: (valuesData: Record<string, any>) => QueryCommand;
+  returning: (columns?: string) => QueryCommand;
+  resolve: () => QueryResultObject;
+  query: string;
+  params: any[];
+};
+
+function createQueryCommand(): QueryCommand {
+  const command: QueryCommand = {
+    query: '',
+    params: [],
+    insert(table: string) {
+      command.query += `INSERT INTO ${table} `;
+      return command;
+    },
+    values(valuesData: Record<string, any>) {
+      const entries = Object.entries(valuesData).filter(
+        ([_, val]) => val !== undefined
+      );
+      const keys = entries.map(([key]) => key);
+      const vals = entries.map(([_, val]) => val);
+
+      const placeholders = vals.map((_, index) => `$${index + 1}`);
+
+      command.query += `(${keys.join(', ')}) VALUES (${placeholders.join(', ')})`;
+      command.params = vals;
+      return command;
+    },
+    returning(columns = '*') {
+      command.query += ` RETURNING ${columns}`;
+      return command;
+    },
+    resolve() {
+      return {
+        text: `${command.query};`,
+        values: command.params,
+      };
+    },
+  };
+
+  return command;
+}
+
+async function runQuery<T = any>(
+  query: string | QueryResultObject,
+  values?: Array<any>
+): Promise<T[]> {
+  if (typeof query === 'object') {
+    const { rows } = await pool.query(query.text, query.values);
+    return rows;
+  }
+
+  const { rows } = values
+    ? await pool.query(query, values)
+    : await pool.query(query);
+  return rows;
+}
+
+async function runInTransaction<T>(
+  transactionCallback: (
+    queryExecutor: <RowType = Record<string, unknown>>(
+      queryText: string,
+      queryValues?: unknown[]
+    ) => Promise<RowType[]>
+  ) => Promise<T>
+): Promise<T> {
+  const databaseClient = await pool.connect();
+  try {
+    await databaseClient.query('BEGIN');
+    const transactionResult = await transactionCallback(
+      async <RowType = Record<string, unknown>>(
+        queryText: string,
+        queryValues?: unknown[]
+      ) => {
+        const { rows } = queryValues
+          ? await databaseClient.query(queryText, queryValues)
+          : await databaseClient.query(queryText);
+        return rows as RowType[];
+      }
+    );
+    await databaseClient.query('COMMIT');
+    return transactionResult;
+  } catch (transactionError) {
+    await databaseClient.query('ROLLBACK');
+    throw transactionError;
+  } finally {
+    databaseClient.release();
+  }
+}
+
+const controller = {
+  createQueryCommand,
+  runQuery,
+  runInTransaction,
+};
+
+export default controller;
+</file>
+
+<file path="docker-compose.yml">
+services:
+  db:
+    image: postgres:18
+    container_name: opennote_db
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - pgdata:/var/lib/postgresql/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+</file>
+
+<file path="instructions.md">
+# Para rodar o servidor local:
+Requisitos: Docker & um terminal qualquer. Inicie no root do projeto.
+*(Verifique se Docker está rodando)*
+Criar container do banco:
+> docker compose --env-file ../.env up -d
+
+Reiniciar container do banco:
+> docker compose --env-file ../.env restart
+
+Ver logs do container do banco:
+> docker compose --env-file ../.env logs -f
+
+Desligar container do banco:
+> docker compose --env-file ../.env down
+
+Desligar e remover conteúdo do container do banco:
+> docker compose --env-file ../.env down -v
+
+
+## Para acessar o terminal interativo:
+> docker exec -it opennote_db psql -U POSTGRES -d postgres
+
+
+## Comandos úteis no terminal interativo:
+Sair do terminal
+> \q
+
+Listar todas as tabelas
+> \dt
+
+Listar entradas de uma tabela
+> \d <nome>
+
+Listar todos os bancos de dados
+> \l
+</file>
+
+<file path="schema.sql">
+CREATE TABLE usuarios (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    username VARCHAR(128) NOT NULL UNIQUE,
+    email VARCHAR(128) NOT NULL UNIQUE,
+    hash_senha VARCHAR(256),
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+    mirror_foto TEXT,
+    show_email BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE categorias (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(128) NOT NULL,
+    cor VARCHAR(7) NOT NULL
+);
+
+CREATE TABLE salas (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    nome VARCHAR(128) NOT NULL,
+    tipo VARCHAR(32) NOT NULL DEFAULT 'restrita' CHECK (tipo IN ('restrita', 'livre')),
+    icone_url VARCHAR(1024),
+    lider_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    created_at TIMESTAMP default CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sala_membros (
+    id_usuario UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    id_sala UUID NOT NULL REFERENCES salas(id) ON DELETE CASCADE,
+    data_entrada TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    pode_criar_tarefas BOOLEAN NOT NULL DEFAULT TRUE,
+    pode_mandar_mensagens BOOLEAN NOT NULL DEFAULT TRUE,
+    PRIMARY KEY (id_usuario, id_sala)
+);
+
+CREATE TABLE tarefas (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    nome VARCHAR(128) NOT NULL,
+    data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    data_entrega TIMESTAMP,
+    descricao TEXT,
+    cor VARCHAR(7) NOT NULL DEFAULT '#14B8A6',
+    concluida BOOLEAN NOT NULL DEFAULT FALSE,
+    criador_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    id_categoria INT REFERENCES categorias(id) ON DELETE SET NULL,
+    id_sala UUID NOT NULL REFERENCES salas(id) ON DELETE CASCADE
+);
+
+CREATE TABLE tarefa_conclusoes (
+    id_usuario UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    id_tarefa UUID NOT NULL REFERENCES tarefas(id) ON DELETE CASCADE,
+    data_conclusao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_usuario, id_tarefa)
+);
+
+CREATE TABLE anexos (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(128) NOT NULL,
+    url_anexo TEXT NOT NULL,
+    data_adicao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_tarefa UUID NOT NULL REFERENCES tarefas(id) ON DELETE CASCADE
+);
+
+CREATE TABLE threads (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(128) NOT NULL,
+    autor_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    id_tarefa UUID NOT NULL UNIQUE REFERENCES tarefas(id) ON DELETE CASCADE
+);
+
+CREATE TABLE comentarios (
+    id SERIAL PRIMARY KEY,
+    conteudo TEXT NOT NULL,
+    flagged BOOLEAN NOT NULL DEFAULT FALSE,
+    autor_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    responde_a INT REFERENCES comentarios(id) ON DELETE SET NULL,
+    pertence_a INT NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sala_mensagens (
+    id SERIAL PRIMARY KEY,
+    conteudo TEXT NOT NULL,
+    autor_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    id_sala UUID NOT NULL REFERENCES salas(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+</file>
+
+<file path="testConnection.mjs">
+import { Pool } from "pg"
+const env = process.env
+
+const pool = new Pool({
+    host: "localhost",
+    user: env.DB_USER,
+    password: env.DB_PASSWORD,
+    database: env.DB_NAME,
+    port: 5432,
+    idleTimeoutMillis: 30000
+})
+
+pool.on('error', (error, client) => {
+    console.log(error)
+})
+
+async function check() {
+    console.log((await pool.query("SELECT NOW()")).rows)
+    console.log((await pool.query("SELECT * FROM usuarios")).rows)
+    console.log((await pool.query("SELECT * FROM sala_membros WHERE id_usuario = $1", ["01a2099d-0ebd-7584-b829-6efce93afa1c"])));
+    console.log((await pool.query("INSERT INTO usuarios (id, username, email) VALUES ('01a2099d-0ebd-7584-b829-6efce93afa1b', 'eardog2', 'ear@dog2.com');")));
+    console.log((await pool.query("INSERT INTO salas (nome, icone_url, lider_id) VALUES ('cachorro orelhas lair', null, '01a2099d-0ebd-7584-b829-6efce93afa1b')")));
+    
+}
+check()
+
+//node --env-file ../.env .\testConnection.mjs
+</file>
+
+</files>

@@ -1,3 +1,4 @@
+import { ensureShowEmailColumn } from "@/actions/updateUserSettings";
 import authOptions from "@/auth/authOptions";
 import controller from "@/db/controller";
 import { getServerSession } from "next-auth";
@@ -5,9 +6,10 @@ import { getServerSession } from "next-auth";
 export type PublicProfileUser = {
     id: string;
     username: string;
-    email: string;
+    email: string | null;
     is_admin: boolean;
     mirror_foto: string | null;
+    show_email: boolean;
 };
 
 export type ProfileRoomSummary = {
@@ -67,8 +69,19 @@ export async function getSafeProfilePayload(
     const normalizedProfileId = targetProfileIdentifier.trim().toLowerCase();
     const normalizedViewerId = authenticatedViewerId.trim().toLowerCase();
 
-    const matchingProfilesList = await controller.runQuery<PublicProfileUser>(
-        "SELECT id, username, email, is_admin, mirror_foto FROM usuarios WHERE id = $1;",
+    await ensureShowEmailColumn();
+
+    const matchingProfilesList = await controller.runQuery<{
+        id: string;
+        username: string;
+        email: string;
+        is_admin: boolean;
+        mirror_foto: string | null;
+        show_email: boolean;
+    }>(
+        `SELECT id, username, email, is_admin, mirror_foto, COALESCE(show_email, FALSE) AS show_email
+         FROM usuarios
+         WHERE id = $1;`,
         [normalizedProfileId]
     );
 
@@ -76,8 +89,18 @@ export async function getSafeProfilePayload(
         return null;
     }
 
-    const profileUser = matchingProfilesList[0];
-    const isOwnProfile = profileUser.id.toLowerCase() === normalizedViewerId;
+    const rawUser = matchingProfilesList[0];
+    const isOwnProfile = rawUser.id.toLowerCase() === normalizedViewerId;
+    const showEmail = Boolean(rawUser.show_email);
+
+    const profileUser: PublicProfileUser = {
+        id: rawUser.id,
+        username: rawUser.username,
+        email: isOwnProfile || showEmail ? rawUser.email : null,
+        is_admin: Boolean(rawUser.is_admin),
+        mirror_foto: rawUser.mirror_foto,
+        show_email: showEmail,
+    };
 
     const visibleRooms = isOwnProfile
         ? await controller.runQuery<ProfileRoomSummary>(

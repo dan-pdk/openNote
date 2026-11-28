@@ -13,7 +13,6 @@ export default function Page() {
             <Logo />
             <LoginBackground>
 
-
                 <div className="2xl:scale-125">
                    <h1 className="text-black text-sm text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Criar conta</h1>
 
