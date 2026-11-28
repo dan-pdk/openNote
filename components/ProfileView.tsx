@@ -1,7 +1,8 @@
 import DashboardMenu from "@/components/DashboardMenu";
 import Header from "@/components/Header";
+import ProfileSettingsSection from "@/components/ProfileSettingsSection";
 import { ProfilePagePayload } from "@/lib/profileService";
-import { Lock, LockOpen, Mail, ShieldCheck, User } from "lucide-react";
+import { EyeOff, Lock, LockOpen, Mail, ShieldCheck, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -19,7 +20,8 @@ function isSafeProfileImageUrl(candidateImageUrl: string | null): candidateImage
         const parsedImageUrl = new URL(candidateImageUrl);
         return (
             parsedImageUrl.protocol === "https:" &&
-            parsedImageUrl.hostname.endsWith(".googleusercontent.com")
+            (parsedImageUrl.hostname.endsWith(".googleusercontent.com") ||
+                parsedImageUrl.hostname.endsWith(".public.blob.vercel-storage.com"))
         );
     } catch {
         return false;
@@ -44,6 +46,7 @@ export default function ProfileView({ profilePayload }: { profilePayload: Profil
                                     src={profileUser.mirror_foto as string}
                                     width={96}
                                     height={96}
+                                    unoptimized={(profileUser.mirror_foto as string).startsWith("/uploads/")}
                                     alt={profileUser.username}
                                     className="w-full h-full object-cover"
                                 />
@@ -75,10 +78,17 @@ export default function ProfileView({ profilePayload }: { profilePayload: Profil
                             </div>
 
                             <div className="flex flex-col gap-2 text-sm text-black/75 dark:text-white/75">
-                                {/* <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0">
-                                    <Mail className="w-4 h-4 shrink-0 text-black/50 dark:text-white/50" />
-                                    <span className="truncate">{profileUser.email}</span>
-                                </div> */}
+                                {profileUser.email && (
+                                    <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0">
+                                        <Mail className="w-4 h-4 shrink-0 text-black/50 dark:text-white/50" />
+                                        <span className="truncate">{profileUser.email}</span>
+                                        {isOwnProfile && !profileUser.show_email && (
+                                            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full text-black/60 dark:text-white/60 shrink-0">
+                                                <EyeOff className="w-3 h-3" />
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0">
                                     <User className="w-4 h-4 shrink-0 text-black/50 dark:text-white/50" />
@@ -89,6 +99,15 @@ export default function ProfileView({ profilePayload }: { profilePayload: Profil
                             </div>
                         </div>
                     </section>
+
+                    {isOwnProfile && (
+                        <ProfileSettingsSection
+                            initialUsername={profileUser.username}
+                            initialImage={profileUser.mirror_foto}
+                            initialShowEmail={profileUser.show_email}
+                            userEmail={profileUser.email}
+                        />
+                    )}
 
                     <section className="flex flex-col gap-3">
                         <div className="flex items-baseline justify-between">
