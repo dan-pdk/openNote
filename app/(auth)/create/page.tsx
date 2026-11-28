@@ -14,19 +14,21 @@ export default function Page() {
             <LoginBackground>
 
                 <div className="2xl:scale-125">
-                    <h1 className="text-black text-sm text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Criar conta</h1>
+                   <h1 className="text-black text-sm text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Criar conta</h1>
 
                     <div className="bg-white dark:bg-[#1D1D1D] dark:border-white/25 dark:bg- border-2 w-84 h-114 border-black/25 rounded-4xl flex flex-col items-center lg:w-90 lg:h-110">
 
                         <div className="text-xs w-full h-45 flex flex-col items-center justify-center gap-5 lg:mt-5">
                             <input className=" bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-3 lg:w-70  " placeholder="Nome de usuário"></input>
                             <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-3 lg:w-70  " placeholder="E-mail"></input>
-                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-3 lg:w-70 " placeholder="Senha"></input>
-                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-3 lg:w-70 " placeholder="Confimar senha"></input>
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-3 lg:w-70 " type="password" placeholder="Senha"></input>
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-3 lg:w-70 " type="password" placeholder="Confimar senha"></input>
                         </div>
 
-                        <input type="button" className="bg-blue-500/20 w-50 mt-5 p-3 text-center rounded-xl cursor-not-allowed text-white/15" value={"Criar conta"} title="O serviço de criação de contas, na verdade, nunca vai estar disponível. Use sua conta Googl.e">
-                        </input>
+                        <a href="login">
+                            <input type="button" className="bg-blue-500 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-pointer text-white" value={"Criar conta"}> 
+                            </input>
+                        </a>
 
                         <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-3 "></div>
 

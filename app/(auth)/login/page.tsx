@@ -18,13 +18,15 @@ export default function Page() {
 
                         <div className="w-full h-45 flex flex-col items-center justify-center gap-5 lg:mt-5">
                             <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 lg:w-70  " placeholder="E-mail"></input>
-                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-5 lg:w-70 " placeholder="Senha"></input>
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-5 lg:w-70 " type="password" placeholder="Senha"></input>
                         </div>
 
                         <Link href={"#"} className="text-center text-blue-400 underline">Esqueci minha senha</Link>
 
-                        <input type="button" className="bg-blue-500/20 w-50 mt-5 p-3 text-center rounded-xl duration-200 cursor-not-allowed text-white/20" value={"Continuar"} title="O serviço de criação de contas está temporariamente indisponível. Por favor, faça login usando sua conta Google.">
-                        </input>
+                        <Link href={"dashboard"}>
+                            <input type="button" className="bg-blue-500 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-pointer text-white" value={"Continuar"}>
+                            </input>
+                        </Link>
 
                         <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-5 "></div>
 
