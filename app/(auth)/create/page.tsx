@@ -27,7 +27,7 @@ export default function Page() {
                         </div>
 
                         <a href="login">
-                            <input type="button" className="bg-blue-500 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-pointer text-white" value={"Criar conta"}> 
+                            <input type="button" className="bg-blue-500/20 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-not-allowed text-white/20" title="O serviço de criação de contas, na verdade, nunca estará disponível, pois ele não existe. Use sua conta Google." value={"Criar conta"}> 
                             </input>
                         </a>
 
