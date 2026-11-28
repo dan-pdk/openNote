@@ -8,7 +8,15 @@ import {
 } from "@/lib/chat";
 import { Loader2, MessageSquare, Send, Trash2, X } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+    FormEvent,
+    KeyboardEvent,
+    ReactNode,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 
 type ChatModalProps = {
     target: ChatTarget | null;
@@ -17,6 +25,87 @@ type ChatModalProps = {
     initialIsRoomLeader: boolean;
     onClose: () => void;
 };
+
+function normalizeHref(rawUrl: string): string | null {
+    const withProtocol = /^https?:\/\//i.test(rawUrl)
+        ? rawUrl
+        : `https://${rawUrl}`;
+
+    try {
+        const parsed = new URL(withProtocol);
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+            return null;
+        }
+        return parsed.href;
+    } catch {
+        return null;
+    }
+}
+
+function renderMessageWithLinks(content: string): ReactNode[] {
+    const urlPattern = /((?:https?:\/\/|www\.)[^\s<]+)/gi;
+    const nodes: ReactNode[] = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = urlPattern.exec(content)) !== null) {
+        const matchStart = match.index;
+        if (matchStart > lastIndex) {
+            nodes.push(content.slice(lastIndex, matchStart));
+        }
+
+        let rawUrl = match[0];
+        let trailing = "";
+
+        while (rawUrl.length > 0) {
+            const lastChar = rawUrl[rawUrl.length - 1];
+            if (/[.,!?;:'"\]}]/.test(lastChar)) {
+                trailing = lastChar + trailing;
+                rawUrl = rawUrl.slice(0, -1);
+                continue;
+            }
+            if (lastChar === ")") {
+                const openCount = (rawUrl.match(/\(/g) || []).length;
+                const closeCount = (rawUrl.match(/\)/g) || []).length;
+                if (closeCount > openCount) {
+                    trailing = lastChar + trailing;
+                    rawUrl = rawUrl.slice(0, -1);
+                    continue;
+                }
+            }
+            break;
+        }
+
+        const safeHref = normalizeHref(rawUrl);
+        if (safeHref) {
+            nodes.push(
+                <a
+                    key={`link-${matchStart}`}
+                    href={safeHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-teal-600 dark:text-teal-400 underline break-all hover:opacity-80"
+                >
+                    {rawUrl}
+                </a>
+            );
+        } else {
+            nodes.push(rawUrl);
+        }
+
+        if (trailing) {
+            nodes.push(trailing);
+        }
+
+        lastIndex = matchStart + match[0].length;
+    }
+
+    if (lastIndex < content.length) {
+        nodes.push(content.slice(lastIndex));
+    }
+
+    return nodes;
+}
 
 export default function ChatModal({
     target,
@@ -39,6 +128,7 @@ export default function ChatModal({
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
+    const textareaRef = useRef<HTMLTextAreaElement | null>(null);
     const shouldScrollToBottomRef = useRef(true);
 
     const buildQueryUrl = useCallback((activeTarget: ChatTarget) => {
@@ -207,6 +297,9 @@ export default function ChatModal({
             setErrorMessage("Erro de conexão ao enviar mensagem.");
         } finally {
             setIsSending(false);
+            requestAnimationFrame(() => {
+                textareaRef.current?.focus();
+            });
         }
     }
 
@@ -382,7 +475,9 @@ export default function ChatModal({
                                         </div>
 
                                         <p className="text-sm text-black/85 dark:text-white/85 whitespace-pre-wrap wrap-break-word">
-                                            {message.conteudo}
+                                            {renderMessageWithLinks(
+                                                message.conteudo
+                                            )}
                                         </p>
                                     </div>
 
@@ -439,6 +534,7 @@ export default function ChatModal({
                             className="flex items-end gap-2"
                         >
                             <textarea
+                                ref={textareaRef}
                                 rows={1}
                                 value={draftMessage}
                                 onChange={(event) =>
@@ -448,7 +544,6 @@ export default function ChatModal({
                                 maxLength={CHAT_MESSAGE_MAX_LENGTH}
                                 placeholder="Escreva uma mensagem..."
                                 aria-label="Escreva uma mensagem"
-                                disabled={isSending}
                                 className="flex-1 bg-[#E2E2E2] dark:bg-[#303030] rounded-xl px-3.5 py-2.5 text-sm text-black dark:text-white placeholder:text-black/50 dark:placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-teal-400 resize-none max-h-28"
                             />
                             <button

@@ -28,6 +28,7 @@ const ALLOWED_IMAGE_EXTENSIONS: Record<string, string> = {
 const MAX_AVATAR_BYTES = 4 * 1024 * 1024; // 4 MB
 
 let hasEnsuredShowEmailColumn = false;
+let hasEnsuredGoogleDefaultsColumns = false;
 
 export async function ensureShowEmailColumn() {
     if (hasEnsuredShowEmailColumn) {
@@ -39,6 +40,39 @@ export async function ensureShowEmailColumn() {
          ADD COLUMN IF NOT EXISTS show_email BOOLEAN NOT NULL DEFAULT FALSE;`
     );
     hasEnsuredShowEmailColumn = true;
+}
+
+export async function ensureGoogleDefaultsColumns() {
+    if (hasEnsuredGoogleDefaultsColumns) {
+        return;
+    }
+
+    await controller.runQuery(
+        `ALTER TABLE usuarios
+         ADD COLUMN IF NOT EXISTS google_username VARCHAR(128),
+         ADD COLUMN IF NOT EXISTS google_foto TEXT;`
+    );
+    hasEnsuredGoogleDefaultsColumns = true;
+}
+
+async function deleteStoredAvatarIfManaged(photoUrl: string | null) {
+    if (!photoUrl) {
+        return;
+    }
+
+    if (
+        process.env.BLOB_READ_WRITE_TOKEN &&
+        photoUrl.includes(".blob.vercel-storage.com/")
+    ) {
+        await del(photoUrl).catch(() => {});
+    } else if (photoUrl.startsWith("/uploads/avatars/")) {
+        const oldFilePath = path.join(
+            process.cwd(),
+            "public",
+            photoUrl.replace(/^\//, "")
+        );
+        await unlink(oldFilePath).catch(() => {});
+    }
 }
 
 export async function updateUsername(
@@ -111,6 +145,95 @@ export async function updateUsername(
     }
 }
 
+export async function resetUsernameToGoogle(): Promise<UpdateUserSettingsResult> {
+    const session = await getServerSession(authOptions);
+    const rawUserId = session?.user?.id;
+
+    if (!session || !isValidUuid(rawUserId)) {
+        return { error: "Usuário não autenticado." };
+    }
+
+    const normalizedUserId = normalizeUuid(rawUserId);
+
+    try {
+        await ensureGoogleDefaultsColumns();
+
+        const userRows = await controller.runQuery<{
+            username: string;
+            mirror_foto: string | null;
+            google_username: string | null;
+        }>(
+            `SELECT username, mirror_foto, google_username
+             FROM usuarios
+             WHERE id = $1;`,
+            [normalizedUserId]
+        );
+
+        if (userRows.length === 0) {
+            return { error: "Usuário não encontrado." };
+        }
+
+        const fallbackSessionGoogleName =
+            typeof session.user.googleName === "string"
+                ? session.user.googleName.trim()
+                : "";
+
+        const defaultGoogleName =
+            userRows[0].google_username?.trim() ||
+            fallbackSessionGoogleName ||
+            null;
+
+        if (!defaultGoogleName) {
+            return {
+                error: "Nome padrão do Google não encontrado. Entre novamente com o Google.",
+            };
+        }
+
+        const duplicateRows = await controller.runQuery<{ id: string }>(
+            `SELECT id FROM usuarios WHERE LOWER(username) = LOWER($1) AND id <> $2;`,
+            [defaultGoogleName, normalizedUserId]
+        );
+
+        if (duplicateRows.length > 0) {
+            return {
+                error: "Seu nome padrão do Google já está em uso por outro usuário.",
+            };
+        }
+
+        const updatedRows = await controller.runQuery<{
+            username: string;
+            mirror_foto: string | null;
+        }>(
+            `UPDATE usuarios
+             SET username = $1,
+                 google_username = COALESCE(google_username, $1)
+             WHERE id = $2
+             RETURNING username, mirror_foto;`,
+            [defaultGoogleName, normalizedUserId]
+        );
+
+        revalidatePath("/dashboard");
+        revalidatePath("/rooms");
+        revalidatePath("/profile");
+        revalidatePath(`/profile/${normalizedUserId}`);
+
+        return {
+            success: true,
+            username: updatedRows[0].username,
+            image: updatedRows[0].mirror_foto,
+        };
+    } catch (error: unknown) {
+        const pgError = error as { code?: string };
+        if (pgError?.code === "23505") {
+            return {
+                error: "Seu nome padrão do Google já está em uso por outro usuário.",
+            };
+        }
+        console.error("Erro ao redefinir nome de usuário:", error);
+        return { error: "Não foi possível redefinir o nome de usuário." };
+    }
+}
+
 export async function updateUserAvatar(
     formData: FormData
 ): Promise<UpdateUserSettingsResult> {
@@ -156,7 +279,12 @@ export async function updateUserAvatar(
             });
             publicUrlPath = blob.url;
         } else {
-            const uploadDir = path.join(process.cwd(), "public", "uploads", "avatars");
+            const uploadDir = path.join(
+                process.cwd(),
+                "public",
+                "uploads",
+                "avatars"
+            );
             await mkdir(uploadDir, { recursive: true });
             const diskFilePath = path.join(uploadDir, fileName);
             publicUrlPath = `/uploads/avatars/${fileName}`;
@@ -177,19 +305,7 @@ export async function updateUserAvatar(
         );
 
         if (previousPhoto && previousPhoto !== publicUrlPath) {
-            if (
-                process.env.BLOB_READ_WRITE_TOKEN &&
-                previousPhoto.includes(".blob.vercel-storage.com/")
-            ) {
-                del(previousPhoto).catch(() => {});
-            } else if (previousPhoto.startsWith("/uploads/avatars/")) {
-                const oldFilePath = path.join(
-                    process.cwd(),
-                    "public",
-                    previousPhoto.replace(/^\//, "")
-                );
-                unlink(oldFilePath).catch(() => {});
-            }
+            await deleteStoredAvatarIfManaged(previousPhoto);
         }
 
         revalidatePath("/dashboard");
@@ -205,6 +321,89 @@ export async function updateUserAvatar(
     } catch (error) {
         console.error("Erro ao atualizar foto de perfil:", error);
         return { error: "Não foi possível salvar a foto de perfil." };
+    }
+}
+
+export async function resetUserAvatarToGoogle(): Promise<UpdateUserSettingsResult> {
+    const session = await getServerSession(authOptions);
+    const rawUserId = session?.user?.id;
+
+    if (!session || !isValidUuid(rawUserId)) {
+        return { error: "Usuário não autenticado." };
+    }
+
+    const normalizedUserId = normalizeUuid(rawUserId);
+
+    try {
+        await ensureGoogleDefaultsColumns();
+
+        const userRows = await controller.runQuery<{
+            username: string;
+            mirror_foto: string | null;
+            google_foto: string | null;
+        }>(
+            `SELECT username, mirror_foto, google_foto
+             FROM usuarios
+             WHERE id = $1;`,
+            [normalizedUserId]
+        );
+
+        if (userRows.length === 0) {
+            return { error: "Usuário não encontrado." };
+        }
+
+        const previousPhoto = userRows[0].mirror_foto;
+        const fallbackSessionGoogleImage =
+            typeof session.user.googleImage === "string" &&
+            session.user.googleImage.trim().length > 0
+                ? session.user.googleImage.trim()
+                : null;
+        const currentGoogleHostedPhoto =
+            previousPhoto && previousPhoto.includes("googleusercontent.com")
+                ? previousPhoto
+                : null;
+
+        const defaultGooglePhoto =
+            userRows[0].google_foto?.trim() ||
+            fallbackSessionGoogleImage ||
+            currentGoogleHostedPhoto ||
+            null;
+
+        if (!defaultGooglePhoto) {
+            return {
+                error: "Foto padrão do Google não encontrada. Entre novamente com o Google.",
+            };
+        }
+
+        const updatedRows = await controller.runQuery<{
+            username: string;
+            mirror_foto: string | null;
+        }>(
+            `UPDATE usuarios
+             SET mirror_foto = $1,
+                 google_foto = COALESCE(google_foto, $1)
+             WHERE id = $2
+             RETURNING username, mirror_foto;`,
+            [defaultGooglePhoto, normalizedUserId]
+        );
+
+        if (previousPhoto && previousPhoto !== defaultGooglePhoto) {
+            await deleteStoredAvatarIfManaged(previousPhoto);
+        }
+
+        revalidatePath("/dashboard");
+        revalidatePath("/rooms");
+        revalidatePath("/profile");
+        revalidatePath(`/profile/${normalizedUserId}`);
+
+        return {
+            success: true,
+            username: updatedRows[0].username,
+            image: updatedRows[0].mirror_foto,
+        };
+    } catch (error) {
+        console.error("Erro ao redefinir foto de perfil:", error);
+        return { error: "Não foi possível redefinir a foto de perfil." };
     }
 }
 

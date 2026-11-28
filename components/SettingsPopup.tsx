@@ -1,6 +1,11 @@
 'use client';
 
-import { updateUserAvatar, updateUsername } from '@/actions/updateUserSettings';
+import {
+    resetUserAvatarToGoogle,
+    resetUsernameToGoogle,
+    updateUserAvatar,
+    updateUsername,
+} from '@/actions/updateUserSettings';
 import {
     MAX_FONT_SCALE,
     MIN_FONT_SCALE,
@@ -13,6 +18,7 @@ import {
     Minus,
     Pencil,
     Plus,
+    RotateCcw,
     Sparkles,
     Type,
     X,
@@ -68,7 +74,9 @@ export default function SettingsPopup({
     const [isEditingName, setIsEditingName] = useState(false);
     const [draftName, setDraftName] = useState('');
     const [isSavingName, setIsSavingName] = useState(false);
+    const [isResettingName, setIsResettingName] = useState(false);
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+    const [isResettingAvatar, setIsResettingAvatar] = useState(false);
     const [feedbackMessage, setFeedbackMessage] = useState<{
         type: 'error' | 'success';
         text: string;
@@ -91,7 +99,6 @@ export default function SettingsPopup({
         let top: number;
 
         if (anchorPosition) {
-                // fix muito burro foi mal
             if (anchorPosition.x + cursorOffset + width <= viewportWidth - margin) {
                 left = anchorPosition.x + cursorOffset;
             } else {
@@ -191,7 +198,7 @@ export default function SettingsPopup({
         const pickedFile = event.target.files?.[0];
         event.target.value = '';
 
-        if (!pickedFile || isUploadingAvatar) {
+        if (!pickedFile || isUploadingAvatar || isResettingAvatar) {
             return;
         }
 
@@ -219,9 +226,35 @@ export default function SettingsPopup({
         }
     }
 
+    async function handleResetAvatar() {
+        if (isUploadingAvatar || isResettingAvatar) {
+            return;
+        }
+
+        setIsResettingAvatar(true);
+        setFeedbackMessage(null);
+
+        const result = await resetUserAvatarToGoogle();
+        setIsResettingAvatar(false);
+
+        if (result.error) {
+            setFeedbackMessage({ type: 'error', text: result.error });
+            return;
+        }
+
+        if (result.success) {
+            await updateSession({
+                name: result.username ?? currentName,
+                image: result.image ?? null,
+            });
+            setFeedbackMessage({ type: 'success', text: 'Foto redefinida!' });
+            router.refresh();
+        }
+    }
+
     async function handleNameSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        if (isSavingName) {
+        if (isSavingName || isResettingName) {
             return;
         }
 
@@ -253,6 +286,34 @@ export default function SettingsPopup({
         }
     }
 
+    async function handleResetName() {
+        if (isSavingName || isResettingName) {
+            return;
+        }
+
+        setIsResettingName(true);
+        setFeedbackMessage(null);
+
+        const result = await resetUsernameToGoogle();
+        setIsResettingName(false);
+
+        if (result.error) {
+            setFeedbackMessage({ type: 'error', text: result.error });
+            return;
+        }
+
+        if (result.success && result.username) {
+            await updateSession({
+                name: result.username,
+                image: result.image ?? currentImage,
+            });
+            setDraftName(result.username);
+            setIsEditingName(false);
+            setFeedbackMessage({ type: 'success', text: 'Nome redefinido!' });
+            router.refresh();
+        }
+    }
+
     return (
         <div
             ref={popupRef}
@@ -274,6 +335,7 @@ export default function SettingsPopup({
                     <X className="w-4 h-4" />
                 </button>
             </div>
+
             <div className="flex items-center justify-between gap-2.5">
                 <div className="flex items-center gap-2.5 min-w-0">
                     <div className="relative w-9 h-9 rounded-full bg-[#E2E2E2] dark:bg-[#303030] overflow-hidden flex items-center justify-center shrink-0">
@@ -297,27 +359,46 @@ export default function SettingsPopup({
                     </span>
                 </div>
 
-                <input
-                    id={avatarInputId}
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif"
-                    onChange={handleAvatarChange}
-                    disabled={isUploadingAvatar}
-                    className="hidden"
-                />
-                <label
-                    htmlFor={avatarInputId}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[#E2E2E2] dark:bg-[#303030] text-black dark:text-white hover:bg-teal-500 hover:text-white dark:hover:bg-teal-500 transition-colors cursor-pointer shrink-0 ${
-                        isUploadingAvatar ? 'opacity-60 pointer-events-none' : ''
-                    }`}
-                >
-                    {isUploadingAvatar ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                        <Camera className="w-3.5 h-3.5" />
-                    )}
-                    <span>{isUploadingAvatar ? 'Enviando...' : 'Alterar'}</span>
-                </label>
+                <div className="flex items-center gap-1.5 shrink-0">
+                    <input
+                        id={avatarInputId}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/gif"
+                        onChange={handleAvatarChange}
+                        disabled={isUploadingAvatar || isResettingAvatar}
+                        className="hidden"
+                    />
+                    <label
+                        htmlFor={avatarInputId}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[#E2E2E2] dark:bg-[#303030] text-black dark:text-white hover:bg-teal-500 hover:text-white dark:hover:bg-teal-500 transition-colors cursor-pointer shrink-0 ${
+                            isUploadingAvatar || isResettingAvatar
+                                ? 'opacity-60 pointer-events-none'
+                                : ''
+                        }`}
+                    >
+                        {isUploadingAvatar ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                            <Camera className="w-3.5 h-3.5" />
+                        )}
+                        <span>{isUploadingAvatar ? 'Enviando...' : 'Alterar'}</span>
+                    </label>
+
+                    <button
+                        type="button"
+                        onClick={handleResetAvatar}
+                        disabled={isUploadingAvatar || isResettingAvatar}
+                        title="Redefinir para foto padrão do Google"
+                        aria-label="Redefinir para foto padrão do Google"
+                        className="p-1.5 rounded-lg bg-[#E2E2E2] dark:bg-[#303030] text-black/70 dark:text-white/70 hover:bg-teal-500 hover:text-white dark:hover:bg-teal-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    >
+                        {isResettingAvatar ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                            <RotateCcw className="w-3.5 h-3.5" />
+                        )}
+                    </button>
+                </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -368,23 +449,42 @@ export default function SettingsPopup({
                                 {currentName}
                             </span>
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setFeedbackMessage(null);
-                                setIsEditingName(true);
-                            }}
-                            aria-label="Editar nome de usuário"
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[#E2E2E2] dark:bg-[#303030] text-black dark:text-white hover:bg-teal-500 hover:text-white dark:hover:bg-teal-500 transition-colors cursor-pointer shrink-0"
-                        >
-                            <Pencil className="w-3 h-3" />
-                            <span>Editar</span>
-                        </button>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setFeedbackMessage(null);
+                                    setDraftName(currentName);
+                                    setIsEditingName(true);
+                                }}
+                                disabled={isResettingName}
+                                aria-label="Editar nome de usuário"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-[#E2E2E2] dark:bg-[#303030] text-black dark:text-white hover:bg-teal-500 hover:text-white dark:hover:bg-teal-500 transition-colors cursor-pointer disabled:opacity-50 shrink-0"
+                            >
+                                <Pencil className="w-3 h-3" />
+                                <span>Editar</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={handleResetName}
+                                disabled={isResettingName}
+                                title="Redefinir para nome padrão do Google"
+                                aria-label="Redefinir para nome padrão do Google"
+                                className="p-1.5 rounded-lg bg-[#E2E2E2] dark:bg-[#303030] text-black/70 dark:text-white/70 hover:bg-teal-500 hover:text-white dark:hover:bg-teal-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                            >
+                                {isResettingName ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                    <RotateCcw className="w-3.5 h-3.5" />
+                                )}
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
 
-            <div className="h-px" /> {/* loco q pha e essa*/}
+            <div className="h-px" />
 
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 text-black dark:text-white">

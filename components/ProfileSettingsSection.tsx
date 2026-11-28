@@ -1,6 +1,8 @@
 "use client";
 
 import {
+    resetUserAvatarToGoogle,
+    resetUsernameToGoogle,
     updateShowEmail,
     updateUserAvatar,
     updateUsername,
@@ -19,6 +21,7 @@ import {
     Loader2,
     Minus,
     Plus,
+    RotateCcw,
     Sparkles,
     Trash2,
     Type,
@@ -58,7 +61,9 @@ export default function ProfileSettingsSection({
     const [draftName, setDraftName] = useState(initialUsername);
     const [showEmail, setShowEmail] = useState(initialShowEmail);
     const [isSavingName, setIsSavingName] = useState(false);
+    const [isResettingName, setIsResettingName] = useState(false);
     const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+    const [isResettingAvatar, setIsResettingAvatar] = useState(false);
     const [isUpdatingEmailVisibility, setIsUpdatingEmailVisibility] = useState(false);
     const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
     const [feedbackMessage, setFeedbackMessage] = useState<{
@@ -83,7 +88,7 @@ export default function ProfileSettingsSection({
         const pickedFile = event.target.files?.[0];
         event.target.value = "";
 
-        if (!pickedFile || isUploadingAvatar) {
+        if (!pickedFile || isUploadingAvatar || isResettingAvatar) {
             return;
         }
 
@@ -114,9 +119,38 @@ export default function ProfileSettingsSection({
         }
     }
 
+    async function handleResetAvatar() {
+        if (isUploadingAvatar || isResettingAvatar) {
+            return;
+        }
+
+        setIsResettingAvatar(true);
+        setFeedbackMessage(null);
+
+        const result = await resetUserAvatarToGoogle();
+        setIsResettingAvatar(false);
+
+        if (result.error) {
+            setFeedbackMessage({ type: "error", text: result.error });
+            return;
+        }
+
+        if (result.success) {
+            await updateSession({
+                name: result.username ?? displayedName,
+                image: result.image ?? null,
+            });
+            setFeedbackMessage({
+                type: "success",
+                text: "Foto de perfil redefinida!",
+            });
+            router.refresh();
+        }
+    }
+
     async function handleNameSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        if (isSavingName || !hasNameChanged) {
+        if (isSavingName || isResettingName || !hasNameChanged) {
             return;
         }
 
@@ -140,6 +174,36 @@ export default function ProfileSettingsSection({
             setFeedbackMessage({
                 type: "success",
                 text: "Nome de usuário atualizado!",
+            });
+            router.refresh();
+        }
+    }
+
+    async function handleResetName() {
+        if (isSavingName || isResettingName) {
+            return;
+        }
+
+        setIsResettingName(true);
+        setFeedbackMessage(null);
+
+        const result = await resetUsernameToGoogle();
+        setIsResettingName(false);
+
+        if (result.error) {
+            setFeedbackMessage({ type: "error", text: result.error });
+            return;
+        }
+
+        if (result.success && result.username) {
+            setDraftName(result.username);
+            await updateSession({
+                name: result.username,
+                image: result.image ?? displayedImage,
+            });
+            setFeedbackMessage({
+                type: "success",
+                text: "Nome de usuário redefinido!",
             });
             router.refresh();
         }
@@ -230,19 +294,21 @@ export default function ProfileSettingsSection({
                             </div>
                         </div>
 
-                        <div className="shrink-0">
+                        <div className="flex items-center gap-2 shrink-0">
                             <input
                                 id={avatarInputId}
                                 type="file"
                                 accept="image/png,image/jpeg,image/webp,image/gif"
                                 onChange={handleAvatarChange}
-                                disabled={isUploadingAvatar}
+                                disabled={isUploadingAvatar || isResettingAvatar}
                                 className="hidden"
                             />
                             <label
                                 htmlFor={avatarInputId}
                                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#1D1D1D] text-black dark:text-white hover:bg-teal-500 hover:text-white dark:hover:bg-teal-500 transition-colors cursor-pointer ${
-                                    isUploadingAvatar ? "opacity-60 pointer-events-none" : ""
+                                    isUploadingAvatar || isResettingAvatar
+                                        ? "opacity-60 pointer-events-none"
+                                        : ""
                                 }`}
                             >
                                 {isUploadingAvatar ? (
@@ -252,6 +318,21 @@ export default function ProfileSettingsSection({
                                 )}
                                 <span>{isUploadingAvatar ? "Enviando..." : "Alterar foto"}</span>
                             </label>
+
+                            <button
+                                type="button"
+                                onClick={handleResetAvatar}
+                                disabled={isUploadingAvatar || isResettingAvatar}
+                                title="Redefinir"
+                                aria-label="Redefinir"
+                                className="p-2 rounded-xl bg-white dark:bg-[#1D1D1D] text-black/70 dark:text-white/70 hover:bg-teal-500 hover:text-white dark:hover:bg-teal-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                            >
+                                {isResettingAvatar ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <RotateCcw className="w-4 h-4" />
+                                )}
+                            </button>
                         </div>
                     </div>
 
@@ -271,21 +352,38 @@ export default function ProfileSettingsSection({
                                 maxLength={128}
                                 minLength={2}
                                 required
-                                disabled={isSavingName}
+                                disabled={isSavingName || isResettingName}
                                 className="flex-1 h-10 rounded-xl bg-white dark:bg-[#1D1D1D] px-3.5 text-sm text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
                             />
-                            <button
-                                type="submit"
-                                disabled={isSavingName || !hasNameChanged}
-                                className="h-10 px-4 rounded-xl bg-teal-500 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-teal-600 transition-colors cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed shrink-0"
-                            >
-                                {isSavingName ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <Check className="w-4 h-4" />
-                                )}
-                                <span>{isSavingName ? "Salvando..." : "Salvar nome"}</span>
-                            </button>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                    type="submit"
+                                    disabled={isSavingName || isResettingName || !hasNameChanged}
+                                    className="flex-1 sm:flex-initial h-10 px-4 rounded-xl bg-teal-500 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 hover:bg-teal-600 transition-colors cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed shrink-0"
+                                >
+                                    {isSavingName ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Check className="w-4 h-4" />
+                                    )}
+                                    <span>{isSavingName ? "Salvando..." : "Salvar nome"}</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={handleResetName}
+                                    disabled={isSavingName || isResettingName}
+                                    title="Redefinir para nome padrão do Google"
+                                    aria-label="Redefinir para nome padrão do Google"
+                                    className="h-10 w-10 rounded-xl bg-white dark:bg-[#1D1D1D] text-black/70 dark:text-white/70 hover:bg-teal-500 hover:text-white dark:hover:bg-teal-500 transition-colors cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed inline-flex items-center justify-center shrink-0"
+                                >
+                                    {isResettingName ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <RotateCcw className="w-4 h-4" />
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </form>
 
