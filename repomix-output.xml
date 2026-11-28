@@ -32,7 +32,7 @@ The content is organized as follows:
 <notes>
 - Some files may have been excluded based on .gitignore rules and Repomix's configuration
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
-- Files matching these patterns are excluded: public/**, package-lock.json, .env*
+- Files matching these patterns are excluded: public/**, package-lock.json
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
 - Files are sorted by Git change count (files with more changes are at the bottom)
@@ -138,6 +138,199 @@ tsconfig.json
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="actions/deleteTask.ts">
+"use server";
+
+import authOptions from "@/auth/authOptions";
+import controller from "@/db/controller";
+import { isValidUuid, normalizeUuid } from "@/lib/tasks";
+import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
+
+type DeleteTaskResult = {
+    success?: boolean;
+    error?: string;
+};
+
+export default async function deleteTask(
+    targetRoomIdentifier: string,
+    targetTaskIdentifier: string
+): Promise<DeleteTaskResult> {
+    const userSession = await getServerSession(authOptions);
+    const authenticatedUserId = userSession?.user?.id;
+
+    if (!userSession || !isValidUuid(authenticatedUserId)) {
+        return { error: "Usuário não autenticado." };
+    }
+
+    if (!isValidUuid(targetRoomIdentifier) || !isValidUuid(targetTaskIdentifier)) {
+        return { error: "Identificador inválido." };
+    }
+
+    const normalizedUserId = normalizeUuid(authenticatedUserId);
+    const normalizedRoomIdentifier = normalizeUuid(targetRoomIdentifier);
+    const normalizedTaskIdentifier = normalizeUuid(targetTaskIdentifier);
+
+    try {
+        const taskRows = await controller.runQuery<{
+            id: string;
+            criador_id: string | null;
+            lider_id: string;
+        }>(
+            `SELECT t.id, t.criador_id, s.lider_id
+             FROM tarefas t
+             INNER JOIN salas s ON s.id = t.id_sala
+             WHERE t.id = $1 AND t.id_sala = $2;`,
+            [normalizedTaskIdentifier, normalizedRoomIdentifier]
+        );
+
+        if (taskRows.length === 0) {
+            return { error: "Tarefa não encontrada." };
+        }
+
+        const targetTask = taskRows[0];
+        const isRoomLeader =
+            targetTask.lider_id.toLowerCase() === normalizedUserId;
+
+        if (!isRoomLeader) {
+            const membershipRows = await controller.runQuery<{ id_sala: string }>(
+                "SELECT id_sala FROM sala_membros WHERE id_usuario = $1 AND id_sala = $2;",
+                [normalizedUserId, normalizedRoomIdentifier]
+            );
+
+            if (membershipRows.length === 0) {
+                return { error: "Você não tem acesso a esta sala." };
+            }
+
+            const isTaskCreator =
+                targetTask.criador_id !== null &&
+                targetTask.criador_id.toLowerCase() === normalizedUserId;
+
+            if (!isTaskCreator) {
+                return { error: "Você só pode remover suas próprias tarefas." };
+            }
+        }
+
+        const deletedTasks = await controller.runQuery<{ id: string }>(
+            "DELETE FROM tarefas WHERE id = $1 AND id_sala = $2 RETURNING id;",
+            [normalizedTaskIdentifier, normalizedRoomIdentifier]
+        );
+
+        if (deletedTasks.length === 0) {
+            return { error: "Tarefa não encontrada." };
+        }
+
+        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
+        revalidatePath("/dashboard");
+
+        return { success: true };
+    } catch (databaseOperationError) {
+        console.error("Erro ao remover tarefa:", databaseOperationError);
+        return { error: "Não foi possível remover a tarefa." };
+    }
+}
+</file>
+
+<file path="actions/toggleTaskCompletion.ts">
+"use server";
+
+import authOptions from "@/auth/authOptions";
+import controller from "@/db/controller";
+import { isValidUuid, normalizeUuid } from "@/lib/tasks";
+import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
+
+type ToggleTaskCompletionResult = {
+    success?: boolean;
+    error?: string;
+    concluida?: boolean;
+};
+
+export default async function toggleTaskCompletion(
+    targetRoomIdentifier: string,
+    targetTaskIdentifier: string
+): Promise<ToggleTaskCompletionResult> {
+    const userSession = await getServerSession(authOptions);
+    const authenticatedUserId = userSession?.user?.id;
+
+    if (!userSession || !isValidUuid(authenticatedUserId)) {
+        return { error: "Usuário não autenticado." };
+    }
+
+    if (!isValidUuid(targetRoomIdentifier) || !isValidUuid(targetTaskIdentifier)) {
+        return { error: "Identificador inválido." };
+    }
+
+    const normalizedUserId = normalizeUuid(authenticatedUserId);
+    const normalizedRoomIdentifier = normalizeUuid(targetRoomIdentifier);
+    const normalizedTaskIdentifier = normalizeUuid(targetTaskIdentifier);
+
+    try {
+        const taskRows = await controller.runQuery<{
+            id: string;
+            lider_id: string;
+        }>(
+            `SELECT t.id, s.lider_id
+             FROM tarefas t
+             INNER JOIN salas s ON s.id = t.id_sala
+             WHERE t.id = $1 AND t.id_sala = $2;`,
+            [normalizedTaskIdentifier, normalizedRoomIdentifier]
+        );
+
+        if (taskRows.length === 0) {
+            return { error: "Tarefa não encontrada." };
+        }
+
+        const targetTask = taskRows[0];
+        const isRoomLeader =
+            targetTask.lider_id.toLowerCase() === normalizedUserId;
+
+        if (!isRoomLeader) {
+            const membershipRows = await controller.runQuery<{ id_sala: string }>(
+                "SELECT id_sala FROM sala_membros WHERE id_usuario = $1 AND id_sala = $2;",
+                [normalizedUserId, normalizedRoomIdentifier]
+            );
+
+            if (membershipRows.length === 0) {
+                return { error: "Você não tem acesso a esta sala." };
+            }
+        }
+
+        const isCompletedForUser = await controller.runInTransaction(
+            async (executeQuery) => {
+                const deletedCompletions = await executeQuery<{ id_tarefa: string }>(
+                    `DELETE FROM tarefa_conclusoes
+                     WHERE id_usuario = $1 AND id_tarefa = $2
+                     RETURNING id_tarefa;`,
+                    [normalizedUserId, normalizedTaskIdentifier]
+                );
+
+                if (deletedCompletions.length > 0) {
+                    return false;
+                }
+
+                await executeQuery(
+                    `INSERT INTO tarefa_conclusoes (id_usuario, id_tarefa)
+                     VALUES ($1, $2)
+                     ON CONFLICT (id_usuario, id_tarefa) DO NOTHING;`,
+                    [normalizedUserId, normalizedTaskIdentifier]
+                );
+
+                return true;
+            }
+        );
+
+        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
+        revalidatePath("/dashboard");
+
+        return { success: true, concluida: isCompletedForUser };
+    } catch (databaseOperationError) {
+        console.error("Erro ao atualizar status da tarefa:", databaseOperationError);
+        return { error: "Não foi possível atualizar a tarefa." };
+    }
+}
+</file>
 
 <file path="actions/updateUserSettings.ts">
 "use server";
@@ -969,6 +1162,96 @@ export async function DELETE(
 }
 </file>
 
+<file path="app/profile/[id]/page.tsx">
+import ProfileView from "@/components/ProfileView";
+import {
+    getAuthenticatedViewerId,
+    getSafeProfilePayload,
+    isValidUuidString,
+} from "@/lib/profileService";
+import { notFound, redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
+
+export default async function ProfileDetailPage({
+    params,
+}: {
+    params: Promise<{ id: string }>;
+}) {
+    const authenticatedViewerId = await getAuthenticatedViewerId();
+
+    if (!authenticatedViewerId) {
+        redirect("/login");
+    }
+
+    const { id: requestedProfileIdentifier } = await params;
+
+    if (!isValidUuidString(requestedProfileIdentifier)) {
+        notFound();
+    }
+
+    const profilePayload = await getSafeProfilePayload(
+        requestedProfileIdentifier,
+        authenticatedViewerId
+    );
+
+    if (!profilePayload) {
+        notFound();
+    }
+
+    return <ProfileView profilePayload={profilePayload} />;
+}
+</file>
+
+<file path="app/profile/layout.tsx">
+import SessionProviderWrapper from "@/components/SessionProviderWrapper";
+import { ReactNode } from "react";
+
+export default function ProfileLayout({ children }: { children: ReactNode }) {
+    return <SessionProviderWrapper>{children}</SessionProviderWrapper>;
+}
+</file>
+
+<file path="app/profile/page.tsx">
+import ProfileView from "@/components/ProfileView";
+import { getAuthenticatedViewerId, getSafeProfilePayload } from "@/lib/profileService";
+import { notFound, redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
+
+export default async function OwnProfilePage() {
+    const authenticatedViewerId = await getAuthenticatedViewerId();
+
+    if (!authenticatedViewerId) {
+        redirect("/login");
+    }
+
+    const profilePayload = await getSafeProfilePayload(
+        authenticatedViewerId,
+        authenticatedViewerId
+    );
+
+    if (!profilePayload) {
+        notFound();
+    }
+
+    return <ProfileView profilePayload={profilePayload} />;
+}
+</file>
+
+<file path="app/rooms/[roomID]/layout.tsx">
+import SessionProviderWrapper from "@/components/SessionProviderWrapper"
+import { ReactNode } from "react"
+
+export default function App({children} : {children : ReactNode}) {
+    return (
+        <SessionProviderWrapper>
+            {children}
+        </SessionProviderWrapper>
+    )
+}
+</file>
+
 <file path="app/settings/page.tsx">
 import { redirect } from "next/navigation";
 
@@ -1457,6 +1740,45 @@ export default function ChatModal({
             </div>
         </div>
     );
+}
+</file>
+
+<file path="components/GenericWideButton.tsx">
+'use client'
+import Link from 'next/link';
+import Image from 'next/image';
+
+export default function GenericWideButton({label, href}:{label: string, href: string}) {
+    return (
+        <>
+            <Link href={href}>
+              <button className="relative bg-[#E2E2E2] dark:bg-[#222222] rounded-xl p-3 text-center text-black/35 dark:text-white/60 hover:scale-[1.02] duration-200 cursor-pointer w-full flex justify-center align-center">
+                {label}
+                <Image src={"/ChevronRight.svg"} width={20} height={20} alt="" className="dark:invert absolute right-3" />
+              </button>
+            </Link>
+        </>
+    )
+}
+</file>
+
+<file path="components/OpenMenuButton.tsx">
+'use client'
+import Link from "next/link"
+import Image from "next/image"
+import { usePathname } from "next/navigation"
+
+export default function OpenMenuButton() {
+    const pathname = usePathname();
+
+
+    return (
+        <Link href={`${pathname}?isMenuOpen=true`}>
+            <button aria-label="Abrir menu" className="cursor-pointer">
+                <Image src={"/Menu.svg"} width={24} height={24} alt="" className="dark:invert"></Image>
+            </button>
+        </Link>
+    )
 }
 </file>
 
@@ -2209,6 +2531,16 @@ export default function RoomWorkspace({
 }
 </file>
 
+<file path="components/SessionProviderWrapper.tsx">
+'use client';
+import { SessionProvider } from "next-auth/react";
+import { ReactNode } from "react";
+
+export default function SessionProviderWrapper({children}: {children: ReactNode}) {
+    return <SessionProvider>{children}</SessionProvider>
+}
+</file>
+
 <file path="components/SettingsPopup.tsx">
 'use client';
 
@@ -2679,6 +3011,69 @@ export default function SettingsPopup({
 }
 </file>
 
+<file path="components/UserProfileLink.tsx">
+import Image from "next/image";
+import Link from "next/link";
+
+type UserProfileLinkProps = {
+    userId: string;
+    username: string;
+    avatarUrl?: string | null;
+};
+
+export default function UserProfileLink({
+    userId,
+    username,
+    avatarUrl = null,
+}: UserProfileLinkProps) {
+    const usernameInitial = username.trim().charAt(0).toUpperCase() || "?";
+
+    return (
+        <Link
+            href={`/profile/${userId}`}
+            className="inline-flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+        >
+            <div className="w-7 h-7 rounded-full bg-black/10 dark:bg-white/15 overflow-hidden flex items-center justify-center shrink-0">
+                {avatarUrl ? (
+                    <Image
+                        src={avatarUrl}
+                        width={28}
+                        height={28}
+                        alt={username}
+                        className="w-full h-full object-cover"
+                    />
+                ) : (
+                    <span className="text-xs font-medium text-black dark:text-white">
+                        {usernameInitial}
+                    </span>
+                )}
+            </div>
+            <span className="text-sm font-medium text-black dark:text-white truncate">
+                {username}
+            </span>
+        </Link>
+    );
+}
+</file>
+
+<file path="db/migrations/001_tasks_system.sql">
+ALTER TABLE sala_membros
+    ADD COLUMN IF NOT EXISTS pode_criar_tarefas BOOLEAN NOT NULL DEFAULT TRUE,
+    ADD COLUMN IF NOT EXISTS pode_comentar BOOLEAN NOT NULL DEFAULT TRUE;
+
+ALTER TABLE tarefas
+    ADD COLUMN IF NOT EXISTS cor VARCHAR(7) NOT NULL DEFAULT '#14B8A6',
+    ADD COLUMN IF NOT EXISTS concluida BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS criador_id UUID REFERENCES usuarios(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS tarefa_conclusoes (
+    id_usuario UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    id_tarefa UUID NOT NULL REFERENCES tarefas(id) ON DELETE CASCADE,
+    data_conclusao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_usuario, id_tarefa)
+);
+</file>
+
 <file path="lib/chat.ts">
 export type ChatTarget =
     | {
@@ -2808,95 +3203,268 @@ export async function markTaskMessagesAsRead(
 }
 </file>
 
-<file path="actions/deleteTask.ts">
+<file path="next-auth.d.ts">
+import NextAuth, { DefaultSession } from "next-auth";
+import { JWT } from "next-auth/jwt";
+
+declare module "next-auth" {
+    interface Session {
+        user: {
+            id: string,
+            email: string,
+            image: string,
+            name: string
+        }
+    }
+}
+</file>
+
+<file path="postcss.config.mjs">
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+
+export default config;
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+</file>
+
+<file path="actions/deleteRoom.ts">
 "use server";
 
 import authOptions from "@/auth/authOptions";
 import controller from "@/db/controller";
-import { isValidUuid, normalizeUuid } from "@/lib/tasks";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
-type DeleteTaskResult = {
+type DeleteRoomResult = {
     success?: boolean;
     error?: string;
 };
 
-export default async function deleteTask(
-    targetRoomIdentifier: string,
-    targetTaskIdentifier: string
-): Promise<DeleteTaskResult> {
+const uuidValidationRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export default async function deleteRoom(targetRoomIdentifier: string): Promise<DeleteRoomResult> {
     const userSession = await getServerSession(authOptions);
     const authenticatedUserId = userSession?.user?.id;
 
-    if (!userSession || !isValidUuid(authenticatedUserId)) {
+    if (!userSession || !authenticatedUserId || typeof authenticatedUserId !== "string" || authenticatedUserId.length !== 36 || !uuidValidationRegex.test(authenticatedUserId)) {
         return { error: "Usuário não autenticado." };
     }
 
-    if (!isValidUuid(targetRoomIdentifier) || !isValidUuid(targetTaskIdentifier)) {
-        return { error: "Identificador inválido." };
+    if (typeof targetRoomIdentifier !== "string") {
+        return { error: "Identificador de sala inválido." };
     }
 
-    const normalizedUserId = normalizeUuid(authenticatedUserId);
-    const normalizedRoomIdentifier = normalizeUuid(targetRoomIdentifier);
-    const normalizedTaskIdentifier = normalizeUuid(targetTaskIdentifier);
+    const trimmedRoomIdentifier = targetRoomIdentifier.trim();
+
+    if (trimmedRoomIdentifier.length !== 36 || !uuidValidationRegex.test(trimmedRoomIdentifier)) {
+        return { error: "Identificador de sala inválido." };
+    }
+
+    const normalizedRoomIdentifier = trimmedRoomIdentifier.toLowerCase();
 
     try {
-        const taskRows = await controller.runQuery<{
-            id: string;
-            criador_id: string | null;
-            lider_id: string;
-        }>(
-            `SELECT t.id, t.criador_id, s.lider_id
-             FROM tarefas t
-             INNER JOIN salas s ON s.id = t.id_sala
-             WHERE t.id = $1 AND t.id_sala = $2;`,
-            [normalizedTaskIdentifier, normalizedRoomIdentifier]
+        const deletedRoomsList = await controller.runQuery<{ id: string }>(
+            "DELETE FROM salas WHERE id = $1 AND lider_id = $2 RETURNING id;",
+            [normalizedRoomIdentifier, authenticatedUserId]
         );
 
-        if (taskRows.length === 0) {
-            return { error: "Tarefa não encontrada." };
+        if (deletedRoomsList.length === 0) {
+            return { error: "Sala não encontrada ou você não tem permissão para deletá-la." };
         }
 
-        const targetTask = taskRows[0];
-        const isRoomLeader =
-            targetTask.lider_id.toLowerCase() === normalizedUserId;
-
-        if (!isRoomLeader) {
-            const membershipRows = await controller.runQuery<{ id_sala: string }>(
-                "SELECT id_sala FROM sala_membros WHERE id_usuario = $1 AND id_sala = $2;",
-                [normalizedUserId, normalizedRoomIdentifier]
-            );
-
-            if (membershipRows.length === 0) {
-                return { error: "Você não tem acesso a esta sala." };
-            }
-
-            const isTaskCreator =
-                targetTask.criador_id !== null &&
-                targetTask.criador_id.toLowerCase() === normalizedUserId;
-
-            if (!isTaskCreator) {
-                return { error: "Você só pode remover suas próprias tarefas." };
-            }
-        }
-
-        const deletedTasks = await controller.runQuery<{ id: string }>(
-            "DELETE FROM tarefas WHERE id = $1 AND id_sala = $2 RETURNING id;",
-            [normalizedTaskIdentifier, normalizedRoomIdentifier]
-        );
-
-        if (deletedTasks.length === 0) {
-            return { error: "Tarefa não encontrada." };
-        }
-
-        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
         revalidatePath("/dashboard");
+        revalidatePath("/rooms");
+        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
 
         return { success: true };
     } catch (databaseOperationError) {
-        console.error("Erro ao remover tarefa:", databaseOperationError);
-        return { error: "Não foi possível remover a tarefa." };
+        console.error("Erro ao deletar sala:", databaseOperationError);
+        return { error: "Não foi possível deletar a sala." };
+    }
+}
+</file>
+
+<file path="actions/joinRoom.ts">
+"use server";
+
+import authOptions from "@/auth/authOptions";
+import controller from "@/db/controller";
+import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
+
+type JoinRoomResult = {
+    success?: boolean;
+    error?: string;
+    roomId?: string;
+};
+
+const uuidValidationRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export default async function joinRoom(formDataPayload: FormData): Promise<JoinRoomResult> {
+    const userSession = await getServerSession(authOptions);
+    const authenticatedUserId = userSession?.user?.id;
+
+    if (!userSession || !authenticatedUserId || typeof authenticatedUserId !== "string" || authenticatedUserId.length !== 36 || !uuidValidationRegex.test(authenticatedUserId)) {
+        return { error: "Usuário não autenticado." };
+    }
+
+    if (!formDataPayload || typeof formDataPayload.get !== "function") {
+        return { error: "Dados de requisição inválidos." };
+    }
+
+    const roomIdentifierEntry = formDataPayload.get("roomId");
+
+    if (typeof roomIdentifierEntry !== "string") {
+        return { error: "Código UUID inválido." };
+    }
+
+    const trimmedRoomIdentifier = roomIdentifierEntry.trim();
+
+    if (trimmedRoomIdentifier.length !== 36 || !uuidValidationRegex.test(trimmedRoomIdentifier)) {
+        return { error: "Código UUID inválido." };
+    }
+
+    const normalizedRoomIdentifier = trimmedRoomIdentifier.toLowerCase();
+
+    try {
+        const targetRoomsList = await controller.runQuery<{ id: string; lider_id: string }>(
+            "SELECT id, lider_id FROM salas WHERE id = $1;",
+            [normalizedRoomIdentifier]
+        );
+
+        if (targetRoomsList.length === 0) {
+            return { error: "Sala não encontrada." };
+        }
+
+        const targetRoom = targetRoomsList[0];
+
+        if (targetRoom.lider_id.toLowerCase() === authenticatedUserId.toLowerCase()) {
+            return { error: "Você já é o líder desta sala." };
+        }
+
+        const existingMembershipsList = await controller.runQuery<{ id_sala: string }>(
+            "SELECT id_sala FROM sala_membros WHERE id_usuario = $1 AND id_sala = $2;",
+            [authenticatedUserId, normalizedRoomIdentifier]
+        );
+
+        if (existingMembershipsList.length > 0) {
+            return { error: "Você já participa desta sala." };
+        }
+
+        const insertedMembershipsList = await controller.runQuery<{ id_sala: string }>(
+            "INSERT INTO sala_membros (id_usuario, id_sala) VALUES ($1, $2) ON CONFLICT (id_usuario, id_sala) DO NOTHING RETURNING id_sala;",
+            [authenticatedUserId, normalizedRoomIdentifier]
+        );
+
+        if (insertedMembershipsList.length === 0) {
+            return { error: "Você já participa desta sala." };
+        }
+
+        revalidatePath("/dashboard");
+        revalidatePath("/rooms");
+        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
+
+        return { success: true, roomId: normalizedRoomIdentifier };
+    } catch (databaseOperationError) {
+        console.error("Erro ao processar ingresso na sala:", databaseOperationError);
+        return { error: "Não foi possível processar a entrada na sala." };
+    }
+}
+</file>
+
+<file path="actions/leaveRoom.ts">
+"use server";
+
+import authOptions from "@/auth/authOptions";
+import controller from "@/db/controller";
+import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
+
+type LeaveRoomResult = {
+    success?: boolean;
+    error?: string;
+};
+
+const uuidValidationRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export default async function leaveRoom(targetRoomIdentifier: string): Promise<LeaveRoomResult> {
+    const userSession = await getServerSession(authOptions);
+    const authenticatedUserId = userSession?.user?.id;
+
+    if (!userSession || !authenticatedUserId || typeof authenticatedUserId !== "string" || authenticatedUserId.length !== 36 || !uuidValidationRegex.test(authenticatedUserId)
+    ) {
+        return { error: "Usuário não autenticado." };
+    }
+
+    if (typeof targetRoomIdentifier !== "string") {
+        return { error: "Identificador de sala inválido." };
+    }
+
+    const trimmedRoomIdentifier = targetRoomIdentifier.trim();
+
+    if (trimmedRoomIdentifier.length !== 36 || !uuidValidationRegex.test(trimmedRoomIdentifier)) {
+        return { error: "Identificador de sala inválido." };
+    }
+
+    const normalizedRoomIdentifier = trimmedRoomIdentifier.toLowerCase();
+
+    try {
+        const deletedMembershipsList = await controller.runQuery<{ id_sala: string }>(
+            "DELETE FROM sala_membros WHERE id_usuario = $1 AND id_sala = $2 AND EXISTS (SELECT 1 FROM salas WHERE id = $2 AND lider_id <> $1) RETURNING id_sala;",
+            [authenticatedUserId, normalizedRoomIdentifier]
+        );
+
+        if (deletedMembershipsList.length === 0) {
+            return { error: "Sala não encontrada ou você não pode sair dela." };
+        }
+
+        revalidatePath("/dashboard");
+        revalidatePath("/rooms");
+        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
+
+        return { success: true };
+    } catch (databaseOperationError) {
+        console.error("Erro ao sair da sala:", databaseOperationError);
+        return { error: "Não foi possível sair da sala." };
     }
 }
 </file>
@@ -3057,106 +3625,6 @@ export async function removeRoomMember(
     } catch (databaseOperationError) {
         console.error("Erro ao remover membro da sala:", databaseOperationError);
         return { error: "Não foi possível remover o membro." };
-    }
-}
-</file>
-
-<file path="actions/toggleTaskCompletion.ts">
-"use server";
-
-import authOptions from "@/auth/authOptions";
-import controller from "@/db/controller";
-import { isValidUuid, normalizeUuid } from "@/lib/tasks";
-import { getServerSession } from "next-auth";
-import { revalidatePath } from "next/cache";
-
-type ToggleTaskCompletionResult = {
-    success?: boolean;
-    error?: string;
-    concluida?: boolean;
-};
-
-export default async function toggleTaskCompletion(
-    targetRoomIdentifier: string,
-    targetTaskIdentifier: string
-): Promise<ToggleTaskCompletionResult> {
-    const userSession = await getServerSession(authOptions);
-    const authenticatedUserId = userSession?.user?.id;
-
-    if (!userSession || !isValidUuid(authenticatedUserId)) {
-        return { error: "Usuário não autenticado." };
-    }
-
-    if (!isValidUuid(targetRoomIdentifier) || !isValidUuid(targetTaskIdentifier)) {
-        return { error: "Identificador inválido." };
-    }
-
-    const normalizedUserId = normalizeUuid(authenticatedUserId);
-    const normalizedRoomIdentifier = normalizeUuid(targetRoomIdentifier);
-    const normalizedTaskIdentifier = normalizeUuid(targetTaskIdentifier);
-
-    try {
-        const taskRows = await controller.runQuery<{
-            id: string;
-            lider_id: string;
-        }>(
-            `SELECT t.id, s.lider_id
-             FROM tarefas t
-             INNER JOIN salas s ON s.id = t.id_sala
-             WHERE t.id = $1 AND t.id_sala = $2;`,
-            [normalizedTaskIdentifier, normalizedRoomIdentifier]
-        );
-
-        if (taskRows.length === 0) {
-            return { error: "Tarefa não encontrada." };
-        }
-
-        const targetTask = taskRows[0];
-        const isRoomLeader =
-            targetTask.lider_id.toLowerCase() === normalizedUserId;
-
-        if (!isRoomLeader) {
-            const membershipRows = await controller.runQuery<{ id_sala: string }>(
-                "SELECT id_sala FROM sala_membros WHERE id_usuario = $1 AND id_sala = $2;",
-                [normalizedUserId, normalizedRoomIdentifier]
-            );
-
-            if (membershipRows.length === 0) {
-                return { error: "Você não tem acesso a esta sala." };
-            }
-        }
-
-        const isCompletedForUser = await controller.runInTransaction(
-            async (executeQuery) => {
-                const deletedCompletions = await executeQuery<{ id_tarefa: string }>(
-                    `DELETE FROM tarefa_conclusoes
-                     WHERE id_usuario = $1 AND id_tarefa = $2
-                     RETURNING id_tarefa;`,
-                    [normalizedUserId, normalizedTaskIdentifier]
-                );
-
-                if (deletedCompletions.length > 0) {
-                    return false;
-                }
-
-                await executeQuery(
-                    `INSERT INTO tarefa_conclusoes (id_usuario, id_tarefa)
-                     VALUES ($1, $2)
-                     ON CONFLICT (id_usuario, id_tarefa) DO NOTHING;`,
-                    [normalizedUserId, normalizedTaskIdentifier]
-                );
-
-                return true;
-            }
-        );
-
-        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
-        revalidatePath("/dashboard");
-
-        return { success: true, concluida: isCompletedForUser };
-    } catch (databaseOperationError) {
-        console.error("Erro ao atualizar status da tarefa:", databaseOperationError);
-        return { error: "Não foi possível atualizar a tarefa." };
     }
 }
 </file>
@@ -3428,84 +3896,115 @@ export default async function updateTask(
 }
 </file>
 
-<file path="app/profile/[id]/page.tsx">
-import ProfileView from "@/components/ProfileView";
-import {
-    getAuthenticatedViewerId,
-    getSafeProfilePayload,
-    isValidUuidString,
-} from "@/lib/profileService";
-import { notFound, redirect } from "next/navigation";
+<file path="app/(auth)/create/page.tsx">
+'use client'
+import Image from "next/image"
+import Link from "next/link"
+import { useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
+import { ReactNode } from "react"
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export default function Page() {
 
-export default async function ProfileDetailPage({
-    params,
-}: {
-    params: Promise<{ id: string }>;
-}) {
-    const authenticatedViewerId = await getAuthenticatedViewerId();
+    return <>
+        <main className="flex items-center gap-5 flex-col h-screen lg:flex-row">
+            <Logo />
+            <LoginBackground>
 
-    if (!authenticatedViewerId) {
-        redirect("/login");
-    }
+                <div className="2xl:scale-125">
+                    <h1 className="text-black text-sm text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Criar conta</h1>
 
-    const { id: requestedProfileIdentifier } = await params;
+                    <div className="bg-white dark:bg-[#1D1D1D] dark:border-white/25 dark:bg- border-2 w-84 h-114 border-black/25 rounded-4xl flex flex-col items-center lg:w-90 lg:h-110">
 
-    if (!isValidUuidString(requestedProfileIdentifier)) {
-        notFound();
-    }
+                        <div className="text-xs w-full h-45 flex flex-col items-center justify-center gap-5 lg:mt-5">
+                            <input className=" bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-3 lg:w-70  " placeholder="Nome de usuário"></input>
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-3 lg:w-70  " placeholder="E-mail"></input>
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-3 lg:w-70 " placeholder="Senha"></input>
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-3 lg:w-70 " placeholder="Confimar senha"></input>
+                        </div>
 
-    const profilePayload = await getSafeProfilePayload(
-        requestedProfileIdentifier,
-        authenticatedViewerId
+                        <input type="button" className="bg-blue-500/20 w-50 mt-5 p-3 text-center rounded-xl cursor-not-allowed text-white/15" value={"Criar conta"} title="O serviço de criação de contas, na verdade, nunca vai estar disponível. Use sua conta Googl.e">
+                        </input>
+
+                        <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-3 "></div>
+
+                        <p className="text-black font-thin mt-3 dark:text-white ">ou</p>
+
+                        <button className="bg-white flex items-center gap-5 border p-1.5 px-3 border-black/15 rounded-4xl mt-3 cursor-pointer hover:scale-105 duration-200" onClick={() => { signIn("google", { callbackUrl: "/dashboard" }) }}>
+
+                            <Image src={"/google.svg"} width={30} height={30} alt="Google"></Image>
+                            <p className="text-black ">Continuar com Google</p>
+
+                        </button>
+                        <div className="flex text-sm gap-3 mt-5 lg:text-base lg:mb-5">
+
+                            <p className="text-black dark:text-white">Já tem uma conta?</p>
+                            <Link href={"/login"} className="text-blue-400 underline"> Fazer login</Link>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </LoginBackground>
+
+        </main>
+    </>
+}
+
+
+
+
+
+function Logo() {
+    return (
+        <div className="md:w-2/5 w-full flex justify-center lg:p-10 bg-[#1D1D1D] md:h-full h-36 items-center">
+            <div className="lg:hidden">
+                <Image src="/LogoDesktop.svg" width={220} height={47} alt="Logo" />
+            </div>
+
+            <div className="max-lg:hidden">
+                <Image src="/LogoDesktop.svg" width={450} height={100} alt="Logo" />
+            </div>
+        </div>
     );
+}
 
-    if (!profilePayload) {
-        notFound();
-    }
-
-    return <ProfileView profilePayload={profilePayload} />;
+function LoginBackground({ children }: { children: ReactNode }) {
+    return (
+        <>
+            <div className="bg-white size-full flex flex-col items-center gap-10 dark:bg-[#1D1D1D] justify-center">
+                {children}
+            </div>
+        </>
+    )
 }
 </file>
 
-<file path="app/profile/layout.tsx">
-import SessionProviderWrapper from "@/components/SessionProviderWrapper";
-import { ReactNode } from "react";
+<file path="app/api/auth/[...nextauth]/route.ts">
+import NextAuth from "next-auth"
+import authOptions from "@/auth/authOptions"
 
-export default function ProfileLayout({ children }: { children: ReactNode }) {
-    return <SessionProviderWrapper>{children}</SessionProviderWrapper>;
+const handler = NextAuth(authOptions)
+
+export { handler as GET, handler as POST }
+</file>
+
+<file path="app/dashboard/layout.tsx">
+import SessionProviderWrapper from "@/components/SessionProviderWrapper"
+import { ReactNode } from "react"
+
+export default function App({children} : {children : ReactNode}) {
+    return (
+        <SessionProviderWrapper>
+            {children}
+        </SessionProviderWrapper>
+    )
 }
 </file>
 
-<file path="app/profile/page.tsx">
-import ProfileView from "@/components/ProfileView";
-import { getAuthenticatedViewerId, getSafeProfilePayload } from "@/lib/profileService";
-import { notFound, redirect } from "next/navigation";
-
-export const dynamic = "force-dynamic";
-
-export default async function OwnProfilePage() {
-    const authenticatedViewerId = await getAuthenticatedViewerId();
-
-    if (!authenticatedViewerId) {
-        redirect("/login");
-    }
-
-    const profilePayload = await getSafeProfilePayload(
-        authenticatedViewerId,
-        authenticatedViewerId
-    );
-
-    if (!profilePayload) {
-        notFound();
-    }
-
-    return <ProfileView profilePayload={profilePayload} />;
-}
-</file>
-
-<file path="app/rooms/[roomID]/layout.tsx">
+<file path="app/rooms/layout.tsx">
 import SessionProviderWrapper from "@/components/SessionProviderWrapper"
 import { ReactNode } from "react"
 
@@ -3595,45 +4094,6 @@ async function getUserByEmail(email: string) {
 }
 
 export default authOptions;
-</file>
-
-<file path="components/GenericWideButton.tsx">
-'use client'
-import Link from 'next/link';
-import Image from 'next/image';
-
-export default function GenericWideButton({label, href}:{label: string, href: string}) {
-    return (
-        <>
-            <Link href={href}>
-              <button className="relative bg-[#E2E2E2] dark:bg-[#222222] rounded-xl p-3 text-center text-black/35 dark:text-white/60 hover:scale-[1.02] duration-200 cursor-pointer w-full flex justify-center align-center">
-                {label}
-                <Image src={"/ChevronRight.svg"} width={20} height={20} alt="" className="dark:invert absolute right-3" />
-              </button>
-            </Link>
-        </>
-    )
-}
-</file>
-
-<file path="components/OpenMenuButton.tsx">
-'use client'
-import Link from "next/link"
-import Image from "next/image"
-import { usePathname } from "next/navigation"
-
-export default function OpenMenuButton() {
-    const pathname = usePathname();
-
-
-    return (
-        <Link href={`${pathname}?isMenuOpen=true`}>
-            <button aria-label="Abrir menu" className="cursor-pointer">
-                <Image src={"/Menu.svg"} width={24} height={24} alt="" className="dark:invert"></Image>
-            </button>
-        </Link>
-    )
-}
 </file>
 
 <file path="components/RoomMembersPanel.tsx">
@@ -3932,16 +4392,6 @@ export default function RoomMembersPanel({
 }
 </file>
 
-<file path="components/SessionProviderWrapper.tsx">
-'use client';
-import { SessionProvider } from "next-auth/react";
-import { ReactNode } from "react";
-
-export default function SessionProviderWrapper({children}: {children: ReactNode}) {
-    return <SessionProvider>{children}</SessionProvider>
-}
-</file>
-
 <file path="components/ThemeProvieder.tsx">
 'use client';
 
@@ -4075,67 +4525,42 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
 }
 </file>
 
-<file path="components/UserProfileLink.tsx">
-import Image from "next/image";
-import Link from "next/link";
+<file path="db/instructions.md">
+# Para rodar o servidor local:
+Requisitos: Docker & um terminal qualquer. Inicie no root do projeto.
+*(Verifique se Docker está rodando)*
+Criar container do banco:
+> docker compose --env-file ../.env up -d
 
-type UserProfileLinkProps = {
-    userId: string;
-    username: string;
-    avatarUrl?: string | null;
-};
+Reiniciar container do banco:
+> docker compose --env-file ../.env restart
 
-export default function UserProfileLink({
-    userId,
-    username,
-    avatarUrl = null,
-}: UserProfileLinkProps) {
-    const usernameInitial = username.trim().charAt(0).toUpperCase() || "?";
+Ver logs do container do banco:
+> docker compose --env-file ../.env logs -f
 
-    return (
-        <Link
-            href={`/profile/${userId}`}
-            className="inline-flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-        >
-            <div className="w-7 h-7 rounded-full bg-black/10 dark:bg-white/15 overflow-hidden flex items-center justify-center shrink-0">
-                {avatarUrl ? (
-                    <Image
-                        src={avatarUrl}
-                        width={28}
-                        height={28}
-                        alt={username}
-                        className="w-full h-full object-cover"
-                    />
-                ) : (
-                    <span className="text-xs font-medium text-black dark:text-white">
-                        {usernameInitial}
-                    </span>
-                )}
-            </div>
-            <span className="text-sm font-medium text-black dark:text-white truncate">
-                {username}
-            </span>
-        </Link>
-    );
-}
-</file>
+Desligar container do banco:
+> docker compose --env-file ../.env down
 
-<file path="db/migrations/001_tasks_system.sql">
-ALTER TABLE sala_membros
-    ADD COLUMN IF NOT EXISTS pode_criar_tarefas BOOLEAN NOT NULL DEFAULT TRUE,
-    ADD COLUMN IF NOT EXISTS pode_comentar BOOLEAN NOT NULL DEFAULT TRUE;
+Desligar e remover conteúdo do container do banco:
+> docker compose --env-file ../.env down -v
 
-ALTER TABLE tarefas
-    ADD COLUMN IF NOT EXISTS cor VARCHAR(7) NOT NULL DEFAULT '#14B8A6',
-    ADD COLUMN IF NOT EXISTS concluida BOOLEAN NOT NULL DEFAULT FALSE,
-    ADD COLUMN IF NOT EXISTS criador_id UUID REFERENCES usuarios(id) ON DELETE SET NULL;
 
-CREATE TABLE IF NOT EXISTS tarefa_conclusoes (
-    id_usuario UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    id_tarefa UUID NOT NULL REFERENCES tarefas(id) ON DELETE CASCADE,
-    data_conclusao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id_usuario, id_tarefa)
-);
+## Para acessar o terminal interativo:
+> docker exec -it opennote_db psql -U POSTGRES -d postgres
+
+
+## Comandos úteis no terminal interativo:
+Sair do terminal
+> \q
+
+Listar todas as tabelas
+> \dt
+
+Listar entradas de uma tabela
+> \d <nome>
+
+Listar todos os bancos de dados
+> \l
 </file>
 
 <file path="lib/profileService.ts">
@@ -4550,390 +4975,177 @@ export function deriveLinkDisplayName(
 }
 </file>
 
-<file path="next-auth.d.ts">
-import NextAuth, { DefaultSession } from "next-auth";
-import { JWT } from "next-auth/jwt";
+<file path=".gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-declare module "next-auth" {
-    interface Session {
-        user: {
-            id: string,
-            email: string,
-            image: string,
-            name: string
-        }
-    }
-}
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+ARCHITECTURE.md
 </file>
 
-<file path="postcss.config.mjs">
-const config = {
-  plugins: {
-    "@tailwindcss/postcss": {},
-  },
-};
+<file path="eslint.config.mjs">
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
 
-export default config;
-</file>
-
-<file path="tsconfig.json">
-{
-  "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "react-jsx",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": ["./*"]
-    }
-  },
-  "include": [
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "**/*.mts"
-  ],
-  "exclude": ["node_modules"]
-}
+  ]),
+  {
+    rules: {
+      "@typescript-eslint/no-unsafe-function-type": "off"
+    }
+  }
+]);
+
+export default eslintConfig;
 </file>
 
-<file path="actions/deleteRoom.ts">
-"use server";
+<file path="next.config.ts">
+import type { NextConfig } from "next";
 
-import authOptions from "@/auth/authOptions";
-import controller from "@/db/controller";
-import { getServerSession } from "next-auth";
-import { revalidatePath } from "next/cache";
-
-type DeleteRoomResult = {
-    success?: boolean;
-    error?: string;
+const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.googleusercontent.com"
+      }
+    ]
+  }
 };
 
-const uuidValidationRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export default nextConfig;
+</file>
 
-export default async function deleteRoom(targetRoomIdentifier: string): Promise<DeleteRoomResult> {
-    const userSession = await getServerSession(authOptions);
-    const authenticatedUserId = userSession?.user?.id;
+<file path="proxy.ts">
+import { getToken } from "next-auth/jwt"
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+import path from "node:path"
 
-    if (!userSession || !authenticatedUserId || typeof authenticatedUserId !== "string" || authenticatedUserId.length !== 36 || !uuidValidationRegex.test(authenticatedUserId)) {
-        return { error: "Usuário não autenticado." };
+export async function proxy(request: NextRequest) {
+    const { pathname } = request.nextUrl
+    
+    const token = await getToken({ req: request })
+    const isLoggedIn = !!token
+
+    // 1. If logged in and trying to go to /login, redirect to /dashboard
+    if (pathname.startsWith("/login") && isLoggedIn) {
+        return NextResponse.redirect(new URL("/dashboard", request.nextUrl))
     }
 
-    if (typeof targetRoomIdentifier !== "string") {
-        return { error: "Identificador de sala inválido." };
+    if (pathname == "/" && isLoggedIn) {
+        return NextResponse.redirect(new URL("/dashboard", request.nextUrl))
     }
 
-    const trimmedRoomIdentifier = targetRoomIdentifier.trim();
-
-    if (trimmedRoomIdentifier.length !== 36 || !uuidValidationRegex.test(trimmedRoomIdentifier)) {
-        return { error: "Identificador de sala inválido." };
+    // 2. If NOT logged in and trying to access protected routes, redirect to /login
+    const isProtectedRoute = pathname === "/" || pathname.startsWith("/dashboard") || pathname.startsWith("/profile")
+    if (isProtectedRoute && !isLoggedIn) {
+        const loginUrl = new URL("/login", request.nextUrl)
+        // Optional: track where they came from
+        loginUrl.searchParams.set("callbackUrl", request.url) 
+        return NextResponse.redirect(loginUrl)
     }
 
-    const normalizedRoomIdentifier = trimmedRoomIdentifier.toLowerCase();
+    return NextResponse.next()
+}
+
+export const config = { 
+    matcher: ['/dashboard/:path*', '/profile', '/profile/:path*', '/login', '/'] 
+}
+</file>
+
+<file path="app/api/v1/rooms/route.ts">
+import { NextRequest, NextResponse } from 'next/server';
+import controller from '@/db/controller';
+import { getServerSession } from 'next-auth';
+
+export async function GET(request: NextRequest) {
+    const session = await getServerSession();
+
+    if (!session?.user?.email) {
+        return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
+    const query = `
+        SELECT s.id, s.nome, s.capacidade, s.tipo, s.icone_url, s.lider_id
+        FROM salas s
+        INNER JOIN sala_membros sm ON s.id = sm.id_sala
+        INNER JOIN usuarios u ON sm.id_usuario = u.id
+        WHERE u.email = $1
+    `;
 
     try {
-        const deletedRoomsList = await controller.runQuery<{ id: string }>(
-            "DELETE FROM salas WHERE id = $1 AND lider_id = $2 RETURNING id;",
-            [normalizedRoomIdentifier, authenticatedUserId]
-        );
-
-        if (deletedRoomsList.length === 0) {
-            return { error: "Sala não encontrada ou você não tem permissão para deletá-la." };
-        }
-
-        revalidatePath("/dashboard");
-        revalidatePath("/rooms");
-        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
-
-        return { success: true };
-    } catch (databaseOperationError) {
-        console.error("Erro ao deletar sala:", databaseOperationError);
-        return { error: "Não foi possível deletar a sala." };
+        const rooms = await controller.runQuery(query, [session.user.email]);
+        return NextResponse.json(rooms, { status: 200 });
+    } catch (error) {
+        console.error('Erro ao buscar salas:', error);
+        return NextResponse.json({ message: "Erro interno ao buscar salas" }, { status: 500 });
     }
 }
 </file>
 
-<file path="actions/joinRoom.ts">
-"use server";
-
-import authOptions from "@/auth/authOptions";
-import controller from "@/db/controller";
-import { getServerSession } from "next-auth";
-import { revalidatePath } from "next/cache";
-
-type JoinRoomResult = {
-    success?: boolean;
-    error?: string;
-    roomId?: string;
-};
-
-const uuidValidationRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export default async function joinRoom(formDataPayload: FormData): Promise<JoinRoomResult> {
-    const userSession = await getServerSession(authOptions);
-    const authenticatedUserId = userSession?.user?.id;
-
-    if (!userSession || !authenticatedUserId || typeof authenticatedUserId !== "string" || authenticatedUserId.length !== 36 || !uuidValidationRegex.test(authenticatedUserId)) {
-        return { error: "Usuário não autenticado." };
-    }
-
-    if (!formDataPayload || typeof formDataPayload.get !== "function") {
-        return { error: "Dados de requisição inválidos." };
-    }
-
-    const roomIdentifierEntry = formDataPayload.get("roomId");
-
-    if (typeof roomIdentifierEntry !== "string") {
-        return { error: "Código UUID inválido." };
-    }
-
-    const trimmedRoomIdentifier = roomIdentifierEntry.trim();
-
-    if (trimmedRoomIdentifier.length !== 36 || !uuidValidationRegex.test(trimmedRoomIdentifier)) {
-        return { error: "Código UUID inválido." };
-    }
-
-    const normalizedRoomIdentifier = trimmedRoomIdentifier.toLowerCase();
-
-    try {
-        const targetRoomsList = await controller.runQuery<{ id: string; lider_id: string }>(
-            "SELECT id, lider_id FROM salas WHERE id = $1;",
-            [normalizedRoomIdentifier]
-        );
-
-        if (targetRoomsList.length === 0) {
-            return { error: "Sala não encontrada." };
-        }
-
-        const targetRoom = targetRoomsList[0];
-
-        if (targetRoom.lider_id.toLowerCase() === authenticatedUserId.toLowerCase()) {
-            return { error: "Você já é o líder desta sala." };
-        }
-
-        const existingMembershipsList = await controller.runQuery<{ id_sala: string }>(
-            "SELECT id_sala FROM sala_membros WHERE id_usuario = $1 AND id_sala = $2;",
-            [authenticatedUserId, normalizedRoomIdentifier]
-        );
-
-        if (existingMembershipsList.length > 0) {
-            return { error: "Você já participa desta sala." };
-        }
-
-        const insertedMembershipsList = await controller.runQuery<{ id_sala: string }>(
-            "INSERT INTO sala_membros (id_usuario, id_sala) VALUES ($1, $2) ON CONFLICT (id_usuario, id_sala) DO NOTHING RETURNING id_sala;",
-            [authenticatedUserId, normalizedRoomIdentifier]
-        );
-
-        if (insertedMembershipsList.length === 0) {
-            return { error: "Você já participa desta sala." };
-        }
-
-        revalidatePath("/dashboard");
-        revalidatePath("/rooms");
-        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
-
-        return { success: true, roomId: normalizedRoomIdentifier };
-    } catch (databaseOperationError) {
-        console.error("Erro ao processar ingresso na sala:", databaseOperationError);
-        return { error: "Não foi possível processar a entrada na sala." };
-    }
-}
-</file>
-
-<file path="actions/leaveRoom.ts">
-"use server";
-
-import authOptions from "@/auth/authOptions";
-import controller from "@/db/controller";
-import { getServerSession } from "next-auth";
-import { revalidatePath } from "next/cache";
-
-type LeaveRoomResult = {
-    success?: boolean;
-    error?: string;
-};
-
-const uuidValidationRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export default async function leaveRoom(targetRoomIdentifier: string): Promise<LeaveRoomResult> {
-    const userSession = await getServerSession(authOptions);
-    const authenticatedUserId = userSession?.user?.id;
-
-    if (!userSession || !authenticatedUserId || typeof authenticatedUserId !== "string" || authenticatedUserId.length !== 36 || !uuidValidationRegex.test(authenticatedUserId)
-    ) {
-        return { error: "Usuário não autenticado." };
-    }
-
-    if (typeof targetRoomIdentifier !== "string") {
-        return { error: "Identificador de sala inválido." };
-    }
-
-    const trimmedRoomIdentifier = targetRoomIdentifier.trim();
-
-    if (trimmedRoomIdentifier.length !== 36 || !uuidValidationRegex.test(trimmedRoomIdentifier)) {
-        return { error: "Identificador de sala inválido." };
-    }
-
-    const normalizedRoomIdentifier = trimmedRoomIdentifier.toLowerCase();
-
-    try {
-        const deletedMembershipsList = await controller.runQuery<{ id_sala: string }>(
-            "DELETE FROM sala_membros WHERE id_usuario = $1 AND id_sala = $2 AND EXISTS (SELECT 1 FROM salas WHERE id = $2 AND lider_id <> $1) RETURNING id_sala;",
-            [authenticatedUserId, normalizedRoomIdentifier]
-        );
-
-        if (deletedMembershipsList.length === 0) {
-            return { error: "Sala não encontrada ou você não pode sair dela." };
-        }
-
-        revalidatePath("/dashboard");
-        revalidatePath("/rooms");
-        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
-
-        return { success: true };
-    } catch (databaseOperationError) {
-        console.error("Erro ao sair da sala:", databaseOperationError);
-        return { error: "Não foi possível sair da sala." };
-    }
-}
-</file>
-
-<file path="app/(auth)/create/page.tsx">
+<file path="components/AddRoomModal.tsx">
 'use client'
-import Image from "next/image"
-import Link from "next/link"
-import { useSession } from "next-auth/react";
-import { signIn } from "next-auth/react";
-import { ReactNode } from "react"
-import { redirect } from "next/navigation";
+import AddRoomForm from "./AddRoomForm";
+import { useState } from "react";
+export default function AddRoomButton() {
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
-export default function Page() {
-
-    return <>
-        <main className="flex items-center gap-5 flex-col h-screen lg:flex-row">
-            <Logo />
-            <LoginBackground>
-
-
-                <div className="2xl:scale-125">
-                    <h1 className="text-black text-sm text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Criar conta</h1>
-
-                    <div className="bg-white dark:bg-[#1D1D1D] dark:border-white/25 dark:bg- border-2 w-84 h-114 border-black/25 rounded-4xl flex flex-col items-center lg:w-90 lg:h-110">
-
-                        <div className="text-xs w-full h-45 flex flex-col items-center justify-center gap-5 lg:mt-5">
-                            <input className=" bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-3 lg:w-70  " placeholder="Nome de usuário"></input>
-                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-3 lg:w-70  " placeholder="E-mail"></input>
-                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-3 lg:w-70 " placeholder="Senha"></input>
-                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-3 lg:w-70 " placeholder="Confimar senha"></input>
-                        </div>
-
-                        <input type="button" className="bg-blue-500 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-pointer text-white" value={"Criar conta"}>
-                        </input>
-
-                        <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-3 "></div>
-
-                        <p className="text-black font-thin mt-3 dark:text-white ">ou</p>
-
-                        <button className="bg-white flex items-center gap-5 border p-1.5 px-3 border-black/15 rounded-4xl mt-3 cursor-pointer hover:scale-105 duration-200" onClick={() => { signIn("google", { callbackUrl: "/dashboard" }) }}>
-
-                            <Image src={"/google.svg"} width={30} height={30} alt="Google"></Image>
-                            <p className="text-black ">Continuar com Google</p>
-
-                        </button>
-                        <div className="flex text-sm gap-3 mt-5 lg:text-base lg:mb-5">
-
-                            <p className="text-black dark:text-white">Já tem uma conta?</p>
-                            <Link href={"/login"} className="text-blue-400 underline"> Fazer login</Link>
-
-                        </div>
-
-                    </div>
-                </div>
-
-            </LoginBackground>
-
-        </main>
-    </>
-}
-
-
-
-
-
-function Logo() {
-    return (
-        <div className="md:w-2/5 w-full flex justify-center lg:p-10 bg-[#1D1D1D] md:h-full h-36 items-center">
-            <div className="lg:hidden">
-                <Image src="/LogoDesktop.svg" width={220} height={47} alt="Logo" />
-            </div>
-
-            <div className="max-lg:hidden">
-                <Image src="/LogoDesktop.svg" width={450} height={100} alt="Logo" />
-            </div>
-        </div>
-    );
-}
-
-function LoginBackground({ children }: { children: ReactNode }) {
     return (
         <>
-            <div className="bg-white size-full flex flex-col items-center gap-10 dark:bg-[#1D1D1D] justify-center">
-                {children}
-            </div>
+            <button className=" bg-teal-400 rounded-xl p-3 text-center text-black hover:scale-[1.02] duration-200 cursor-pointer" onClick={() => { setIsModalOpen(!isModalOpen) }}>
+                + Adicionar Sala
+            </button>
+            <AddRoomForm visible={isModalOpen} closeModal={() => { setIsModalOpen(false) }} />
         </>
-    )
-}
-</file>
-
-<file path="app/api/auth/[...nextauth]/route.ts">
-import NextAuth from "next-auth"
-import authOptions from "@/auth/authOptions"
-
-const handler = NextAuth(authOptions)
-
-export { handler as GET, handler as POST }
-</file>
-
-<file path="app/dashboard/layout.tsx">
-import SessionProviderWrapper from "@/components/SessionProviderWrapper"
-import { ReactNode } from "react"
-
-export default function App({children} : {children : ReactNode}) {
-    return (
-        <SessionProviderWrapper>
-            {children}
-        </SessionProviderWrapper>
-    )
-}
-</file>
-
-<file path="app/rooms/layout.tsx">
-import SessionProviderWrapper from "@/components/SessionProviderWrapper"
-import { ReactNode } from "react"
-
-export default function App({children} : {children : ReactNode}) {
-    return (
-        <SessionProviderWrapper>
-            {children}
-        </SessionProviderWrapper>
     )
 }
 </file>
@@ -5729,169 +5941,35 @@ export default function ProfileView({ profilePayload }: { profilePayload: Profil
 }
 </file>
 
-<file path="db/instructions.md">
-# Para rodar o servidor local:
-Requisitos: Docker & um terminal qualquer. Inicie no root do projeto.
-*(Verifique se Docker está rodando)*
-Criar container do banco:
-> docker compose --env-file ../.env up -d
+<file path="db/docker-compose.yml">
+services:
+  db:
+    image: postgres:18
+    container_name: opennote_db
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - pgdata:/var/lib/postgresql/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-Reiniciar container do banco:
-> docker compose --env-file ../.env restart
-
-Ver logs do container do banco:
-> docker compose --env-file ../.env logs -f
-
-Desligar container do banco:
-> docker compose --env-file ../.env down
-
-Desligar e remover conteúdo do container do banco:
-> docker compose --env-file ../.env down -v
-
-
-## Para acessar o terminal interativo:
-> docker exec -it opennote_db psql -U POSTGRES -d postgres
-
-
-## Comandos úteis no terminal interativo:
-Sair do terminal
-> \q
-
-Listar todas as tabelas
-> \dt
-
-Listar entradas de uma tabela
-> \d <nome>
-
-Listar todos os bancos de dados
-> \l
+volumes:
+  pgdata:
 </file>
 
-<file path=".gitignore">
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-ARCHITECTURE.md
-</file>
-
-<file path="eslint.config.mjs">
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
-
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
-  {
-    rules: {
-      "@typescript-eslint/no-unsafe-function-type": "off"
-    }
-  }
-]);
-
-export default eslintConfig;
-</file>
-
-<file path="next.config.ts">
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "*.googleusercontent.com"
-      }
-    ]
-  }
-};
-
-export default nextConfig;
-</file>
-
-<file path="proxy.ts">
-import { getToken } from "next-auth/jwt"
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
-import path from "node:path"
-
-export async function proxy(request: NextRequest) {
-    const { pathname } = request.nextUrl
-    
-    const token = await getToken({ req: request })
-    const isLoggedIn = !!token
-
-    // 1. If logged in and trying to go to /login, redirect to /dashboard
-    if (pathname.startsWith("/login") && isLoggedIn) {
-        return NextResponse.redirect(new URL("/dashboard", request.nextUrl))
-    }
-
-    if (pathname == "/" && isLoggedIn) {
-        return NextResponse.redirect(new URL("/dashboard", request.nextUrl))
-    }
-
-    // 2. If NOT logged in and trying to access protected routes, redirect to /login
-    const isProtectedRoute = pathname === "/" || pathname.startsWith("/dashboard") || pathname.startsWith("/profile")
-    if (isProtectedRoute && !isLoggedIn) {
-        const loginUrl = new URL("/login", request.nextUrl)
-        // Optional: track where they came from
-        loginUrl.searchParams.set("callbackUrl", request.url) 
-        return NextResponse.redirect(loginUrl)
-    }
-
-    return NextResponse.next()
-}
-
-export const config = { 
-    matcher: ['/dashboard/:path*', '/profile', '/profile/:path*', '/login', '/'] 
-}
+<file path="README.md">
+Template JS
 </file>
 
 <file path="actions/createTask.ts">
@@ -6159,36 +6237,6 @@ export default async function createTask(
 }
 </file>
 
-<file path="app/api/v1/rooms/route.ts">
-import { NextRequest, NextResponse } from 'next/server';
-import controller from '@/db/controller';
-import { getServerSession } from 'next-auth';
-
-export async function GET(request: NextRequest) {
-    const session = await getServerSession();
-
-    if (!session?.user?.email) {
-        return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-    }
-
-    const query = `
-        SELECT s.id, s.nome, s.capacidade, s.tipo, s.icone_url, s.lider_id
-        FROM salas s
-        INNER JOIN sala_membros sm ON s.id = sm.id_sala
-        INNER JOIN usuarios u ON sm.id_usuario = u.id
-        WHERE u.email = $1
-    `;
-
-    try {
-        const rooms = await controller.runQuery(query, [session.user.email]);
-        return NextResponse.json(rooms, { status: 200 });
-    } catch (error) {
-        console.error('Erro ao buscar salas:', error);
-        return NextResponse.json({ message: "Erro interno ao buscar salas" }, { status: 500 });
-    }
-}
-</file>
-
 <file path="app/globals.css">
 @import "tailwindcss";
 
@@ -6227,24 +6275,6 @@ html.reduce-motion *::after {
 }
 </file>
 
-<file path="components/AddRoomModal.tsx">
-'use client'
-import AddRoomForm from "./AddRoomForm";
-import { useState } from "react";
-export default function AddRoomButton() {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
-    return (
-        <>
-            <button className=" bg-teal-400 rounded-xl p-3 text-center text-black hover:scale-[1.02] duration-200 cursor-pointer" onClick={() => { setIsModalOpen(!isModalOpen) }}>
-                + Adicionar Sala
-            </button>
-            <AddRoomForm visible={isModalOpen} closeModal={() => { setIsModalOpen(false) }} />
-        </>
-    )
-}
-</file>
-
 <file path="components/Header.tsx">
 import Image from "next/image"
 import Link from "next/link"
@@ -6269,37 +6299,6 @@ export default function Header() {
         </>
     )
 }
-</file>
-
-<file path="db/docker-compose.yml">
-services:
-  db:
-    image: postgres:18
-    container_name: opennote_db
-    restart: unless-stopped
-    env_file:
-      - ../.env
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
-      - pgdata:/var/lib/postgresql/
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  pgdata:
-</file>
-
-<file path="README.md">
-Template JS
 </file>
 
 <file path="db/controller.ts">
@@ -6517,347 +6516,6 @@ export default async function createRoom(formData: FormData): Promise<CreateRoom
         console.error("Erro ao criar sala:", error);
         return { error: "Não foi possível criar a sala." };
     }
-}
-</file>
-
-<file path="app/rooms/[roomID]/page.tsx">
-import authOptions from "@/auth/authOptions";
-import joinRoom from "@/actions/joinRoom";
-import DashboardMenu from "@/components/DashboardMenu";
-import Header from "@/components/Header";
-import type { RoomMemberItem } from "@/components/RoomMembersPanel";
-import RoomWorkspace from "@/components/RoomWorkspace";
-import controller from "@/db/controller";
-import { ensureTaskReadsTable } from "@/lib/taskReads";
-import {
-  DEFAULT_TASK_COLOR,
-  isValidUuid,
-  normalizeTaskColor,
-  normalizeUuid,
-  RoomTaskItem,
-  TaskLinkItem,
-  validateAndNormalizeExternalUrl,
-} from "@/lib/tasks";
-import { Lock, LockOpen, UserPlus } from "lucide-react";
-import { getServerSession } from "next-auth";
-import Image from "next/image";
-import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { Suspense } from "react";
-
-export const dynamic = "force-dynamic";
-
-type RoomAccessRow = {
-  id: string;
-  nome: string;
-  tipo: string;
-  icone_url: string | null;
-  lider_id: string;
-  lider_username: string;
-  lider_foto: string | null;
-  membro_usuario_id: string | null;
-  pode_criar_tarefas: boolean | null;
-  pode_mandar_mensagens: boolean | null;
-};
-
-type MemberRow = {
-  id: string;
-  username: string;
-  mirror_foto: string | null;
-  pode_criar_tarefas: boolean;
-  pode_mandar_mensagens: boolean;
-};
-
-type TaskRow = {
-  id: string;
-  nome: string;
-  descricao: string | null;
-  data_entrega_str: string;
-  cor: string | null;
-  concluida: boolean;
-  criador_id: string | null;
-  autor_nome: string | null;
-  has_unread_messages: boolean;
-};
-
-type AttachmentRow = {
-  id: number;
-  nome: string;
-  url_anexo: string;
-  id_tarefa: string;
-};
-
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ roomID: string }>;
-}) {
-  const userSession = await getServerSession(authOptions);
-  const authenticatedUserId = userSession?.user?.id;
-
-  if (!userSession || !isValidUuid(authenticatedUserId)) {
-    redirect("/login");
-  }
-
-  const { roomID } = await params;
-  if (!isValidUuid(roomID)) {
-    notFound();
-  }
-
-  const normalizedUserId = normalizeUuid(authenticatedUserId);
-  const normalizedRoomIdentifier = normalizeUuid(roomID);
-
-  const roomRows = await controller.runQuery<RoomAccessRow>(
-    `SELECT
-            s.id,
-            s.nome,
-            s.tipo,
-            s.icone_url,
-            s.lider_id,
-            lider.username AS lider_username,
-            lider.mirror_foto AS lider_foto,
-            sm.id_usuario AS membro_usuario_id,
-            sm.pode_criar_tarefas,
-            sm.pode_mandar_mensagens
-         FROM salas s
-         INNER JOIN usuarios lider ON lider.id = s.lider_id
-         LEFT JOIN sala_membros sm
-            ON sm.id_sala = s.id AND sm.id_usuario = $2
-         WHERE s.id = $1;`,
-    [normalizedRoomIdentifier, normalizedUserId],
-  );
-
-  if (roomRows.length === 0) {
-    notFound();
-  }
-
-  const targetRoom = roomRows[0];
-  const normalizedLeaderId = normalizeUuid(targetRoom.lider_id);
-  const isRoomLeader = normalizedLeaderId === normalizedUserId;
-  const isRoomMember = targetRoom.membro_usuario_id !== null;
-  const roomType = targetRoom.tipo === "livre" ? "livre" : "restrita";
-  const isRestrictedRoom = roomType === "restrita";
-
-  if (!isRoomLeader && !isRoomMember) {
-    async function handleConfirmJoinRoom() {
-      "use server";
-      const formData = new FormData();
-      formData.set("roomId", normalizedRoomIdentifier);
-      await joinRoom(formData);
-    }
-
-    return (
-      <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
-        <Header />
-        <DashboardMenu />
-
-        <main className="px-4 py-12 max-w-md mx-auto flex flex-col items-center text-center gap-6">
-          {!targetRoom.icone_url ? (
-            <div className="w-24 h-24 rounded-full bg-[#E2E2E2] dark:bg-[#303030] flex items-center justify-center text-4xl font-bold text-black dark:text-white">
-              {targetRoom.nome.charAt(0).toUpperCase()}
-            </div>
-          ) : (
-            <Image
-              width={192}
-              height={192}
-              quality={95}
-              src={targetRoom.icone_url}
-              alt={targetRoom.nome}
-              className="w-24 h-24 rounded-full object-cover"
-            />
-          )}
-
-          <div className="flex flex-col items-center gap-2">
-            <span
-              className={`px-3 py-1 text-xs font-semibold flex items-center gap-1.5 rounded-full ${
-                isRestrictedRoom
-                  ? "bg-[#E60000]/15 text-[#E60000] dark:bg-[#E60000]/20 dark:text-red-400"
-                  : "bg-[#139C1A]/15 text-[#139C1A] dark:bg-[#139C1A]/20 dark:text-green-400"
-              }`}
-            >
-              {isRestrictedRoom ? (
-                <Lock className="w-3.5 h-3.5" />
-              ) : (
-                <LockOpen className="w-3.5 h-3.5" />
-              )}
-              <span>{isRestrictedRoom ? "Sala Restrita" : "Sala Livre"}</span>
-            </span>
-
-            <h1 className="text-2xl font-bold text-black dark:text-white">
-              {targetRoom.nome}
-            </h1>
-            <p className="text-sm text-black/60 dark:text-white/60">
-              Líder: {targetRoom.lider_username}
-            </p>
-          </div>
-
-          <form action={handleConfirmJoinRoom} className="w-full flex flex-col gap-3">
-            <button
-              type="submit"
-              className="w-full py-3 px-5 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>Entrar na sala</span>
-            </button>
-
-            <Link
-              href="/rooms"
-              className="w-full py-2.5 px-5 rounded-xl text-sm font-medium text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-            >
-              Voltar para minhas salas
-            </Link>
-          </form>
-        </main>
-      </div>
-    );
-  }
-
-  const canCreateTasks =
-    isRoomLeader ||
-    (roomType === "livre" && targetRoom.pode_criar_tarefas !== false);
-  const canSendMessages =
-    isRoomLeader || targetRoom.pode_mandar_mensagens !== false;
-
-  await ensureTaskReadsTable();
-
-  const [taskRows, attachmentRows, memberRows] = await Promise.all([
-    controller.runQuery<TaskRow>(
-      `SELECT
-                t.id,
-                t.nome,
-                t.descricao,
-                TO_CHAR(t.data_entrega, 'YYYY-MM-DD') AS data_entrega_str,
-                t.cor,
-                (tc.id_usuario IS NOT NULL) AS concluida,
-                t.criador_id,
-                u.username AS autor_nome,
-                EXISTS (
-                    SELECT 1
-                    FROM threads th
-                    INNER JOIN comentarios c ON c.pertence_a = th.id
-                    LEFT JOIN tarefa_leituras tl
-                        ON tl.id_tarefa = t.id AND tl.id_usuario = $2
-                    WHERE th.id_tarefa = t.id
-                      AND c.id > COALESCE(tl.ultimo_comentario_id, 0)
-                      AND (c.autor_id IS NULL OR c.autor_id <> $2)
-                ) AS has_unread_messages
-             FROM tarefas t
-             LEFT JOIN usuarios u ON u.id = t.criador_id
-             LEFT JOIN tarefa_conclusoes tc
-                ON tc.id_tarefa = t.id AND tc.id_usuario = $2
-             WHERE t.id_sala = $1 AND t.data_entrega IS NOT NULL
-             ORDER BY t.data_entrega ASC, t.data_criacao ASC;`,
-      [normalizedRoomIdentifier, normalizedUserId],
-    ),
-    controller.runQuery<AttachmentRow>(
-      `SELECT a.id, a.nome, a.url_anexo, a.id_tarefa
-             FROM anexos a
-             INNER JOIN tarefas t ON t.id = a.id_tarefa
-             WHERE t.id_sala = $1
-             ORDER BY a.data_adicao ASC, a.id ASC;`,
-      [normalizedRoomIdentifier],
-    ),
-    controller.runQuery<MemberRow>(
-      `SELECT
-                u.id,
-                u.username,
-                u.mirror_foto,
-                sm.pode_criar_tarefas,
-                sm.pode_mandar_mensagens
-             FROM sala_membros sm
-             INNER JOIN usuarios u ON u.id = sm.id_usuario
-             WHERE sm.id_sala = $1
-             ORDER BY (u.id = $2) DESC, sm.data_entrada ASC, u.username ASC;`,
-      [normalizedRoomIdentifier, normalizedLeaderId],
-    ),
-  ]);
-
-  const orderedMembers: RoomMemberItem[] = [];
-  const leaderInMembers = memberRows.find(
-    (row) => normalizeUuid(row.id) === normalizedLeaderId,
-  );
-
-  orderedMembers.push({
-    id: normalizedLeaderId,
-    username: leaderInMembers?.username || targetRoom.lider_username,
-    mirrorFoto: leaderInMembers?.mirror_foto ?? targetRoom.lider_foto,
-    isLeader: true,
-    podeCriarTarefas: true,
-    podeMandarMensagens: true,
-  });
-
-  for (const memberRow of memberRows) {
-    const normalizedMemberId = normalizeUuid(memberRow.id);
-    if (normalizedMemberId === normalizedLeaderId) {
-      continue;
-    }
-
-    orderedMembers.push({
-      id: normalizedMemberId,
-      username: memberRow.username,
-      mirrorFoto: memberRow.mirror_foto,
-      isLeader: false,
-      podeCriarTarefas: Boolean(memberRow.pode_criar_tarefas),
-      podeMandarMensagens: Boolean(memberRow.pode_mandar_mensagens),
-    });
-  }
-
-  const linksByTaskId = new Map<string, TaskLinkItem[]>();
-  for (const attachmentRow of attachmentRows) {
-    const safeUrl = validateAndNormalizeExternalUrl(attachmentRow.url_anexo);
-    if (!safeUrl) {
-      continue;
-    }
-
-    const existingLinks = linksByTaskId.get(attachmentRow.id_tarefa) ?? [];
-    existingLinks.push({
-      id: attachmentRow.id,
-      nome: attachmentRow.nome,
-      url_anexo: safeUrl,
-    });
-    linksByTaskId.set(attachmentRow.id_tarefa, existingLinks);
-  }
-
-  const roomTasks: RoomTaskItem[] = taskRows.map((taskRow) => ({
-    id: taskRow.id,
-    nome: taskRow.nome,
-    descricao: taskRow.descricao,
-    dataEntrega: taskRow.data_entrega_str,
-    cor: normalizeTaskColor(taskRow.cor) ?? DEFAULT_TASK_COLOR,
-    concluida: Boolean(taskRow.concluida),
-    criadorId: taskRow.criador_id ? normalizeUuid(taskRow.criador_id) : null,
-    autorNome: taskRow.autor_nome?.trim() || "Usuário removido",
-    links: linksByTaskId.get(taskRow.id) ?? [],
-    hasUnreadMessages: Boolean(taskRow.has_unread_messages),
-  }));
-
-  return (
-    <Suspense
-      fallback={<div className="min-h-screen bg-white dark:bg-[#1D1D1D]" />}
-    >
-      <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
-        <Header />
-        <DashboardMenu />
-
-        <main className="px-4 py-6 lg:px-10 max-w-7xl mx-auto flex flex-col gap-8">
-          <RoomWorkspace
-            roomId={normalizedRoomIdentifier}
-            roomName={targetRoom.nome}
-            roomIconUrl={targetRoom.icone_url}
-            roomType={roomType}
-            leaderUsername={targetRoom.lider_username}
-            tasks={roomTasks}
-            members={orderedMembers}
-            currentUserId={normalizedUserId}
-            currentUserName={userSession.user?.name?.trim() || "Você"}
-            isRoomLeader={isRoomLeader}
-            canCreateTasks={canCreateTasks}
-            canSendMessages={canSendMessages}
-          />
-        </main>
-      </div>
-    </Suspense>
-  );
 }
 </file>
 
@@ -7318,6 +6976,347 @@ export default function AddTaskForm({
 }
 </file>
 
+<file path="app/rooms/[roomID]/page.tsx">
+import authOptions from "@/auth/authOptions";
+import joinRoom from "@/actions/joinRoom";
+import DashboardMenu from "@/components/DashboardMenu";
+import Header from "@/components/Header";
+import type { RoomMemberItem } from "@/components/RoomMembersPanel";
+import RoomWorkspace from "@/components/RoomWorkspace";
+import controller from "@/db/controller";
+import { ensureTaskReadsTable } from "@/lib/taskReads";
+import {
+  DEFAULT_TASK_COLOR,
+  isValidUuid,
+  normalizeTaskColor,
+  normalizeUuid,
+  RoomTaskItem,
+  TaskLinkItem,
+  validateAndNormalizeExternalUrl,
+} from "@/lib/tasks";
+import { Lock, LockOpen, UserPlus } from "lucide-react";
+import { getServerSession } from "next-auth";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
+
+export const dynamic = "force-dynamic";
+
+type RoomAccessRow = {
+  id: string;
+  nome: string;
+  tipo: string;
+  icone_url: string | null;
+  lider_id: string;
+  lider_username: string;
+  lider_foto: string | null;
+  membro_usuario_id: string | null;
+  pode_criar_tarefas: boolean | null;
+  pode_mandar_mensagens: boolean | null;
+};
+
+type MemberRow = {
+  id: string;
+  username: string;
+  mirror_foto: string | null;
+  pode_criar_tarefas: boolean;
+  pode_mandar_mensagens: boolean;
+};
+
+type TaskRow = {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  data_entrega_str: string;
+  cor: string | null;
+  concluida: boolean;
+  criador_id: string | null;
+  autor_nome: string | null;
+  has_unread_messages: boolean;
+};
+
+type AttachmentRow = {
+  id: number;
+  nome: string;
+  url_anexo: string;
+  id_tarefa: string;
+};
+
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ roomID: string }>;
+}) {
+  const userSession = await getServerSession(authOptions);
+  const authenticatedUserId = userSession?.user?.id;
+
+  if (!userSession || !isValidUuid(authenticatedUserId)) {
+    redirect("/login");
+  }
+
+  const { roomID } = await params;
+  if (!isValidUuid(roomID)) {
+    notFound();
+  }
+
+  const normalizedUserId = normalizeUuid(authenticatedUserId);
+  const normalizedRoomIdentifier = normalizeUuid(roomID);
+
+  const roomRows = await controller.runQuery<RoomAccessRow>(
+    `SELECT
+            s.id,
+            s.nome,
+            s.tipo,
+            s.icone_url,
+            s.lider_id,
+            lider.username AS lider_username,
+            lider.mirror_foto AS lider_foto,
+            sm.id_usuario AS membro_usuario_id,
+            sm.pode_criar_tarefas,
+            sm.pode_mandar_mensagens
+         FROM salas s
+         INNER JOIN usuarios lider ON lider.id = s.lider_id
+         LEFT JOIN sala_membros sm
+            ON sm.id_sala = s.id AND sm.id_usuario = $2
+         WHERE s.id = $1;`,
+    [normalizedRoomIdentifier, normalizedUserId],
+  );
+
+  if (roomRows.length === 0) {
+    notFound();
+  }
+
+  const targetRoom = roomRows[0];
+  const normalizedLeaderId = normalizeUuid(targetRoom.lider_id);
+  const isRoomLeader = normalizedLeaderId === normalizedUserId;
+  const isRoomMember = targetRoom.membro_usuario_id !== null;
+  const roomType = targetRoom.tipo === "livre" ? "livre" : "restrita";
+  const isRestrictedRoom = roomType === "restrita";
+
+  if (!isRoomLeader && !isRoomMember) {
+    async function handleConfirmJoinRoom() {
+      "use server";
+      const formData = new FormData();
+      formData.set("roomId", normalizedRoomIdentifier);
+      await joinRoom(formData);
+    }
+
+    return (
+      <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
+        <Header />
+        <DashboardMenu />
+
+        <main className="px-4 py-12 max-w-md mx-auto flex flex-col items-center text-center gap-6">
+          {!targetRoom.icone_url ? (
+            <div className="w-24 h-24 rounded-full bg-[#E2E2E2] dark:bg-[#303030] flex items-center justify-center text-4xl font-bold text-black dark:text-white">
+              {targetRoom.nome.charAt(0).toUpperCase()}
+            </div>
+          ) : (
+            <Image
+              width={192}
+              height={192}
+              quality={95}
+              src={targetRoom.icone_url}
+              alt={targetRoom.nome}
+              className="w-24 h-24 rounded-full object-cover"
+            />
+          )}
+
+          <div className="flex flex-col items-center gap-2">
+            <span
+              className={`px-3 py-1 text-xs font-semibold flex items-center gap-1.5 rounded-full ${
+                isRestrictedRoom
+                  ? "bg-[#E60000]/15 text-[#E60000] dark:bg-[#E60000]/20 dark:text-red-400"
+                  : "bg-[#139C1A]/15 text-[#139C1A] dark:bg-[#139C1A]/20 dark:text-green-400"
+              }`}
+            >
+              {isRestrictedRoom ? (
+                <Lock className="w-3.5 h-3.5" />
+              ) : (
+                <LockOpen className="w-3.5 h-3.5" />
+              )}
+              <span>{isRestrictedRoom ? "Sala Restrita" : "Sala Livre"}</span>
+            </span>
+
+            <h1 className="text-2xl font-bold text-black dark:text-white">
+              {targetRoom.nome}
+            </h1>
+            <p className="text-sm text-black/60 dark:text-white/60">
+              Líder: {targetRoom.lider_username}
+            </p>
+          </div>
+
+          <form action={handleConfirmJoinRoom} className="w-full flex flex-col gap-3">
+            <button
+              type="submit"
+              className="w-full py-3 px-5 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Entrar na sala</span>
+            </button>
+
+            <Link
+              href="/rooms"
+              className="w-full py-2.5 px-5 rounded-xl text-sm font-medium text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+            >
+              Voltar para minhas salas
+            </Link>
+          </form>
+        </main>
+      </div>
+    );
+  }
+
+  const canCreateTasks =
+    isRoomLeader ||
+    (roomType === "livre" && targetRoom.pode_criar_tarefas !== false);
+  const canSendMessages =
+    isRoomLeader || targetRoom.pode_mandar_mensagens !== false;
+
+  await ensureTaskReadsTable();
+
+  const [taskRows, attachmentRows, memberRows] = await Promise.all([
+    controller.runQuery<TaskRow>(
+      `SELECT
+                t.id,
+                t.nome,
+                t.descricao,
+                TO_CHAR(t.data_entrega, 'YYYY-MM-DD') AS data_entrega_str,
+                t.cor,
+                (tc.id_usuario IS NOT NULL) AS concluida,
+                t.criador_id,
+                u.username AS autor_nome,
+                EXISTS (
+                    SELECT 1
+                    FROM threads th
+                    INNER JOIN comentarios c ON c.pertence_a = th.id
+                    LEFT JOIN tarefa_leituras tl
+                        ON tl.id_tarefa = t.id AND tl.id_usuario = $2
+                    WHERE th.id_tarefa = t.id
+                      AND c.id > COALESCE(tl.ultimo_comentario_id, 0)
+                      AND (c.autor_id IS NULL OR c.autor_id <> $2)
+                ) AS has_unread_messages
+             FROM tarefas t
+             LEFT JOIN usuarios u ON u.id = t.criador_id
+             LEFT JOIN tarefa_conclusoes tc
+                ON tc.id_tarefa = t.id AND tc.id_usuario = $2
+             WHERE t.id_sala = $1 AND t.data_entrega IS NOT NULL
+             ORDER BY t.data_entrega ASC, t.data_criacao ASC;`,
+      [normalizedRoomIdentifier, normalizedUserId],
+    ),
+    controller.runQuery<AttachmentRow>(
+      `SELECT a.id, a.nome, a.url_anexo, a.id_tarefa
+             FROM anexos a
+             INNER JOIN tarefas t ON t.id = a.id_tarefa
+             WHERE t.id_sala = $1
+             ORDER BY a.data_adicao ASC, a.id ASC;`,
+      [normalizedRoomIdentifier],
+    ),
+    controller.runQuery<MemberRow>(
+      `SELECT
+                u.id,
+                u.username,
+                u.mirror_foto,
+                sm.pode_criar_tarefas,
+                sm.pode_mandar_mensagens
+             FROM sala_membros sm
+             INNER JOIN usuarios u ON u.id = sm.id_usuario
+             WHERE sm.id_sala = $1
+             ORDER BY (u.id = $2) DESC, sm.data_entrada ASC, u.username ASC;`,
+      [normalizedRoomIdentifier, normalizedLeaderId],
+    ),
+  ]);
+
+  const orderedMembers: RoomMemberItem[] = [];
+  const leaderInMembers = memberRows.find(
+    (row) => normalizeUuid(row.id) === normalizedLeaderId,
+  );
+
+  orderedMembers.push({
+    id: normalizedLeaderId,
+    username: leaderInMembers?.username || targetRoom.lider_username,
+    mirrorFoto: leaderInMembers?.mirror_foto ?? targetRoom.lider_foto,
+    isLeader: true,
+    podeCriarTarefas: true,
+    podeMandarMensagens: true,
+  });
+
+  for (const memberRow of memberRows) {
+    const normalizedMemberId = normalizeUuid(memberRow.id);
+    if (normalizedMemberId === normalizedLeaderId) {
+      continue;
+    }
+
+    orderedMembers.push({
+      id: normalizedMemberId,
+      username: memberRow.username,
+      mirrorFoto: memberRow.mirror_foto,
+      isLeader: false,
+      podeCriarTarefas: Boolean(memberRow.pode_criar_tarefas),
+      podeMandarMensagens: Boolean(memberRow.pode_mandar_mensagens),
+    });
+  }
+
+  const linksByTaskId = new Map<string, TaskLinkItem[]>();
+  for (const attachmentRow of attachmentRows) {
+    const safeUrl = validateAndNormalizeExternalUrl(attachmentRow.url_anexo);
+    if (!safeUrl) {
+      continue;
+    }
+
+    const existingLinks = linksByTaskId.get(attachmentRow.id_tarefa) ?? [];
+    existingLinks.push({
+      id: attachmentRow.id,
+      nome: attachmentRow.nome,
+      url_anexo: safeUrl,
+    });
+    linksByTaskId.set(attachmentRow.id_tarefa, existingLinks);
+  }
+
+  const roomTasks: RoomTaskItem[] = taskRows.map((taskRow) => ({
+    id: taskRow.id,
+    nome: taskRow.nome,
+    descricao: taskRow.descricao,
+    dataEntrega: taskRow.data_entrega_str,
+    cor: normalizeTaskColor(taskRow.cor) ?? DEFAULT_TASK_COLOR,
+    concluida: Boolean(taskRow.concluida),
+    criadorId: taskRow.criador_id ? normalizeUuid(taskRow.criador_id) : null,
+    autorNome: taskRow.autor_nome?.trim() || "Usuário removido",
+    links: linksByTaskId.get(taskRow.id) ?? [],
+    hasUnreadMessages: Boolean(taskRow.has_unread_messages),
+  }));
+
+  return (
+    <Suspense
+      fallback={<div className="min-h-screen bg-white dark:bg-[#1D1D1D]" />}
+    >
+      <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
+        <Header />
+        <DashboardMenu />
+
+        <main className="px-4 py-6 lg:px-10 max-w-7xl mx-auto flex flex-col gap-8">
+          <RoomWorkspace
+            roomId={normalizedRoomIdentifier}
+            roomName={targetRoom.nome}
+            roomIconUrl={targetRoom.icone_url}
+            roomType={roomType}
+            leaderUsername={targetRoom.lider_username}
+            tasks={roomTasks}
+            members={orderedMembers}
+            currentUserId={normalizedUserId}
+            currentUserName={userSession.user?.name?.trim() || "Você"}
+            isRoomLeader={isRoomLeader}
+            canCreateTasks={canCreateTasks}
+            canSendMessages={canSendMessages}
+          />
+        </main>
+      </div>
+    </Suspense>
+  );
+}
+</file>
+
 <file path="db/testConnection.mjs">
 import { Pool } from "pg"
 const env = process.env
@@ -7682,6 +7681,88 @@ export default async function Page() {
 }
 </file>
 
+<file path="app/(auth)/login/page.tsx">
+'use client'
+import Image from "next/image"
+import Link from "next/link"
+import { signIn } from "next-auth/react";
+import { ReactNode } from "react"
+
+export default function Page() {
+    return <>
+        <main className="flex items-center gap-5 flex-col h-screen lg:flex-row">
+            <Logo />
+            <LoginBackground>
+
+
+                <div className="2xl:scale-125">
+                    <h1 className="text-black text-sm text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Fazer Login</h1>
+
+                    <div className="bg-white dark:bg-[#1D1D1D] dark:border-white/25 dark:bg- border-2 w-84 h-114 border-black/25 rounded-4xl flex flex-col items-center lg:w-90 lg:h-110">
+
+                        <div className="w-full h-45 flex flex-col items-center justify-center gap-5 lg:mt-5">
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 lg:w-70  " placeholder="E-mail"></input>
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-5 lg:w-70 " placeholder="Senha"></input>
+                        </div>
+
+                        <Link href={"#"} className="text-center text-blue-400 underline">Esqueci minha senha</Link>
+
+                        <input type="button" className="bg-blue-500/20 w-50 mt-5 p-3 text-center rounded-xl duration-200 cursor-not-allowed text-white/20" value={"Continuar"} title="O serviço de criação de contas está temporariamente indisponível. Por favor, faça login usando sua conta Google.">
+                        </input>
+
+                        <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-5 "></div>
+
+                        <p className="text-black font-thin mt-3 dark:text-white ">ou</p>
+
+                        <button className="bg-white flex items-center gap-5 border p-1.5 px-3 border-black/15 rounded-4xl mt-3 cursor-pointer hover:scale-105 duration-200" onClick={() => { signIn("google", { callbackUrl: "/dashboard" }) }}>
+
+                            <Image src={"/google.svg"} width={30} height={30} alt="Google"></Image>
+                            <p className="text-black ">Continuar com Google</p>
+
+                        </button>
+                        <div className="flex text-sm gap-3 mt-5 lg:text-base lg:mb-5">
+
+                            <p className="text-black dark:text-white">Não tem uma conta?</p>
+                            <Link href={"/create"} className="text-blue-400 underline"> Crie uma Conta</Link>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </LoginBackground>
+
+        </main>
+    </>
+}
+
+
+
+function Logo() {
+    return (
+        <div className="md:w-2/5 w-full flex justify-center lg:p-10 bg-[#1D1D1D] md:h-full h-36 items-center">
+            <div className="lg:hidden">
+                <Image src="/LogoDesktop.svg" width={220} height={47} alt="Logo" />
+            </div>
+
+            <div className="max-lg:hidden">
+                <Image src="/LogoDesktop.svg" width={450} height={100} alt="Logo" />
+            </div>
+        </div>
+    );
+}
+
+function LoginBackground({ children }: { children: ReactNode }) {
+    return (
+        <>
+            <div className="bg-white size-full flex flex-col items-center gap-10 dark:bg-[#1D1D1D] justify-center">
+                {children}
+            </div>
+        </>
+    )
+}
+</file>
+
 <file path="components/AddRoomForm.tsx">
 'use client'
 
@@ -7922,88 +8003,6 @@ function ImagePicker({ file }: { file: File }) {
             {' '}
             +{' '}
         </div>
-    )
-}
-</file>
-
-<file path="app/(auth)/login/page.tsx">
-'use client'
-import Image from "next/image"
-import Link from "next/link"
-import { signIn } from "next-auth/react";
-import { ReactNode } from "react"
-
-export default function Page() {
-    return <>
-        <main className="flex items-center gap-5 flex-col h-screen lg:flex-row">
-            <Logo />
-            <LoginBackground>
-
-
-                <div className="2xl:scale-125">
-                    <h1 className="text-black text-sm text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Fazer Login</h1>
-
-                    <div className="bg-white dark:bg-[#1D1D1D] dark:border-white/25 dark:bg- border-2 w-84 h-114 border-black/25 rounded-4xl flex flex-col items-center lg:w-90 lg:h-110">
-
-                        <div className="w-full h-45 flex flex-col items-center justify-center gap-5 lg:mt-5">
-                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 lg:w-70  " placeholder="E-mail"></input>
-                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-5 lg:w-70 " placeholder="Senha"></input>
-                        </div>
-
-                        <Link href={"#"} className="text-center text-blue-400 underline">Esqueci minha senha</Link>
-
-                        <input type="button" className="bg-blue-500 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-pointer text-white" value={"Continuar"}>
-                        </input>
-
-                        <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-5 "></div>
-
-                        <p className="text-black font-thin mt-3 dark:text-white ">ou</p>
-
-                        <button className="bg-white flex items-center gap-5 border p-1.5 px-3 border-black/15 rounded-4xl mt-3 cursor-pointer hover:scale-105 duration-200" onClick={() => { signIn("google", { callbackUrl: "/dashboard" }) }}>
-
-                            <Image src={"/google.svg"} width={30} height={30} alt="Google"></Image>
-                            <p className="text-black ">Continuar com Google</p>
-
-                        </button>
-                        <div className="flex text-sm gap-3 mt-5 lg:text-base lg:mb-5">
-
-                            <p className="text-black dark:text-white">Não tem uma conta?</p>
-                            <Link href={"/create"} className="text-blue-400 underline"> Crie uma Conta</Link>
-
-                        </div>
-
-                    </div>
-                </div>
-
-            </LoginBackground>
-
-        </main>
-    </>
-}
-
-
-
-function Logo() {
-    return (
-        <div className="md:w-2/5 w-full flex justify-center lg:p-10 bg-[#1D1D1D] md:h-full h-36 items-center">
-            <div className="lg:hidden">
-                <Image src="/LogoDesktop.svg" width={220} height={47} alt="Logo" />
-            </div>
-
-            <div className="max-lg:hidden">
-                <Image src="/LogoDesktop.svg" width={450} height={100} alt="Logo" />
-            </div>
-        </div>
-    );
-}
-
-function LoginBackground({ children }: { children: ReactNode }) {
-    return (
-        <>
-            <div className="bg-white size-full flex flex-col items-center gap-10 dark:bg-[#1D1D1D] justify-center">
-                {children}
-            </div>
-        </>
     )
 }
 </file>

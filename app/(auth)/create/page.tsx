@@ -13,7 +13,6 @@ export default function Page() {
             <Logo />
             <LoginBackground>
 
-
                 <div className="2xl:scale-125">
                     <h1 className="text-black text-sm text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Criar conta</h1>
 
@@ -26,7 +25,7 @@ export default function Page() {
                             <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-3 lg:w-70 " placeholder="Confimar senha"></input>
                         </div>
 
-                        <input type="button" className="bg-blue-500 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-pointer text-white" value={"Criar conta"}>
+                        <input type="button" className="bg-blue-500/20 w-50 mt-5 p-3 text-center rounded-xl cursor-not-allowed text-white/15" value={"Criar conta"} title="O serviço de criação de contas, na verdade, nunca vai estar disponível. Use sua conta Googl.e">
                         </input>
 
                         <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-3 "></div>

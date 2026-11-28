@@ -4,19 +4,26 @@ const globalForPg = globalThis as unknown as { pool: Pool | undefined };
 
 const pool =
   globalForPg.pool ??
-  new Pool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: Number(process.env.DB_PORT) || 5432,
-    max: 10,
-    idleTimeoutMillis: 30000,
-  });
+  new Pool(
+    process.env.DATABASE_URL
+      ? {
+          connectionString: process.env.DATABASE_URL,
+          ssl: { rejectUnauthorized: false },
+          max: 5,
+          idleTimeoutMillis: 30000,
+        }
+      : {
+          host: process.env.DB_HOST || 'localhost',
+          user: process.env.DB_USER,
+          password: process.env.DB_PASSWORD,
+          database: process.env.DB_NAME,
+          port: Number(process.env.DB_PORT) || 5432,
+          max: 10,
+          idleTimeoutMillis: 30000,
+        }
+  );
 
-if (process.env.NODE_ENV !== 'production') {
-  globalForPg.pool = pool;
-}
+globalForPg.pool = pool;
 
 type QueryResultObject = {
   text: string;

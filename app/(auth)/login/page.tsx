@@ -23,7 +23,7 @@ export default function Page() {
 
                         <Link href={"#"} className="text-center text-blue-400 underline">Esqueci minha senha</Link>
 
-                        <input type="button" className="bg-blue-500 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-pointer text-white" value={"Continuar"}>
+                        <input type="button" className="bg-blue-500/20 w-50 mt-5 p-3 text-center rounded-xl duration-200 cursor-not-allowed text-white/20" value={"Continuar"} title="O serviço de criação de contas está temporariamente indisponível. Por favor, faça login usando sua conta Google.">
                         </input>
 
                         <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-5 "></div>
