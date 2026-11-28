@@ -20,7 +20,8 @@ function isSafeProfileImageUrl(candidateImageUrl: string | null): candidateImage
         const parsedImageUrl = new URL(candidateImageUrl);
         return (
             parsedImageUrl.protocol === "https:" &&
-            parsedImageUrl.hostname.endsWith(".googleusercontent.com")
+            (parsedImageUrl.hostname.endsWith(".googleusercontent.com") ||
+                parsedImageUrl.hostname.endsWith(".public.blob.vercel-storage.com"))
         );
     } catch {
         return false;

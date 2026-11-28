@@ -3,6 +3,7 @@
 import authOptions from "@/auth/authOptions";
 import controller from "@/db/controller";
 import { isValidUuid, normalizeUuid } from "@/lib/tasks";
+import { del, put } from "@vercel/blob";
 import { mkdir, unlink, writeFile } from "fs/promises";
 import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
@@ -24,7 +25,7 @@ const ALLOWED_IMAGE_EXTENSIONS: Record<string, string> = {
     "image/gif": "gif",
 };
 
-const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_AVATAR_BYTES = 4 * 1024 * 1024; // 4 MB
 
 let hasEnsuredShowEmailColumn = false;
 
@@ -126,7 +127,7 @@ export async function updateUserAvatar(
     }
 
     if (fileEntry.size > MAX_AVATAR_BYTES) {
-        return { error: "A imagem deve ter no máximo 5 MB." };
+        return { error: "A imagem deve ter no máximo 4 MB." };
     }
 
     const extension = ALLOWED_IMAGE_EXTENSIONS[fileEntry.type];
@@ -146,16 +147,23 @@ export async function updateUserAvatar(
         }
 
         const previousPhoto = currentUserRows[0].mirror_foto;
-
-        const uploadDir = path.join(process.cwd(), "public", "uploads", "avatars");
-        await mkdir(uploadDir, { recursive: true });
-
         const fileName = `${normalizedUserId}-${Date.now()}.${extension}`;
-        const diskFilePath = path.join(uploadDir, fileName);
-        const publicUrlPath = `/uploads/avatars/${fileName}`;
+        let publicUrlPath: string;
 
-        const bytes = await fileEntry.arrayBuffer();
-        await writeFile(diskFilePath, Buffer.from(bytes));
+        if (process.env.BLOB_READ_WRITE_TOKEN) {
+            const blob = await put(`avatars/${fileName}`, fileEntry, {
+                access: "public",
+            });
+            publicUrlPath = blob.url;
+        } else {
+            const uploadDir = path.join(process.cwd(), "public", "uploads", "avatars");
+            await mkdir(uploadDir, { recursive: true });
+            const diskFilePath = path.join(uploadDir, fileName);
+            publicUrlPath = `/uploads/avatars/${fileName}`;
+
+            const bytes = await fileEntry.arrayBuffer();
+            await writeFile(diskFilePath, Buffer.from(bytes));
+        }
 
         const updatedRows = await controller.runQuery<{
             username: string;
@@ -168,17 +176,20 @@ export async function updateUserAvatar(
             [publicUrlPath, normalizedUserId]
         );
 
-        if (
-            previousPhoto &&
-            previousPhoto.startsWith("/uploads/avatars/") &&
-            previousPhoto !== publicUrlPath
-        ) {
-            const oldFilePath = path.join(
-                process.cwd(),
-                "public",
-                previousPhoto.replace(/^\//, "")
-            );
-            unlink(oldFilePath).catch(() => {});
+        if (previousPhoto && previousPhoto !== publicUrlPath) {
+            if (
+                process.env.BLOB_READ_WRITE_TOKEN &&
+                previousPhoto.includes(".blob.vercel-storage.com/")
+            ) {
+                del(previousPhoto).catch(() => {});
+            } else if (previousPhoto.startsWith("/uploads/avatars/")) {
+                const oldFilePath = path.join(
+                    process.cwd(),
+                    "public",
+                    previousPhoto.replace(/^\//, "")
+                );
+                unlink(oldFilePath).catch(() => {});
+            }
         }
 
         revalidatePath("/dashboard");
