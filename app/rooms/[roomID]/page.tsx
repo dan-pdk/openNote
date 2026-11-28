@@ -1,0 +1,29 @@
+import authOptions from "@/auth/authOptions";
+import Calendar from "@/components/Calendar";
+import DashboardMenu from "@/components/DashboardMenu";
+import Header from "@/components/Header";
+import controller from "@/db/controller";
+import { getServerSession } from "next-auth";
+import { notFound, redirect } from "next/navigation";
+
+type taskType = {
+  id: string,
+  nome: string,
+  data_entrega: Date,
+}
+
+export default async function Page({ params }: { params: Promise<{ roomID: string }> }) {
+  const { roomID } = await params;
+  const tasks: Array<taskType> = await controller.runQuery(`SELECT * FROM tarefas WHERE id_sala = $1`, [roomID]);
+  console.log(tasks[0])
+
+  return (
+    <div className="dark:bg-[#1D1D1D] min-h-screen">
+      <Header />
+      <DashboardMenu />
+      <div className="flex mx-auto items-center flex-col min-h-full ">
+        <Calendar tasks={tasks} />
+      </div>
+    </div>
+  )
+}

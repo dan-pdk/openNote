@@ -1,65 +1,64 @@
 CREATE TABLE usuarios (
-    id_usuarios UUID PRIMARY KEY DEFAULT uuidv7(),
-    
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     username VARCHAR(128) NOT NULL UNIQUE,
     email VARCHAR(128) NOT NULL UNIQUE,
     hash_senha VARCHAR(256),
-    isAdmin BOOLEAN,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     mirror_foto TEXT
 );
 
 CREATE TABLE categorias (
     id SERIAL PRIMARY KEY,
-    
     nome VARCHAR(128) NOT NULL,
     cor VARCHAR(7) NOT NULL
 );
 
-CREATE TABLE tarefas (
-    id_tarefas SERIAL PRIMARY KEY,
-    
-    nome VARCHAR(128) NOT NULL,
-    dataCriacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    dataEntrega TIMESTAMP,
-
-    id_categoria INT REFERENCES categorias(id) ON DELETE SET NULL
-);
-
 CREATE TABLE salas (
-    id_salas UUID PRIMARY KEY DEFAULT uuidv7(),
-
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     nome VARCHAR(128) NOT NULL,
-    capacidade INT,
-    tipo VARCHAR(128) NOT NULL,
+    tipo VARCHAR(32) NOT NULL DEFAULT 'restrita' CHECK (tipo IN ('restrita', 'livre')),
     icone_url VARCHAR(1024),
-
-    lider_id UUID,
-    CONSTRAINT fk_lider_id FOREIGN KEY (lider_id) REFERENCES usuarios(id)
+    lider_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    created_at TIMESTAMP default CURRENT_TIMESTAMP
 );
 
-CREATE TABLE threads (
-    id_threads SERIAL PRIMARY KEY,
-    nome VARCHAR(128) NOT NULL UNIQUE,
-    
-    autor_id UUID REFERENCES usuarios(id_usuarios)
+CREATE TABLE sala_membros (
+    id_usuario UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    id_sala UUID NOT NULL REFERENCES salas(id) ON DELETE CASCADE,
+    data_entrada TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_usuario, id_sala)
 );
 
-CREATE TABLE comentarios (
-    id_comentarios SERIAL PRIMARY KEY,
-
-    conteudo TEXT,
-    flagged BOOLEAN,
-
-    autor_id UUID REFERENCES usuarios(id_usuarios),
-    responde_a INT REFERENCES comentarios(id_comentarios) ON DELETE SET NULL,
-    pertence_a INT REFERENCES threads(id_threads) ON DELETE CASCADE
+CREATE TABLE tarefas (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    nome VARCHAR(128) NOT NULL,
+    data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    data_entrega TIMESTAMP,
+    descricao TEXT,
+    id_categoria INT REFERENCES categorias(id) ON DELETE SET NULL,
+    id_sala UUID NOT NULL REFERENCES salas(id) ON DELETE CASCADE
 );
 
 CREATE TABLE anexos (
-    id_anexos SERIAL PRIMARY KEY,
-
+    id SERIAL PRIMARY KEY,
     nome VARCHAR(128) NOT NULL,
-    url_anexo TEXT,
+    url_anexo TEXT NOT NULL,
+    data_adicao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_tarefa UUID NOT NULL REFERENCES tarefas(id) ON DELETE CASCADE
+);
 
-    dataAdicao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE threads (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(128) NOT NULL,
+    autor_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    id_tarefa UUID NOT NULL REFERENCES tarefas(id) ON DELETE CASCADE
+);
+
+CREATE TABLE comentarios (
+    id SERIAL PRIMARY KEY,
+    conteudo TEXT NOT NULL,
+    flagged BOOLEAN NOT NULL DEFAULT FALSE,
+    autor_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    responde_a INT REFERENCES comentarios(id) ON DELETE SET NULL,
+    pertence_a INT NOT NULL REFERENCES threads(id) ON DELETE CASCADE
 );

@@ -19,7 +19,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // 2. If NOT logged in and trying to access protected routes, redirect to /login
-    const isProtectedRoute = pathname === "/" || pathname.startsWith("/dashboard")
+    const isProtectedRoute = pathname === "/" || pathname.startsWith("/dashboard") || pathname.startsWith("/profile")
     if (isProtectedRoute && !isLoggedIn) {
         const loginUrl = new URL("/login", request.nextUrl)
         // Optional: track where they came from
@@ -31,5 +31,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = { 
-    matcher: ['/dashboard/:path*', '/login', '/'] 
+    matcher: ['/dashboard/:path*', '/profile', '/profile/:path*', '/login', '/'] 
 }
