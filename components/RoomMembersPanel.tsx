@@ -10,9 +10,9 @@ import {
   Crown,
   MessageSquare,
   PlusCircle,
-  Users,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -22,7 +22,7 @@ export type RoomMemberItem = {
   mirrorFoto: string | null;
   isLeader: boolean;
   podeCriarTarefas: boolean;
-  podeComentar: boolean;
+  podeMandarMensagens: boolean;
 };
 
 type RoomMembersPanelProps = {
@@ -61,7 +61,7 @@ export default function RoomMembersPanel({
 
   function handleTogglePermission(
     memberId: string,
-    field: "pode_criar_tarefas" | "pode_comentar",
+    field: "pode_criar_tarefas" | "pode_comentar" | "pode_mandar_mensagens",
     currentValue: boolean,
   ) {
     setErrorMessage(null);
@@ -71,7 +71,7 @@ export default function RoomMembersPanel({
       const result = await updateMemberPermission(
         roomId,
         memberId,
-        field,
+        field as Parameters<typeof updateMemberPermission>[2],
         !currentValue,
       );
 
@@ -106,7 +106,7 @@ export default function RoomMembersPanel({
   }
 
   return (
-    <aside className="w-full bg-[#F5F5F5] dark:bg-[#252525]  rounded-2xl p-4 sm:p-5 flex flex-col gap-4">
+    <aside className="w-full bg-[#F5F5F5] dark:bg-[#252525] rounded-2xl p-4 sm:p-5 flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold text-black dark:text-white">
@@ -157,14 +157,13 @@ export default function RoomMembersPanel({
           return (
             <li
               key={member.id}
-              className={`rounded-xl p-3 transition-colors ${
-                member.isLeader
-                  ? "bg-white dark:bg-[#1D1D1D]"
-                  : "bg-white dark:bg-[#1D1D1D]"
-              }`}
+              className="rounded-xl p-3 transition-colors bg-white dark:bg-[#1D1D1D]"
             >
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5 min-w-0">
+                <Link
+                  href={`/profile/${member.id}`}
+                  className="group flex items-center gap-2.5 min-w-0 flex-1"
+                >
                   {member.mirrorFoto ? (
                     <img
                       src={member.mirrorFoto}
@@ -180,7 +179,7 @@ export default function RoomMembersPanel({
 
                   <div className="flex flex-col min-w-0">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-sm font-medium text-black dark:text-white truncate">
+                      <span className="text-sm font-medium text-black dark:text-white truncate group-hover:underline">
                         {member.username}
                       </span>
                       {member.isLeader && (
@@ -200,7 +199,7 @@ export default function RoomMembersPanel({
                       {member.isLeader ? "Líder" : "Membro"}
                     </span>
                   </div>
-                </div>
+                </Link>
 
                 {isRoomLeader && !member.isLeader && (
                   <div className="flex items-center gap-1 shrink-0">
@@ -255,14 +254,14 @@ export default function RoomMembersPanel({
                           onClick={() =>
                             handleTogglePermission(
                               member.id,
-                              "pode_comentar",
-                              member.podeComentar,
+                              "pode_mandar_mensagens",
+                              member.podeMandarMensagens,
                             )
                           }
-                          title={`Comentar: ${member.podeComentar ? "Permitido" : "Bloqueado"}`}
-                          aria-label={`Alternar permissão de comentar para ${member.username}`}
+                          title={`Mandar mensagens: ${member.podeMandarMensagens ? "Permitido" : "Bloqueado"}`}
+                          aria-label={`Alternar permissão de mandar mensagens para ${member.username}`}
                           className={`p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-50 ${
-                            member.podeComentar
+                            member.podeMandarMensagens
                               ? "text-teal-500 dark:text-teal-400"
                               : "text-black/35 dark:text-white/35"
                           }`}

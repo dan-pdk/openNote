@@ -237,6 +237,13 @@ export default async function updateTask(
                 normalizedTaskIdentifier,
             ]);
 
+            await executeQuery(
+                `UPDATE threads
+                 SET nome = $1
+                 WHERE id_tarefa = $2;`,
+                [trimmedTaskName, normalizedTaskIdentifier]
+            );
+
             for (const linkEntry of validatedLinks) {
                 await executeQuery(
                     `INSERT INTO anexos (nome, url_anexo, id_tarefa)

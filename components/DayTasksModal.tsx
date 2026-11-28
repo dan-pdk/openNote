@@ -8,6 +8,7 @@ import {
     CheckCircle2,
     Circle,
     ExternalLink,
+    MessageSquare,
     Pencil,
     Plus,
     Trash2,
@@ -27,6 +28,7 @@ type DayTasksModalProps = {
     currentUserName: string;
     isRoomLeader: boolean;
     canCreateTasks: boolean;
+    onOpenTaskChat: (task: RoomTaskItem) => void;
     onClose: () => void;
 };
 
@@ -39,6 +41,7 @@ export default function DayTasksModal({
     currentUserName,
     isRoomLeader,
     canCreateTasks,
+    onOpenTaskChat,
     onClose,
 }: DayTasksModalProps) {
     const router = useRouter();
@@ -222,7 +225,19 @@ export default function DayTasksModal({
                                     return (
                                         <div
                                             key={taskItem.id}
-                                            className="bg-[#E2E2E2] dark:bg-[#303030] rounded-xl p-4 flex flex-col gap-2.5"
+                                            onClick={(event) => {
+                                                const targetElement =
+                                                    event.target as HTMLElement;
+                                                if (
+                                                    targetElement.closest(
+                                                        "button, a"
+                                                    )
+                                                ) {
+                                                    return;
+                                                }
+                                                onOpenTaskChat(taskItem);
+                                            }}
+                                            className="bg-[#E2E2E2] dark:bg-[#303030] hover:bg-[#DADADA] dark:hover:bg-[#383838] transition-colors rounded-xl p-4 flex flex-col gap-2.5 cursor-pointer"
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -274,9 +289,9 @@ export default function DayTasksModal({
                                                     </h3>
                                                 </div>
 
-                                                {canManageTask && (
-                                                    <div className="flex items-center gap-1 shrink-0">
-                                                        {isConfirmingDelete ? (
+                                                <div className="flex items-center gap-1 shrink-0">
+                                                    {canManageTask ? (
+                                                        isConfirmingDelete ? (
                                                             <>
                                                                 <button
                                                                     type="button"
@@ -311,6 +326,23 @@ export default function DayTasksModal({
                                                             </>
                                                         ) : (
                                                             <>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        onOpenTaskChat(
+                                                                            taskItem
+                                                                        )
+                                                                    }
+                                                                    title="Abrir chat da tarefa"
+                                                                    aria-label={`Abrir chat da tarefa ${taskItem.nome}`}
+                                                                    className="relative p-1.5 rounded-lg text-black/60 hover:text-teal-600 hover:bg-teal-500/10 dark:text-white/60 dark:hover:text-teal-400 dark:hover:bg-teal-500/20 transition-colors cursor-pointer"
+                                                                >
+                                                                    <MessageSquare className="w-4 h-4" />
+                                                                    {taskItem.hasUnreadMessages && (
+                                                                        <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#E60000]" />
+                                                                    )}
+                                                                </button>
+
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => {
@@ -348,9 +380,26 @@ export default function DayTasksModal({
                                                                     <Trash2 className="w-4 h-4" />
                                                                 </button>
                                                             </>
-                                                        )}
-                                                    </div>
-                                                )}
+                                                        )
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                onOpenTaskChat(
+                                                                    taskItem
+                                                                )
+                                                            }
+                                                            title="Abrir chat da tarefa"
+                                                            aria-label={`Abrir chat da tarefa ${taskItem.nome}`}
+                                                            className="relative p-1.5 rounded-lg text-black/60 hover:text-teal-600 hover:bg-teal-500/10 dark:text-white/60 dark:hover:text-teal-400 dark:hover:bg-teal-500/20 transition-colors cursor-pointer"
+                                                        >
+                                                            <MessageSquare className="w-4 h-4" />
+                                                            {taskItem.hasUnreadMessages && (
+                                                                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#E60000]" />
+                                                            )}
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             <div className="flex items-center gap-1.5 text-xs text-black/60 dark:text-white/60">
@@ -371,7 +420,7 @@ export default function DayTasksModal({
                                             </div>
 
                                             {taskItem.descricao && (
-                                                <p className="text-sm text-black/80 dark:text-white/80 whitespace-pre-wrap break-words">
+                                                <p className="text-sm text-black/80 dark:text-white/80 whitespace-pre-wrap">
                                                     {taskItem.descricao}
                                                 </p>
                                             )}

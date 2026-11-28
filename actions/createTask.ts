@@ -234,6 +234,12 @@ export default async function createTask(
                 throw new Error("Falha ao recuperar o ID da tarefa criada.");
             }
 
+            await executeQuery(
+                `INSERT INTO threads (nome, autor_id, id_tarefa)
+                 VALUES ($1, $2, $3);`,
+                [trimmedTaskName, normalizedUserId, insertedTaskId]
+            );
+
             for (const linkEntry of validatedLinks) {
                 await executeQuery(
                     `INSERT INTO anexos (nome, url_anexo, id_tarefa)

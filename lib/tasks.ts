@@ -14,6 +14,12 @@ export type TaskLinkDraft = {
     url: string;
 };
 
+export type FormattedTaskDateInfo = {
+    label: string;
+    isOverdue: boolean;
+    isToday: boolean;
+};
+
 export type RoomTaskItem = {
     id: string;
     nome: string;
@@ -24,7 +30,63 @@ export type RoomTaskItem = {
     criadorId: string | null;
     autorNome: string;
     links: TaskLinkItem[];
+    hasUnreadMessages: boolean;
 };
+
+export function formatRelativeTaskDate(
+    dateString: string,
+    todayDateString: string
+): FormattedTaskDateInfo {
+    const validatedDate = parseCalendarDateString(dateString);
+    const validatedToday = parseCalendarDateString(todayDateString);
+
+    if (!validatedDate) {
+        return { label: dateString, isOverdue: false, isToday: false };
+    }
+
+    const [targetYear, targetMonth, targetDay] = validatedDate
+        .split("-")
+        .map(Number);
+
+    if (!validatedToday) {
+        return {
+            label: `${String(targetDay).padStart(2, "0")}/${String(targetMonth).padStart(2, "0")}`,
+            isOverdue: false,
+            isToday: false,
+        };
+    }
+
+    const [todayYear, todayMonth, todayDay] = validatedToday
+        .split("-")
+        .map(Number);
+
+    const targetUtcMs = Date.UTC(targetYear, targetMonth - 1, targetDay);
+    const todayUtcMs = Date.UTC(todayYear, todayMonth - 1, todayDay);
+    const diffDays = Math.round((targetUtcMs - todayUtcMs) / 86400000);
+
+    if (diffDays === 0) {
+        return { label: "Hoje", isOverdue: false, isToday: true };
+    }
+
+    if (diffDays === 1) {
+        return { label: "Amanhã", isOverdue: false, isToday: false };
+    }
+
+    if (diffDays === -1) {
+        return { label: "Ontem", isOverdue: true, isToday: false };
+    }
+
+    const baseDateLabel =
+        targetYear === todayYear
+            ? `${String(targetDay).padStart(2, "0")}/${String(targetMonth).padStart(2, "0")}`
+            : `${String(targetDay).padStart(2, "0")}/${String(targetMonth).padStart(2, "0")}/${targetYear}`;
+
+    return {
+        label: baseDateLabel,
+        isOverdue: diffDays < 0,
+        isToday: false,
+    };
+}
 
 export const TASK_COLOR_OPTIONS: ReadonlyArray<TaskColorOption> = [
     { hexCode: "#EF4444", label: "Vermelho" },

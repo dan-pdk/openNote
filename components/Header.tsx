@@ -14,12 +14,6 @@ export default function Header() {
                     </Link>
                 </div>
                 <div className="flex items-center gap-6 lg:gap-8">
-                    <button aria-label="Buscar" className="cursor-pointer">
-                        <Image src={"/Search.svg"} width={24} height={24} alt="" className="dark:invert"></Image>
-                    </button>
-                    <button aria-label="Adicionar" className="cursor-pointer">
-                        <Image src={"/Plus.svg"} width={24} height={24} alt="" className="dark:invert"></Image>
-                    </button>
                     <OpenMenuButton />
                 </div>
             </header>

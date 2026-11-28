@@ -6,6 +6,11 @@ import { buildCalendarDateString, RoomTaskItem } from "@/lib/tasks";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 
+export type CalendarDateJumpRequest = {
+    dateString: string;
+    nonce: number;
+};
+
 type CalendarProps = {
     roomId: string;
     tasks: RoomTaskItem[];
@@ -13,6 +18,10 @@ type CalendarProps = {
     currentUserName: string;
     isRoomLeader: boolean;
     canCreateTasks: boolean;
+    selectedDateString?: string | null;
+    onSelectDateString?: (dateString: string | null) => void;
+    onOpenTaskChat: (task: RoomTaskItem) => void;
+    navigateToDateRequest?: CalendarDateJumpRequest | null;
 };
 
 const PORTUGUESE_MONTHS = [
@@ -39,11 +48,38 @@ export default function Calendar({
     currentUserName,
     isRoomLeader,
     canCreateTasks,
+    selectedDateString,
+    onSelectDateString,
+    onOpenTaskChat,
+    navigateToDateRequest = null,
 }: CalendarProps) {
     const [currentDateCursor, setCurrentDateCursor] = useState(() => new Date());
-    const [selectedDateString, setSelectedDateString] = useState<string | null>(
+    const [internalSelectedDateString, setInternalSelectedDateString] =
+        useState<string | null>(null);
+    const [handledJumpNonce, setHandledJumpNonce] = useState<number | null>(
         null
     );
+
+    if (
+        navigateToDateRequest &&
+        navigateToDateRequest.nonce !== handledJumpNonce
+    ) {
+        setHandledJumpNonce(navigateToDateRequest.nonce);
+        const [jumpYear, jumpMonth] = navigateToDateRequest.dateString
+            .split("-")
+            .map(Number);
+        if (jumpYear && jumpMonth) {
+            setCurrentDateCursor(new Date(jumpYear, jumpMonth - 1, 1));
+        }
+    }
+
+    const activeSelectedDateString =
+        selectedDateString !== undefined
+            ? selectedDateString
+            : internalSelectedDateString;
+
+    const handleSetSelectedDate =
+        onSelectDateString ?? setInternalSelectedDateString;
 
     const currentYear = currentDateCursor.getFullYear();
     const currentMonthIndex = currentDateCursor.getMonth();
@@ -109,13 +145,13 @@ export default function Calendar({
                 firstWeekdayOffset={firstWeekdayOffset}
                 isToday={cellDateString === todayDateString}
                 dayTasks={dayTasks}
-                onSelectDay={() => setSelectedDateString(cellDateString)}
+                onSelectDay={() => handleSetSelectedDate(cellDateString)}
             />
         );
     }
 
-    const selectedDayTasks = selectedDateString
-        ? tasksByDateMap.get(selectedDateString) ?? []
+    const selectedDayTasks = activeSelectedDateString
+        ? tasksByDateMap.get(activeSelectedDateString) ?? []
         : [];
 
     return (
@@ -158,18 +194,19 @@ export default function Calendar({
                 {dayCells}
             </div>
 
-            {selectedDateString && (
+            {activeSelectedDateString && (
                 <DayTasksModal
-                    key={selectedDateString}
+                    key={activeSelectedDateString}
                     isOpen={true}
-                    selectedDateString={selectedDateString}
+                    selectedDateString={activeSelectedDateString}
                     roomId={roomId}
                     tasksForDay={selectedDayTasks}
                     currentUserId={currentUserId}
                     currentUserName={currentUserName}
                     isRoomLeader={isRoomLeader}
                     canCreateTasks={canCreateTasks}
-                    onClose={() => setSelectedDateString(null)}
+                    onOpenTaskChat={onOpenTaskChat}
+                    onClose={() => handleSetSelectedDate(null)}
                 />
             )}
         </section>

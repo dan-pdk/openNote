@@ -1,12 +1,11 @@
 import authOptions from "@/auth/authOptions";
 import joinRoom from "@/actions/joinRoom";
-import Calendar from "@/components/Calendar";
 import DashboardMenu from "@/components/DashboardMenu";
 import Header from "@/components/Header";
-import RoomMembersPanel, {
-  RoomMemberItem,
-} from "@/components/RoomMembersPanel";
+import type { RoomMemberItem } from "@/components/RoomMembersPanel";
+import RoomWorkspace from "@/components/RoomWorkspace";
 import controller from "@/db/controller";
+import { ensureTaskReadsTable } from "@/lib/taskReads";
 import {
   DEFAULT_TASK_COLOR,
   isValidUuid,
@@ -16,7 +15,7 @@ import {
   TaskLinkItem,
   validateAndNormalizeExternalUrl,
 } from "@/lib/tasks";
-import { ArrowLeft, Crown, Lock, LockOpen, UserPlus } from "lucide-react";
+import { Lock, LockOpen, UserPlus } from "lucide-react";
 import { getServerSession } from "next-auth";
 import Image from "next/image";
 import Link from "next/link";
@@ -35,6 +34,7 @@ type RoomAccessRow = {
   lider_foto: string | null;
   membro_usuario_id: string | null;
   pode_criar_tarefas: boolean | null;
+  pode_mandar_mensagens: boolean | null;
 };
 
 type MemberRow = {
@@ -42,7 +42,7 @@ type MemberRow = {
   username: string;
   mirror_foto: string | null;
   pode_criar_tarefas: boolean;
-  pode_comentar: boolean;
+  pode_mandar_mensagens: boolean;
 };
 
 type TaskRow = {
@@ -54,6 +54,7 @@ type TaskRow = {
   concluida: boolean;
   criador_id: string | null;
   autor_nome: string | null;
+  has_unread_messages: boolean;
 };
 
 type AttachmentRow = {
@@ -93,7 +94,8 @@ export default async function Page({
             lider.username AS lider_username,
             lider.mirror_foto AS lider_foto,
             sm.id_usuario AS membro_usuario_id,
-            sm.pode_criar_tarefas
+            sm.pode_criar_tarefas,
+            sm.pode_mandar_mensagens
          FROM salas s
          INNER JOIN usuarios lider ON lider.id = s.lider_id
          LEFT JOIN sala_membros sm
@@ -190,6 +192,10 @@ export default async function Page({
   const canCreateTasks =
     isRoomLeader ||
     (roomType === "livre" && targetRoom.pode_criar_tarefas !== false);
+  const canSendMessages =
+    isRoomLeader || targetRoom.pode_mandar_mensagens !== false;
+
+  await ensureTaskReadsTable();
 
   const [taskRows, attachmentRows, memberRows] = await Promise.all([
     controller.runQuery<TaskRow>(
@@ -201,7 +207,17 @@ export default async function Page({
                 t.cor,
                 (tc.id_usuario IS NOT NULL) AS concluida,
                 t.criador_id,
-                u.username AS autor_nome
+                u.username AS autor_nome,
+                EXISTS (
+                    SELECT 1
+                    FROM threads th
+                    INNER JOIN comentarios c ON c.pertence_a = th.id
+                    LEFT JOIN tarefa_leituras tl
+                        ON tl.id_tarefa = t.id AND tl.id_usuario = $2
+                    WHERE th.id_tarefa = t.id
+                      AND c.id > COALESCE(tl.ultimo_comentario_id, 0)
+                      AND (c.autor_id IS NULL OR c.autor_id <> $2)
+                ) AS has_unread_messages
              FROM tarefas t
              LEFT JOIN usuarios u ON u.id = t.criador_id
              LEFT JOIN tarefa_conclusoes tc
@@ -224,7 +240,7 @@ export default async function Page({
                 u.username,
                 u.mirror_foto,
                 sm.pode_criar_tarefas,
-                sm.pode_comentar
+                sm.pode_mandar_mensagens
              FROM sala_membros sm
              INNER JOIN usuarios u ON u.id = sm.id_usuario
              WHERE sm.id_sala = $1
@@ -244,7 +260,7 @@ export default async function Page({
     mirrorFoto: leaderInMembers?.mirror_foto ?? targetRoom.lider_foto,
     isLeader: true,
     podeCriarTarefas: true,
-    podeComentar: true,
+    podeMandarMensagens: true,
   });
 
   for (const memberRow of memberRows) {
@@ -259,7 +275,7 @@ export default async function Page({
       mirrorFoto: memberRow.mirror_foto,
       isLeader: false,
       podeCriarTarefas: Boolean(memberRow.pode_criar_tarefas),
-      podeComentar: Boolean(memberRow.pode_comentar),
+      podeMandarMensagens: Boolean(memberRow.pode_mandar_mensagens),
     });
   }
 
@@ -289,6 +305,7 @@ export default async function Page({
     criadorId: taskRow.criador_id ? normalizeUuid(taskRow.criador_id) : null,
     autorNome: taskRow.autor_nome?.trim() || "Usuário removido",
     links: linksByTaskId.get(taskRow.id) ?? [],
+    hasUnreadMessages: Boolean(taskRow.has_unread_messages),
   }));
 
   return (
@@ -300,90 +317,20 @@ export default async function Page({
         <DashboardMenu />
 
         <main className="px-4 py-6 lg:px-10 max-w-7xl mx-auto flex flex-col gap-8">
-          <div>
-            <Link
-              href="/rooms"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition-colors mb-4"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Voltar</span>
-            </Link>
-
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-4 sm:gap-5 min-w-0">
-                {!targetRoom.icone_url ? (
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#E2E2E2] dark:bg-[#303030] flex items-center justify-center text-3xl sm:text-4xl font-bold text-black dark:text-white shrink-0 shadow-sm">
-                    {targetRoom.nome.charAt(0).toUpperCase()}
-                  </div>
-                ) : (
-                  <Image
-                    width={192}
-                    height={192}
-                    quality={95}
-                    src={targetRoom.icone_url}
-                    alt={targetRoom.nome}
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover shrink-0 shadow-sm"
-                  />
-                )}
-
-                <div className="flex flex-col gap-1 min-w-0">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-black dark:text-white truncate">
-                    {targetRoom.nome}
-                  </h1>
-                  <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-black/55 dark:text-white/55">
-                    {isRoomLeader && (
-                      <Crown
-                        strokeWidth={1.75}
-                        className="w-3.5 h-3.5 text-black/55 dark:text-white/55"
-                      />
-                    )}
-                    <span>
-                      {isRoomLeader
-                        ? "Você é o líder desta sala"
-                        : `Líder: ${targetRoom.lider_username}`}
-                    </span>
-                  </span>
-                </div>
-              </div>
-
-              <span
-                title={isRestrictedRoom ? "Sala restrita" : "Sala livre"}
-                className={`px-3.5 py-1.5 text-xs font-semibold flex items-center gap-1.5 rounded-full shrink-0 ${
-                  isRestrictedRoom
-                    ? "bg-[#E60000]/15 text-[#E60000] dark:bg-[#E60000]/20 dark:text-red-400"
-                    : "bg-[#139C1A]/15 text-[#139C1A] dark:bg-[#139C1A]/20 dark:text-green-400"
-                }`}
-              >
-                {isRestrictedRoom ? (
-                  <Lock className="w-3.5 h-3.5" />
-                ) : (
-                  <LockOpen className="w-3.5 h-3.5" />
-                )}
-                <span>{isRestrictedRoom ? "Restrita" : "Livre"}</span>
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-8 items-start">
-            <div className="w-full flex justify-center">
-              <Calendar
-                roomId={normalizedRoomIdentifier}
-                tasks={roomTasks}
-                currentUserId={normalizedUserId}
-                currentUserName={userSession.user?.name?.trim() || "Você"}
-                isRoomLeader={isRoomLeader}
-                canCreateTasks={canCreateTasks}
-              />
-            </div>
-
-            <RoomMembersPanel
-              roomId={normalizedRoomIdentifier}
-              roomType={roomType}
-              members={orderedMembers}
-              currentUserId={normalizedUserId}
-              isRoomLeader={isRoomLeader}
-            />
-          </div>
+          <RoomWorkspace
+            roomId={normalizedRoomIdentifier}
+            roomName={targetRoom.nome}
+            roomIconUrl={targetRoom.icone_url}
+            roomType={roomType}
+            leaderUsername={targetRoom.lider_username}
+            tasks={roomTasks}
+            members={orderedMembers}
+            currentUserId={normalizedUserId}
+            currentUserName={userSession.user?.name?.trim() || "Você"}
+            isRoomLeader={isRoomLeader}
+            canCreateTasks={canCreateTasks}
+            canSendMessages={canSendMessages}
+          />
         </main>
       </div>
     </Suspense>

@@ -11,13 +11,13 @@ type MemberActionResult = {
     error?: string;
 };
 
-type MemberPermissionField = "pode_criar_tarefas" | "pode_comentar";
+type MemberPermissionField = "pode_criar_tarefas" | "pode_mandar_mensagens";
 
 export async function updateMemberPermission(
     targetRoomIdentifier: string,
     targetMemberIdentifier: string,
     permissionField: MemberPermissionField,
-    nextValue: boolean
+    nextValue: boolean,
 ): Promise<MemberActionResult> {
     const userSession = await getServerSession(authOptions);
     const authenticatedUserId = userSession?.user?.id;
@@ -35,7 +35,7 @@ export async function updateMemberPermission(
 
     if (
         permissionField !== "pode_criar_tarefas" &&
-        permissionField !== "pode_comentar"
+        permissionField !== "pode_mandar_mensagens"
     ) {
         return { error: "Permissão inválida." };
     }
@@ -55,7 +55,7 @@ export async function updateMemberPermission(
     try {
         const roomRows = await controller.runQuery<{ lider_id: string }>(
             "SELECT lider_id FROM salas WHERE id = $1;",
-            [normalizedRoomId]
+            [normalizedRoomId],
         );
 
         if (roomRows.length === 0) {
@@ -73,13 +73,13 @@ export async function updateMemberPermission(
                    WHERE id_sala = $2 AND id_usuario = $3
                    RETURNING id_usuario;`
                 : `UPDATE sala_membros
-                   SET pode_comentar = $1
+                   SET pode_mandar_mensagens = $1
                    WHERE id_sala = $2 AND id_usuario = $3
                    RETURNING id_usuario;`;
 
         const updatedRows = await controller.runQuery<{ id_usuario: string }>(
             updateQuery,
-            [nextValue, normalizedRoomId, normalizedMemberId]
+            [nextValue, normalizedRoomId, normalizedMemberId],
         );
 
         if (updatedRows.length === 0) {
@@ -91,7 +91,7 @@ export async function updateMemberPermission(
     } catch (databaseOperationError) {
         console.error(
             "Erro ao atualizar permissão de membro:",
-            databaseOperationError
+            databaseOperationError,
         );
         return { error: "Não foi possível atualizar a permissão." };
     }
@@ -99,7 +99,7 @@ export async function updateMemberPermission(
 
 export async function removeRoomMember(
     targetRoomIdentifier: string,
-    targetMemberIdentifier: string
+    targetMemberIdentifier: string,
 ): Promise<MemberActionResult> {
     const userSession = await getServerSession(authOptions);
     const authenticatedUserId = userSession?.user?.id;
@@ -126,7 +126,7 @@ export async function removeRoomMember(
     try {
         const roomRows = await controller.runQuery<{ lider_id: string }>(
             "SELECT lider_id FROM salas WHERE id = $1;",
-            [normalizedRoomId]
+            [normalizedRoomId],
         );
 
         if (roomRows.length === 0) {
@@ -141,7 +141,7 @@ export async function removeRoomMember(
             `DELETE FROM sala_membros
              WHERE id_sala = $1 AND id_usuario = $2
              RETURNING id_usuario;`,
-            [normalizedRoomId, normalizedMemberId]
+            [normalizedRoomId, normalizedMemberId],
         );
 
         if (deletedRows.length === 0) {

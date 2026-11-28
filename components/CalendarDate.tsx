@@ -21,6 +21,9 @@ export default function CalendarDate({
 }: CalendarDateProps) {
     const hasTasks = dayTasks.length > 0;
     const firstTaskColor = hasTasks ? dayTasks[0].cor : undefined;
+    const hasUnreadMessages = dayTasks.some(
+        (taskItem) => taskItem.hasUnreadMessages
+    );
     const previewTasks = dayTasks.slice(0, 3);
     const remainingTasksCount = dayTasks.length - previewTasks.length;
 
@@ -36,13 +39,19 @@ export default function CalendarDate({
             <button
                 type="button"
                 onClick={onSelectDay}
-                aria-label={`Dia ${dayNumber}${hasTasks ? `, ${dayTasks.length} tarefa(s)` : ""}`}
-                className={`aspect-square w-full max-w-14 rounded-full flex flex-col items-center justify-center gap-0.5 transition-colors duration-200 cursor-pointer select-none hover:bg-black/10 dark:hover:bg-white/10 ${
+                aria-label={`Dia ${dayNumber}${hasTasks ? `, ${dayTasks.length} tarefa(s)` : ""}${hasUnreadMessages ? ", mensagens não lidas" : ""}`}
+                className={`relative aspect-square w-full max-w-14 rounded-full flex flex-col items-center justify-center gap-0.5 transition-colors duration-200 cursor-pointer select-none hover:bg-black/10 dark:hover:bg-white/10 ${
                     isToday
                         ? "ring-2 ring-teal-500/70 font-semibold text-teal-600 dark:text-teal-400"
                         : "text-black dark:text-white"
                 }`}
             >
+                {hasUnreadMessages && (
+                    <span
+                        title="Mensagens não lidas"
+                        className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#E60000] ring-2 ring-[#F9F9F9] dark:ring-[#232323]"
+                    />
+                )}
                 <span className="leading-none">{dayNumber}</span>
                 {hasTasks && firstTaskColor ? (
                     <span
@@ -76,6 +85,9 @@ export default function CalendarDate({
                                 >
                                     {taskItem.nome}
                                 </span>
+                                {taskItem.hasUnreadMessages && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#E60000] shrink-0" />
+                                )}
                             </li>
                         ))}
                     </ul>
