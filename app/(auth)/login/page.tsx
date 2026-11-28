@@ -9,6 +9,11 @@ export default function Page() {
         <main className="flex items-center gap-5 flex-col h-screen lg:flex-row">
             <Logo />
             <LoginBackground>
+            <div className="absolute right-0.5 bottom-0.5 flex gap-2 items-end">
+                <Link href={"/terms"} className="text-xs text-white/20 hover:underline hover:text-cyan-400/60">Termos de Serviço</Link>
+                <p className="text-xs select-none text-white/20">•</p>
+                <Link href={"/privacy"} className="text-xs text-white/20 hover:underline hover:text-cyan-400/60">Política de Privacidade</Link>
+            </div>
 
 
                 <div className="2xl:scale-125">

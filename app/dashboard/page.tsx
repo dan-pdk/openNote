@@ -41,6 +41,11 @@ export default async function Page() {
         <Suspense fallback={<div className="min-h-screen bg-white dark:bg-[#1D1D1D]" />}>
             <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
                 <Header />
+                <div className="absolute right-0.5 bottom-0.5 flex gap-2 items-end">
+                <Link href={"/terms"} className="text-xs text-white/20 hover:underline hover:text-cyan-400/60">Termos de Serviço</Link>
+                <p className="text-xs select-none text-white/20">•</p>
+                <Link href={"/privacy"} className="text-xs text-white/20 hover:underline hover:text-cyan-400/60">Política de Privacidade</Link>
+            </div>
 
                 <main className="px-4 py-6 lg:px-10 lg:max-w-5xl lg:mx-auto">
                     <h1 className="text-2xl font-semibold mb-6 text-black dark:text-white">Início</h1>

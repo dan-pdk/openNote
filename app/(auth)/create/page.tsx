@@ -12,7 +12,11 @@ export default function Page() {
         <main className="flex items-center gap-5 flex-col h-screen lg:flex-row">
             <Logo />
             <LoginBackground>
-
+            <div className="absolute right-0.5 bottom-0.5 flex gap-2 items-end">
+                <Link href={"/terms"} className="text-xs text-white/20 hover:underline hover:text-cyan-400/60">Termos de Serviço</Link>
+                <p className="text-xs select-none text-white/20">•</p>
+                <Link href={"/privacy"} className="text-xs text-white/20 hover:underline hover:text-cyan-400/60">Política de Privacidade</Link>
+            </div>
 
                 <div className="2xl:scale-125">
                    <h1 className="text-black text-sm text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Criar conta</h1>
@@ -27,7 +31,7 @@ export default function Page() {
                         </div>
 
                         <a href="login">
-                            <input type="button" className="bg-blue-500/20 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-not-allowed text-white/20" title="O serviço de criação de contas, na verdade, nunca estará disponível, pois ele não existe. Use sua conta Google." value={"Criar conta"}> 
+                            <input type="button" className="bg-blue-500/20 w-50 mt-5 p-3 text-center rounded-xl duration-200 cursor-not-allowed text-white/20" title="O serviço de criação de contas, na verdade, nunca estará disponível, pois ele não existe. Use sua conta Google." value={"Criar conta"}> 
                             </input>
                         </a>
 

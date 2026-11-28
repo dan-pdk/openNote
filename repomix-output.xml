@@ -1,0 +1,3302 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: public/**, package-lock.json, .env*
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+actions/
+  createRoom.ts
+  createTask.ts
+  deleteRoom.ts
+  joinRoom.ts
+  leaveRoom.ts
+app/
+  (auth)/
+    create/
+      page.tsx
+    login/
+      page.tsx
+  api/
+    auth/
+      [...nextauth]/
+        route.ts
+    v1/
+      rooms/
+        route.ts
+  dashboard/
+    layout.tsx
+    page.tsx
+  privacy/
+    page.tsx
+  profile/
+    [id]/
+      page.tsx
+    layout.tsx
+    page.tsx
+  rooms/
+    [roomID]/
+      layout.tsx
+      page.tsx
+    layout.tsx
+    page.tsx
+  terms/
+    page.tsx
+  globals.css
+  layout.tsx
+  page.tsx
+auth/
+  authOptions.ts
+components/
+  AddRoomForm.tsx
+  AddRoomModal.tsx
+  AddTaskForm.tsx
+  Calendar.tsx
+  CalendarDate.tsx
+  DashboardMenu.tsx
+  GenericWideButton.tsx
+  Header.tsx
+  OpenMenuButton.tsx
+  ProfileView.tsx
+  Rooms.tsx
+  RoomsRoomsPage.tsx
+  SessionProviderWrapper.tsx
+  ThemeProvieder.tsx
+  UserProfileLink.tsx
+db/
+  controller.ts
+  docker-compose.yml
+  instructions.md
+  schema.sql
+  testConnection.mjs
+lib/
+  profileService.ts
+.gitignore
+eslint.config.mjs
+next-auth.d.ts
+next.config.ts
+package.json
+postcss.config.mjs
+proxy.ts
+README.md
+tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="app/privacy/page.tsx">
+import Image from "next/image";
+import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "openNote",
+    description: "Política de Privacidade do projeto acadêmico openNote",
+};
+
+export default function PrivacyPage() {
+    return (
+        <div className="min-h-screen bg-white dark:bg-[#1D1D1D] text-black dark:text-white">
+            <header className="flex items-center justify-between px-4 py-4 lg:px-10 border-b border-black/15 dark:border-white/15">
+                <Link href="/login">
+                    <Image
+                        src="/LogoDesktopLight.svg"
+                        width={160}
+                        height={34}
+                        alt="openNote"
+                        className="dark:hidden"
+                    />
+                    <Image
+                        src="/LogoDesktop.svg"
+                        width={160}
+                        height={34}
+                        alt="openNote"
+                        className="hidden dark:block"
+                    />
+                </Link>
+
+                <Link
+                    href="/login"
+                    className="text-sm font-medium text-teal-600 dark:text-teal-400 hover:underline"
+                >
+                    Voltar ao início
+                </Link>
+            </header>
+
+            <main className="px-4 py-8 lg:px-10 max-w-3xl mx-auto flex flex-col gap-6">
+                <div>
+                    <h1 className="text-3xl font-semibold mt-1">Política de Privacidade</h1>
+                    <p className="text-sm text-black/60 dark:text-white/60 mt-2">
+                        OpenNote é um projeto acadêmico desenvolvido exclusivamente para fins educacionais.
+                    </p>
+                </div>
+
+                <section className="bg-[#E2E2E2]/60 dark:bg-[#303030] rounded-2xl p-6 flex flex-col gap-5 text-sm leading-relaxed text-black/85 dark:text-white/85">
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-lg font-semibold text-black dark:text-white">
+                            I. Dados que coletamos
+                        </h2>
+                        <p>
+                            Ao entrar na plataforma, recebemos apenas essas informações:
+                        </p>
+                        <ul className="list-disc pl-5 flex flex-col gap-1">
+                            <li>Nome de exibição;</li>
+                            <li>Endereço de e-mail;</li>
+                            <li>Foto de perfil fornecida pela Google.</li>
+                        </ul>
+                        <p>Nunca armazenaremos sua senha ou outros dados sensíveis. Seu e-mail será oculto para outros usuários por padrão.</p>
+                        <p>
+                            Também armazenamos o conteúdo que você cria dentro da aplicação, como nomes de salas, tarefas, datas de entrega, descrições e comentários.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-lg font-semibold text-black dark:text-white">
+                            2. Como usamos esses dados
+                        </h2>
+                        <p>
+                            Seus dados são utilizados exclusivamente para autenticar seu acesso, vincular você às salas que criar ou participar e exibir seu nome e foto aos outros usuários que compartilham salas com você. Não vendemos, alugamos ou utilizamos seus dados para fins comerciais ou publicitários, ou sequer nos importamos com eles.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-lg font-semibold text-black dark:text-white">
+                            3. Armazenamento e cookies
+                        </h2>
+                        <p>
+                            A aplicação é hospedada na Vercel e os dados são armazenados em banco de dados PostgreSQL na plataforma Neon. Utilizamos apenas os cookies essenciais de sessão para manter você conectado durante o uso; não coletamos informações pessoais.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-lg font-semibold text-black dark:text-white">
+                            4. Disponibilidade e exclusão
+                        </h2>
+                        <p>
+                            Por se tratar de um projeto escolar, o banco de dados pode ser limpo ou desativado após o encerramento das avaliações acadêmicas. Você pode excluir sua conta a qualquer momento, juntamente com toda sua atividade na plataforma.
+                        </p>
+                    </div>
+                </section>
+
+                <footer className="flex items-center justify-between text-xs text-black/50 dark:text-white/50 pt-2">
+                    <span>openNote</span>
+                    <Link href="/terms" className="hover:underline text-teal-600 dark:text-teal-400">
+                        Ver Termos de Serviço
+                    </Link>
+                </footer>
+            </main>
+        </div>
+    );
+}
+</file>
+
+<file path="app/terms/page.tsx">
+import Image from "next/image";
+import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "openNote",
+    description: "Termos de Serviço do projeto acadêmico openNote",
+};
+
+export default function TermsPage() {
+    return (
+        <div className="min-h-screen bg-white dark:bg-[#1D1D1D] text-black dark:text-white">
+            <header className="flex items-center justify-between px-4 py-4 lg:px-10 border-b border-black/15 dark:border-white/15">
+                <Link href="/login">
+                    <Image
+                        src="/LogoDesktopLight.svg"
+                        width={160}
+                        height={34}
+                        alt="openNote"
+                        className="dark:hidden"
+                    />
+                    <Image
+                        src="/LogoDesktop.svg"
+                        width={160}
+                        height={34}
+                        alt="openNote"
+                        className="hidden dark:block"
+                    />
+                </Link>
+
+                <Link
+                    href="/login"
+                    className="text-sm font-medium text-teal-600 dark:text-teal-400 hover:underline"
+                >
+                    Voltar ao início
+                </Link>
+            </header>
+
+            <main className="px-4 py-8 lg:px-10 max-w-3xl mx-auto flex flex-col gap-6">
+                <div>
+                    <h1 className="text-3xl font-semibold mt-1">Termos de Serviço</h1>
+                    <p className="text-sm text-black/60 dark:text-white/60 mt-2">
+                        Ao acessar e utilizar o openNote, você concorda com os termos descritos abaixo:
+                    </p>
+                </div>
+
+                <section className="bg-[#E2E2E2]/60 dark:bg-[#303030] rounded-2xl p-6 flex flex-col gap-5 text-sm leading-relaxed text-black/85 dark:text-white/85">
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-lg font-semibold text-black dark:text-white">
+                            1. Natureza do projeto
+                        </h2>
+                        <p>
+                            O openNote é uma aplicação web desenvolvida como trabalho escolar para organização colaborativa de tarefas, oferecida gratuitamente &ldquo;no estado em que se encontra&rdquo;, sem fins comerciais ou compromissos com qualidade.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-lg font-semibold text-black dark:text-white">
+                            2. Uso adequado
+                        </h2>
+                        <p>
+                            Ao criar salas, tarefas ou comentários, você concorda em não publicar conteúdo ilegal ou contendo dados sensíveis (senhas, cartões de crédito, endereços). Também concorda com não ser anti-resenha.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-lg font-semibold text-black dark:text-white">
+                            3. Disponibilidade e ausência de garantias
+                        </h2>
+                        <p>
+                            Por se tratar de um projeto acadêmico descartável, não há garantias de tempo de serviço integral e muito menos suporte ao cliente. Consulte o código fonte no GitHub e faça uma pull request se quiser arrumar algo que (inevitavelmente) esquecemos.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-lg font-semibold text-black dark:text-white">
+                            4. Contas e moderação
+                        </h2>
+                        <p>
+                            O acesso é realizado via autenticação Google. Os desenvolvedores responsáveis pelo projeto reservam-se o direito de remover conteúdos ou contas que violem o bom uso da plataforma durante o período de avaliação ou remover conteúdos que sejam contra a resenha. Você concorda com o risco de ser oprimido nessa plataforma.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-lg font-semibold text-black dark:text-white">
+                            5. Contato
+                        </h2>
+                        <p>
+                            Dúvidas ou solicitações relacionadas ao projeto deveriam ser mantidas para si mesmo. Se necessário, envie um e-mail para <a href="mailto:macacopedreiropedreiragem@gmail.com">macacopedreiropedreiragem@gmail.com</a>
+                        </p>
+                    </div>
+                </section>
+
+                <footer className="flex items-center justify-between text-xs text-black/50 dark:text-white/50 pt-2">
+                    <span>openNote</span>
+                    <Link href="/privacy" className="hover:underline text-teal-600 dark:text-teal-400">
+                        Ver Política de Privacidade
+                    </Link>
+                </footer>
+            </main>
+        </div>
+    );
+}
+</file>
+
+<file path="app/profile/[id]/page.tsx">
+import ProfileView from "@/components/ProfileView";
+import {
+    getAuthenticatedViewerId,
+    getSafeProfilePayload,
+    isValidUuidString,
+} from "@/lib/profileService";
+import { notFound, redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
+
+export default async function ProfileDetailPage({
+    params,
+}: {
+    params: Promise<{ id: string }>;
+}) {
+    const authenticatedViewerId = await getAuthenticatedViewerId();
+
+    if (!authenticatedViewerId) {
+        redirect("/login");
+    }
+
+    const { id: requestedProfileIdentifier } = await params;
+
+    if (!isValidUuidString(requestedProfileIdentifier)) {
+        notFound();
+    }
+
+    const profilePayload = await getSafeProfilePayload(
+        requestedProfileIdentifier,
+        authenticatedViewerId
+    );
+
+    if (!profilePayload) {
+        notFound();
+    }
+
+    return <ProfileView profilePayload={profilePayload} />;
+}
+</file>
+
+<file path="app/profile/layout.tsx">
+import SessionProviderWrapper from "@/components/SessionProviderWrapper";
+import { ReactNode } from "react";
+
+export default function ProfileLayout({ children }: { children: ReactNode }) {
+    return <SessionProviderWrapper>{children}</SessionProviderWrapper>;
+}
+</file>
+
+<file path="app/profile/page.tsx">
+import ProfileView from "@/components/ProfileView";
+import { getAuthenticatedViewerId, getSafeProfilePayload } from "@/lib/profileService";
+import { notFound, redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
+
+export default async function OwnProfilePage() {
+    const authenticatedViewerId = await getAuthenticatedViewerId();
+
+    if (!authenticatedViewerId) {
+        redirect("/login");
+    }
+
+    const profilePayload = await getSafeProfilePayload(
+        authenticatedViewerId,
+        authenticatedViewerId
+    );
+
+    if (!profilePayload) {
+        notFound();
+    }
+
+    return <ProfileView profilePayload={profilePayload} />;
+}
+</file>
+
+<file path="app/rooms/[roomID]/layout.tsx">
+import SessionProviderWrapper from "@/components/SessionProviderWrapper"
+import { ReactNode } from "react"
+
+export default function App({children} : {children : ReactNode}) {
+    return (
+        <SessionProviderWrapper>
+            {children}
+        </SessionProviderWrapper>
+    )
+}
+</file>
+
+<file path="auth/authOptions.ts">
+import { AuthOptions } from "next-auth";
+import Google from "next-auth/providers/google";
+import controller from "@/db/controller";
+
+const authOptions: AuthOptions = {
+    providers: [
+        Google({
+            clientId: process.env.GOOGLE_ID as string,
+            clientSecret: process.env.GOOGLE_SECRET as string,
+        })
+    ],
+    callbacks: {
+
+        async jwt({ token, user }) {
+            let id: string = "";
+            if (user?.email) {
+                const matchingUsers = await getUsersIdByEmail(user.email) as any as Array<Record<string, any>>
+                if (matchingUsers.length == 1) {
+                    id = matchingUsers[0].id;
+                } else {
+                    const queryCommand = controller.createQueryCommand().insert("usuarios").values({ username: user.name, email: user.email, mirror_foto: user.image }).resolve()
+                    await controller.runQuery(queryCommand);
+                    const [generatedID] = await getUsersIdByEmail(user.email)
+                    id = generatedID.id;
+                }
+                token.id = id;
+            }
+            return token
+        },
+
+        async session({ session, token }) {
+            if (session.user) {
+                session.user.id = token.id as string;
+            }
+            return session;
+        }
+    }
+}
+
+async function getUsersIdByEmail(email: string) {
+    const matchingUsers = await controller.runQuery(`SELECT id FROM usuarios WHERE email = $1;`, [email]);
+    return matchingUsers
+}
+
+export default authOptions
+</file>
+
+<file path="components/CalendarDate.tsx">
+function CalendarDate() {
+    return <div></div>
+}
+
+export default CalendarDate;
+</file>
+
+<file path="components/GenericWideButton.tsx">
+'use client'
+import Link from 'next/link';
+import Image from 'next/image';
+
+export default function GenericWideButton({label, href}:{label: string, href: string}) {
+    return (
+        <>
+            <Link href={href}>
+              <button className="relative bg-[#E2E2E2] dark:bg-[#222222] rounded-xl p-3 text-center text-black/35 dark:text-white/60 hover:scale-[1.02] duration-200 cursor-pointer w-full flex justify-center align-center">
+                {label}
+                <Image src={"/ChevronRight.svg"} width={20} height={20} alt="" className="dark:invert absolute right-3" />
+              </button>
+            </Link>
+        </>
+    )
+}
+</file>
+
+<file path="components/OpenMenuButton.tsx">
+'use client'
+import Link from "next/link"
+import Image from "next/image"
+import { usePathname } from "next/navigation"
+
+export default function OpenMenuButton() {
+    const pathname = usePathname();
+
+
+    return (
+        <Link href={`${pathname}?isMenuOpen=true`}>
+            <button aria-label="Abrir menu" className="cursor-pointer">
+                <Image src={"/Menu.svg"} width={24} height={24} alt="" className="dark:invert"></Image>
+            </button>
+        </Link>
+    )
+}
+</file>
+
+<file path="components/SessionProviderWrapper.tsx">
+'use client';
+import { SessionProvider } from "next-auth/react";
+import { ReactNode } from "react";
+
+export default function SessionProviderWrapper({children}: {children: ReactNode}) {
+    return <SessionProvider>{children}</SessionProvider>
+}
+</file>
+
+<file path="components/ThemeProvieder.tsx">
+'use client';
+
+import { ThemeProvider as NextThemesProvider } from 'next-themes';
+import { ReactNode } from 'react';
+
+export default function ThemeProvider({ children }: { children: ReactNode }) {
+    return (
+        <NextThemesProvider attribute="class" defaultTheme="system" enableSystem={true} >
+            {children}
+        </NextThemesProvider>
+    )
+}
+</file>
+
+<file path="components/UserProfileLink.tsx">
+import Image from "next/image";
+import Link from "next/link";
+
+type UserProfileLinkProps = {
+    userId: string;
+    username: string;
+    avatarUrl?: string | null;
+};
+
+export default function UserProfileLink({
+    userId,
+    username,
+    avatarUrl = null,
+}: UserProfileLinkProps) {
+    const usernameInitial = username.trim().charAt(0).toUpperCase() || "?";
+
+    return (
+        <Link
+            href={`/profile/${userId}`}
+            className="inline-flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+        >
+            <div className="w-7 h-7 rounded-full bg-black/10 dark:bg-white/15 overflow-hidden flex items-center justify-center shrink-0">
+                {avatarUrl ? (
+                    <Image
+                        src={avatarUrl}
+                        width={28}
+                        height={28}
+                        alt={username}
+                        className="w-full h-full object-cover"
+                    />
+                ) : (
+                    <span className="text-xs font-medium text-black dark:text-white">
+                        {usernameInitial}
+                    </span>
+                )}
+            </div>
+            <span className="text-sm font-medium text-black dark:text-white truncate">
+                {username}
+            </span>
+        </Link>
+    );
+}
+</file>
+
+<file path="lib/profileService.ts">
+import authOptions from "@/auth/authOptions";
+import controller from "@/db/controller";
+import { getServerSession } from "next-auth";
+
+export type PublicProfileUser = {
+    id: string;
+    username: string;
+    email: string;
+    is_admin: boolean;
+    mirror_foto: string | null;
+};
+
+export type ProfileRoomSummary = {
+    id: string;
+    nome: string;
+    tipo: "livre" | "restrita";
+    icone_url: string | null;
+};
+
+export type ProfilePagePayload = {
+    profileUser: PublicProfileUser;
+    isOwnProfile: boolean;
+    visibleRooms: Array<ProfileRoomSummary>;
+};
+
+const uuidValidationRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isValidUuidString(candidateIdentifier: unknown): candidateIdentifier is string {
+    if (typeof candidateIdentifier !== "string") {
+        return false;
+    }
+
+    const trimmedIdentifier = candidateIdentifier.trim();
+    return trimmedIdentifier.length === 36 && uuidValidationRegex.test(trimmedIdentifier);
+}
+
+export async function getAuthenticatedViewerId(): Promise<string | null> {
+    const userSession = await getServerSession(authOptions);
+    const sessionUserId = userSession?.user?.id;
+
+    if (!userSession || !isValidUuidString(sessionUserId)) {
+        return null;
+    }
+
+    const normalizedViewerId = sessionUserId.trim().toLowerCase();
+
+    const matchingUsersList = await controller.runQuery<{ id: string }>(
+        "SELECT id FROM usuarios WHERE id = $1;",
+        [normalizedViewerId]
+    );
+
+    if (matchingUsersList.length === 0) {
+        return null;
+    }
+
+    return normalizedViewerId;
+}
+
+export async function getSafeProfilePayload(
+    targetProfileIdentifier: string,
+    authenticatedViewerId: string
+): Promise<ProfilePagePayload | null> {
+    if (!isValidUuidString(targetProfileIdentifier) || !isValidUuidString(authenticatedViewerId)) {
+        return null;
+    }
+
+    const normalizedProfileId = targetProfileIdentifier.trim().toLowerCase();
+    const normalizedViewerId = authenticatedViewerId.trim().toLowerCase();
+
+    const matchingProfilesList = await controller.runQuery<PublicProfileUser>(
+        "SELECT id, username, email, is_admin, mirror_foto FROM usuarios WHERE id = $1;",
+        [normalizedProfileId]
+    );
+
+    if (matchingProfilesList.length === 0) {
+        return null;
+    }
+
+    const profileUser = matchingProfilesList[0];
+    const isOwnProfile = profileUser.id.toLowerCase() === normalizedViewerId;
+
+    const visibleRooms = isOwnProfile
+        ? await controller.runQuery<ProfileRoomSummary>(
+              `SELECT DISTINCT s.id, s.nome, s.tipo, s.icone_url
+               FROM salas s
+               LEFT JOIN sala_membros sm ON s.id = sm.id_sala
+               WHERE s.lider_id = $1 OR sm.id_usuario = $1
+               ORDER BY s.nome ASC;`,
+              [normalizedViewerId]
+          )
+        : await controller.runQuery<ProfileRoomSummary>(
+              `SELECT DISTINCT s.id, s.nome, s.tipo, s.icone_url
+               FROM salas s
+               WHERE (s.lider_id = $1 OR EXISTS (SELECT 1 FROM sala_membros sm_viewer WHERE sm_viewer.id_sala = s.id AND sm_viewer.id_usuario = $1))
+                 AND (s.lider_id = $2 OR EXISTS (SELECT 1 FROM sala_membros sm_target WHERE sm_target.id_sala = s.id AND sm_target.id_usuario = $2))
+               ORDER BY s.nome ASC;`,
+              [normalizedViewerId, profileUser.id]
+          );
+
+    return {
+        profileUser,
+        isOwnProfile,
+        visibleRooms,
+    };
+}
+</file>
+
+<file path="next-auth.d.ts">
+import NextAuth, { DefaultSession } from "next-auth";
+import { JWT } from "next-auth/jwt";
+
+declare module "next-auth" {
+    interface Session {
+        user: {
+            id: string,
+            email: string,
+            image: string,
+            name: string
+        }
+    }
+}
+</file>
+
+<file path="postcss.config.mjs">
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+
+export default config;
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+</file>
+
+<file path="actions/createTask.ts">
+"use server";
+import controller from "@/db/controller";
+import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
+import authOptions from "@/auth/authOptions";
+
+
+export default async function createTask(roomId: string, formData: FormData) {
+    const session = await getServerSession(authOptions);
+    const taskName = formData.get("taskName");
+    const description = formData.get("description");
+    const date = formData.get("date") as string
+
+    function formatDate(date: string) {
+        const [year, month, day] = date.split('-');
+        const newDate = new Date(Number(year), Number(month), Number(day));
+        return newDate.toISOString();
+    }
+
+    const valuesData = {
+        nome: taskName,
+        data_Entrega: formatDate(date),
+        data_Criacao: (new Date()).toISOString(),
+        descricao: description,
+        id_sala: roomId
+    }
+
+    /*function validadeAuthorization() {
+        const user = session?.user;
+        const DBuser = await controller.runQuery("SELECT FROM SALAS")
+    }
+        TODO: When users are able to join someone else's room, add the logic the validate their authorization to create a task    
+    
+    */
+    
+    const userId = session?.user.id
+
+    const room = await controller.runQuery("SELECT lider_id FROM salas WHERE id = $1 ", [roomId])
+    const isUserAuthorized  = room[0].lider_id == userId
+
+    if (session && isUserAuthorized) {
+        const queryCommand = controller.createQueryCommand();
+        const query = queryCommand.insert("tarefas").values(valuesData).resolve();
+        const result = await controller.runQuery(query);
+    }
+
+    revalidatePath(`/rooms/${roomId}`)
+}
+</file>
+
+<file path="actions/deleteRoom.ts">
+"use server";
+
+import authOptions from "@/auth/authOptions";
+import controller from "@/db/controller";
+import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
+
+type DeleteRoomResult = {
+    success?: boolean;
+    error?: string;
+};
+
+const uuidValidationRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export default async function deleteRoom(targetRoomIdentifier: string): Promise<DeleteRoomResult> {
+    const userSession = await getServerSession(authOptions);
+    const authenticatedUserId = userSession?.user?.id;
+
+    if (!userSession || !authenticatedUserId || typeof authenticatedUserId !== "string" || authenticatedUserId.length !== 36 || !uuidValidationRegex.test(authenticatedUserId)) {
+        return { error: "Usuário não autenticado." };
+    }
+
+    if (typeof targetRoomIdentifier !== "string") {
+        return { error: "Identificador de sala inválido." };
+    }
+
+    const trimmedRoomIdentifier = targetRoomIdentifier.trim();
+
+    if (trimmedRoomIdentifier.length !== 36 || !uuidValidationRegex.test(trimmedRoomIdentifier)) {
+        return { error: "Identificador de sala inválido." };
+    }
+
+    const normalizedRoomIdentifier = trimmedRoomIdentifier.toLowerCase();
+
+    try {
+        const deletedRoomsList = await controller.runQuery<{ id: string }>(
+            "DELETE FROM salas WHERE id = $1 AND lider_id = $2 RETURNING id;",
+            [normalizedRoomIdentifier, authenticatedUserId]
+        );
+
+        if (deletedRoomsList.length === 0) {
+            return { error: "Sala não encontrada ou você não tem permissão para deletá-la." };
+        }
+
+        revalidatePath("/dashboard");
+        revalidatePath("/rooms");
+        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
+
+        return { success: true };
+    } catch (databaseOperationError) {
+        console.error("Erro ao deletar sala:", databaseOperationError);
+        return { error: "Não foi possível deletar a sala." };
+    }
+}
+</file>
+
+<file path="actions/joinRoom.ts">
+"use server";
+
+import authOptions from "@/auth/authOptions";
+import controller from "@/db/controller";
+import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
+
+type JoinRoomResult = {
+    success?: boolean;
+    error?: string;
+    roomId?: string;
+};
+
+const uuidValidationRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export default async function joinRoom(formDataPayload: FormData): Promise<JoinRoomResult> {
+    const userSession = await getServerSession(authOptions);
+    const authenticatedUserId = userSession?.user?.id;
+
+    if (!userSession || !authenticatedUserId || typeof authenticatedUserId !== "string" || authenticatedUserId.length !== 36 || !uuidValidationRegex.test(authenticatedUserId)) {
+        return { error: "Usuário não autenticado." };
+    }
+
+    if (!formDataPayload || typeof formDataPayload.get !== "function") {
+        return { error: "Dados de requisição inválidos." };
+    }
+
+    const roomIdentifierEntry = formDataPayload.get("roomId");
+
+    if (typeof roomIdentifierEntry !== "string") {
+        return { error: "Código UUID inválido." };
+    }
+
+    const trimmedRoomIdentifier = roomIdentifierEntry.trim();
+
+    if (trimmedRoomIdentifier.length !== 36 || !uuidValidationRegex.test(trimmedRoomIdentifier)) {
+        return { error: "Código UUID inválido." };
+    }
+
+    const normalizedRoomIdentifier = trimmedRoomIdentifier.toLowerCase();
+
+    try {
+        const targetRoomsList = await controller.runQuery<{ id: string; lider_id: string }>(
+            "SELECT id, lider_id FROM salas WHERE id = $1;",
+            [normalizedRoomIdentifier]
+        );
+
+        if (targetRoomsList.length === 0) {
+            return { error: "Sala não encontrada." };
+        }
+
+        const targetRoom = targetRoomsList[0];
+
+        if (targetRoom.lider_id.toLowerCase() === authenticatedUserId.toLowerCase()) {
+            return { error: "Você já é o líder desta sala." };
+        }
+
+        const existingMembershipsList = await controller.runQuery<{ id_sala: string }>(
+            "SELECT id_sala FROM sala_membros WHERE id_usuario = $1 AND id_sala = $2;",
+            [authenticatedUserId, normalizedRoomIdentifier]
+        );
+
+        if (existingMembershipsList.length > 0) {
+            return { error: "Você já participa desta sala." };
+        }
+
+        const insertedMembershipsList = await controller.runQuery<{ id_sala: string }>(
+            "INSERT INTO sala_membros (id_usuario, id_sala) VALUES ($1, $2) ON CONFLICT (id_usuario, id_sala) DO NOTHING RETURNING id_sala;",
+            [authenticatedUserId, normalizedRoomIdentifier]
+        );
+
+        if (insertedMembershipsList.length === 0) {
+            return { error: "Você já participa desta sala." };
+        }
+
+        revalidatePath("/dashboard");
+        revalidatePath("/rooms");
+        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
+
+        return { success: true, roomId: normalizedRoomIdentifier };
+    } catch (databaseOperationError) {
+        console.error("Erro ao processar ingresso na sala:", databaseOperationError);
+        return { error: "Não foi possível processar a entrada na sala." };
+    }
+}
+</file>
+
+<file path="actions/leaveRoom.ts">
+"use server";
+
+import authOptions from "@/auth/authOptions";
+import controller from "@/db/controller";
+import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
+
+type LeaveRoomResult = {
+    success?: boolean;
+    error?: string;
+};
+
+const uuidValidationRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export default async function leaveRoom(targetRoomIdentifier: string): Promise<LeaveRoomResult> {
+    const userSession = await getServerSession(authOptions);
+    const authenticatedUserId = userSession?.user?.id;
+
+    if (!userSession || !authenticatedUserId || typeof authenticatedUserId !== "string" || authenticatedUserId.length !== 36 || !uuidValidationRegex.test(authenticatedUserId)
+    ) {
+        return { error: "Usuário não autenticado." };
+    }
+
+    if (typeof targetRoomIdentifier !== "string") {
+        return { error: "Identificador de sala inválido." };
+    }
+
+    const trimmedRoomIdentifier = targetRoomIdentifier.trim();
+
+    if (trimmedRoomIdentifier.length !== 36 || !uuidValidationRegex.test(trimmedRoomIdentifier)) {
+        return { error: "Identificador de sala inválido." };
+    }
+
+    const normalizedRoomIdentifier = trimmedRoomIdentifier.toLowerCase();
+
+    try {
+        const deletedMembershipsList = await controller.runQuery<{ id_sala: string }>(
+            "DELETE FROM sala_membros WHERE id_usuario = $1 AND id_sala = $2 AND EXISTS (SELECT 1 FROM salas WHERE id = $2 AND lider_id <> $1) RETURNING id_sala;",
+            [authenticatedUserId, normalizedRoomIdentifier]
+        );
+
+        if (deletedMembershipsList.length === 0) {
+            return { error: "Sala não encontrada ou você não pode sair dela." };
+        }
+
+        revalidatePath("/dashboard");
+        revalidatePath("/rooms");
+        revalidatePath(`/rooms/${normalizedRoomIdentifier}`);
+
+        return { success: true };
+    } catch (databaseOperationError) {
+        console.error("Erro ao sair da sala:", databaseOperationError);
+        return { error: "Não foi possível sair da sala." };
+    }
+}
+</file>
+
+<file path="app/api/auth/[...nextauth]/route.ts">
+import NextAuth from "next-auth"
+import authOptions from "@/auth/authOptions"
+
+const handler = NextAuth(authOptions)
+
+export { handler as GET, handler as POST }
+</file>
+
+<file path="app/dashboard/layout.tsx">
+import SessionProviderWrapper from "@/components/SessionProviderWrapper"
+import { ReactNode } from "react"
+
+export default function App({children} : {children : ReactNode}) {
+    return (
+        <SessionProviderWrapper>
+            {children}
+        </SessionProviderWrapper>
+    )
+}
+</file>
+
+<file path="app/rooms/layout.tsx">
+import SessionProviderWrapper from "@/components/SessionProviderWrapper"
+import { ReactNode } from "react"
+
+export default function App({children} : {children : ReactNode}) {
+    return (
+        <SessionProviderWrapper>
+            {children}
+        </SessionProviderWrapper>
+    )
+}
+</file>
+
+<file path="components/ProfileView.tsx">
+import DashboardMenu from "@/components/DashboardMenu";
+import Header from "@/components/Header";
+import { ProfilePagePayload } from "@/lib/profileService";
+import { Lock, LockOpen, Mail, ShieldCheck, User } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { Suspense } from "react";
+
+function isSafeProfileImageUrl(candidateImageUrl: string | null): candidateImageUrl is string {
+    if (!candidateImageUrl) {
+        return false;
+    }
+
+    if (candidateImageUrl.startsWith("/") && !candidateImageUrl.startsWith("//")) {
+        return true;
+    }
+
+    try {
+        const parsedImageUrl = new URL(candidateImageUrl);
+        return (
+            parsedImageUrl.protocol === "https:" &&
+            parsedImageUrl.hostname.endsWith(".googleusercontent.com")
+        );
+    } catch {
+        return false;
+    }
+}
+
+export default function ProfileView({ profilePayload }: { profilePayload: ProfilePagePayload }) {
+    const { profileUser, isOwnProfile, visibleRooms } = profilePayload;
+    const hasSafeAvatarImage = isSafeProfileImageUrl(profileUser.mirror_foto);
+    const usernameInitial = profileUser.username?.trim().charAt(0).toUpperCase() || "?";
+
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-white dark:bg-[#1D1D1D]" />}>
+            <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
+                <Header />
+
+                <main className="px-4 py-6 lg:px-10 lg:max-w-4xl lg:mx-auto flex flex-col gap-8">
+                    <section className="bg-[#E2E2E2] dark:bg-[#303030] rounded-2xl p-6 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                        <div className="w-24 h-24 rounded-full bg-black/10 dark:bg-white/15 flex items-center justify-center overflow-hidden shrink-0">
+                            {hasSafeAvatarImage ? (
+                                <Image
+                                    src={profileUser.mirror_foto as string}
+                                    width={96}
+                                    height={96}
+                                    alt={profileUser.username}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <span className="text-3xl font-semibold text-black dark:text-white">
+                                    {usernameInitial}
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="flex-1 min-w-0 flex flex-col gap-3 text-center sm:text-left">
+                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                                <h1 className="text-2xl font-semibold text-black dark:text-white truncate">
+                                    {profileUser.username}
+                                </h1>
+
+                                {isOwnProfile && (
+                                    <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-teal-500/15 text-teal-700 dark:bg-teal-400/20 dark:text-teal-300">
+                                        Seu perfil
+                                    </span>
+                                )}
+
+                                {profileUser.is_admin && (
+                                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:bg-amber-400/20 dark:text-amber-300">
+                                        <ShieldCheck className="w-3.5 h-3.5" />
+                                        Administrador
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="flex flex-col gap-2 text-sm text-black/75 dark:text-white/75">
+                                {/* <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0">
+                                    <Mail className="w-4 h-4 shrink-0 text-black/50 dark:text-white/50" />
+                                    <span className="truncate">{profileUser.email}</span>
+                                </div> */}
+
+                                <div className="flex items-center justify-center sm:justify-start gap-2 min-w-0">
+                                    <User className="w-4 h-4 shrink-0 text-black/50 dark:text-white/50" />
+                                    <span className="truncate text-xs font-mono text-black/60 dark:text-white/60">
+                                        {profileUser.id}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="flex flex-col gap-3">
+                        <div className="flex items-baseline justify-between">
+                            <span className="text-xs font-medium text-black/50 dark:text-white/50 uppercase tracking-wide">
+                                Salas
+                            </span>
+                            <span className="text-xs text-black/50 dark:text-white/50">
+                                {visibleRooms.length}
+                            </span>
+                        </div>
+                        <h2 className="text-lg font-semibold text-black dark:text-white">
+                            {isOwnProfile ? "Suas salas" : "Salas em comum"}
+                        </h2>
+
+                        {visibleRooms.length > 0 ? (
+                            <div className="flex flex-col gap-3">
+                                {visibleRooms.map((roomItem) => {
+                                    const isRestrictedRoom = roomItem.tipo === "restrita";
+
+                                    return (
+                                        <Link
+                                            key={roomItem.id}
+                                            href={`/rooms/${roomItem.id}`}
+                                            className="flex items-center gap-3 bg-[#E2E2E2] dark:bg-[#303030] rounded-xl p-3 text-left hover:scale-[1.02] duration-200 cursor-pointer"
+                                        >
+                                            {!roomItem.icone_url ? (
+                                                <div className="w-10 h-10 rounded-full bg-black/10 dark:bg-white/15 flex items-center justify-center font-medium text-black dark:text-white shrink-0">
+                                                    {roomItem.nome.charAt(0).toUpperCase()}
+                                                </div>
+                                            ) : (
+                                                <Image
+                                                    width={40}
+                                                    height={40}
+                                                    src={roomItem.icone_url}
+                                                    className="w-10 h-10 rounded-full object-cover shrink-0"
+                                                    alt={roomItem.nome}
+                                                />
+                                            )}
+
+                                            <span className="flex-1 font-medium text-black dark:text-white truncate">
+                                                {roomItem.nome}
+                                            </span>
+
+                                            <span
+                                                title={isRestrictedRoom ? "Restrita" : "Livre"}
+                                                aria-label={isRestrictedRoom ? "Restrita" : "Livre"}
+                                                className={`p-1.5 rounded-full shrink-0 ${
+                                                    isRestrictedRoom
+                                                        ? "bg-[#E60000]/15 text-[#E60000] dark:bg-[#E60000]/20 dark:text-red-400"
+                                                        : "bg-[#139C1A]/15 text-[#139C1A] dark:bg-[#139C1A]/20 dark:text-green-400"
+                                                }`}
+                                            >
+                                                {isRestrictedRoom ? (
+                                                    <Lock className="w-4 h-4" />
+                                                ) : (
+                                                    <LockOpen className="w-4 h-4" />
+                                                )}
+                                            </span>
+
+                                            <Image
+                                                src={"/ChevronRight.svg"}
+                                                width={20}
+                                                height={20}
+                                                alt=""
+                                                className="dark:invert"
+                                            />
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-black/60 dark:text-white/60">
+                                {isOwnProfile
+                                    ? "Você ainda não participa de nenhuma sala."
+                                    : "Vocês ainda não possuem salas em comum."}
+                            </p>
+                        )}
+                    </section>
+                </main>
+
+                <DashboardMenu />
+            </div>
+        </Suspense>
+    );
+}
+</file>
+
+<file path="db/instructions.md">
+# Para rodar o servidor local:
+Requisitos: Docker & um terminal qualquer. Inicie no root do projeto.
+*(Verifique se Docker está rodando)*
+Criar container do banco:
+> docker compose --env-file ../.env up -d
+
+Reiniciar container do banco:
+> docker compose --env-file ../.env restart
+
+Ver logs do container do banco:
+> docker compose --env-file ../.env logs -f
+
+Desligar container do banco:
+> docker compose --env-file ../.env down
+
+Desligar e remover conteúdo do container do banco:
+> docker compose --env-file ../.env down -v
+
+
+## Para acessar o terminal interativo:
+> docker exec -it opennote_db psql -U POSTGRES -d postgres
+
+
+## Comandos úteis no terminal interativo:
+Sair do terminal
+> \q
+
+Listar todas as tabelas
+> \dt
+
+Listar entradas de uma tabela
+> \d <nome>
+
+Listar todos os bancos de dados
+> \l
+</file>
+
+<file path=".gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+ARCHITECTURE.md
+</file>
+
+<file path="eslint.config.mjs">
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  // Override default ignores of eslint-config-next.
+  globalIgnores([
+    // Default ignores of eslint-config-next:
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+  {
+    rules: {
+      "@typescript-eslint/no-unsafe-function-type": "off"
+    }
+  }
+]);
+
+export default eslintConfig;
+</file>
+
+<file path="next.config.ts">
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.googleusercontent.com"
+      }
+    ]
+  }
+};
+
+export default nextConfig;
+</file>
+
+<file path="proxy.ts">
+import { getToken } from "next-auth/jwt"
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+import path from "node:path"
+
+export async function proxy(request: NextRequest) {
+    const { pathname } = request.nextUrl
+    
+    const token = await getToken({ req: request })
+    const isLoggedIn = !!token
+
+    // 1. If logged in and trying to go to /login, redirect to /dashboard
+    if (pathname.startsWith("/login") && isLoggedIn) {
+        return NextResponse.redirect(new URL("/dashboard", request.nextUrl))
+    }
+
+    if (pathname == "/" && isLoggedIn) {
+        return NextResponse.redirect(new URL("/dashboard", request.nextUrl))
+    }
+
+    // 2. If NOT logged in and trying to access protected routes, redirect to /login
+    const isProtectedRoute = pathname === "/" || pathname.startsWith("/dashboard") || pathname.startsWith("/profile")
+    if (isProtectedRoute && !isLoggedIn) {
+        const loginUrl = new URL("/login", request.nextUrl)
+        // Optional: track where they came from
+        loginUrl.searchParams.set("callbackUrl", request.url) 
+        return NextResponse.redirect(loginUrl)
+    }
+
+    return NextResponse.next()
+}
+
+export const config = { 
+    matcher: ['/dashboard/:path*', '/profile', '/profile/:path*', '/login', '/'] 
+}
+</file>
+
+<file path="app/api/v1/rooms/route.ts">
+import { NextRequest, NextResponse } from 'next/server';
+import controller from '@/db/controller';
+import { getServerSession } from 'next-auth';
+
+export async function GET(request: NextRequest) {
+    const session = await getServerSession();
+
+    if (!session?.user?.email) {
+        return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
+    const query = `
+        SELECT s.id, s.nome, s.capacidade, s.tipo, s.icone_url, s.lider_id
+        FROM salas s
+        INNER JOIN sala_membros sm ON s.id = sm.id_sala
+        INNER JOIN usuarios u ON sm.id_usuario = u.id
+        WHERE u.email = $1
+    `;
+
+    try {
+        const rooms = await controller.runQuery(query, [session.user.email]);
+        return NextResponse.json(rooms, { status: 200 });
+    } catch (error) {
+        console.error('Erro ao buscar salas:', error);
+        return NextResponse.json({ message: "Erro interno ao buscar salas" }, { status: 500 });
+    }
+}
+</file>
+
+<file path="app/rooms/[roomID]/page.tsx">
+import authOptions from "@/auth/authOptions";
+import Calendar from "@/components/Calendar";
+import DashboardMenu from "@/components/DashboardMenu";
+import Header from "@/components/Header";
+import controller from "@/db/controller";
+import { getServerSession } from "next-auth";
+import { notFound, redirect } from "next/navigation";
+
+type taskType = {
+  id: string,
+  nome: string,
+  data_entrega: Date,
+}
+
+export default async function Page({ params }: { params: Promise<{ roomID: string }> }) {
+  const { roomID } = await params;
+  const tasks: Array<taskType> = await controller.runQuery(`SELECT * FROM tarefas WHERE id_sala = $1`, [roomID]);
+  console.log(tasks[0])
+
+  return (
+    <div className="dark:bg-[#1D1D1D] min-h-screen">
+      <Header />
+      <DashboardMenu />
+      <div className="flex mx-auto items-center flex-col min-h-full ">
+        <Calendar tasks={tasks} />
+      </div>
+    </div>
+  )
+}
+</file>
+
+<file path="app/globals.css">
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+</file>
+
+<file path="components/AddRoomModal.tsx">
+'use client'
+import AddRoomForm from "./AddRoomForm";
+import { useState } from "react";
+export default function AddRoomButton() {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    return (
+        <>
+            <button className=" bg-teal-400 rounded-xl p-3 text-center text-black hover:scale-[1.02] duration-200 cursor-pointer" onClick={() => { setIsModalOpen(!isModalOpen) }}>
+                + Adicionar Sala
+            </button>
+            <AddRoomForm visible={isModalOpen} closeModal={() => { setIsModalOpen(false) }} />
+        </>
+    )
+}
+</file>
+
+<file path="components/AddTaskForm.tsx">
+import createTask from "@/actions/createTask";
+import { ChangeEvent, ChangeEventHandler } from "react";
+import Form from "next/form";
+import { usePathname } from "next/navigation";
+
+export default function AddTaskForm({ closeModal, modalDate, setModalDate }: { closeModal: Function, modalDate: Date, setModalDate: Function }) {
+    const pathname = usePathname();
+    const splitPathname = pathname.split('/');
+    const roomId = splitPathname[splitPathname.length - 1];
+
+    const createTaskWithRoomId = createTask.bind(null, roomId)
+
+    function updateModalDate(event: ChangeEvent) {
+        const input = event.target as HTMLInputElement;
+        const dateString = input.value;
+        const [year, month, day] = dateString.split('-');
+
+        const newDate = new Date(Number(year), Number(month), Number(day));
+        setModalDate(newDate)
+    }
+
+    return (
+        <Form action={createTaskWithRoomId}>
+            <div className="absolute max-h-screen min-h-screen max-w-screen min-w-screen bg-black/50 top-0 left-0 flex items-center justify-center" onClick={event => { if (event.target == event.currentTarget) { closeModal() } }}>
+                <div className="bg-white size-150 flex items-center p-4 pt-10 flex-col gap-7 rounded-xl dark:bg-[#1D1D1D]">
+                    <input name='taskName' className="bg-[#E2E2E2] w-2/3 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 block" placeholder="Nova Tarefa" required />
+                    <input value={modalDate.toLocaleDateString("en-CA")} type="date" name='date' className="bg-[#E2E2E2] px-5 w-2/3 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 block" placeholder="Nome da sala" required onChange={updateModalDate} />
+
+                    <h1>Descrição</h1>
+                    <textarea name="description" placeholder="descrição" className="border-black/15 dark:border-white/15 rounded-sm border-2 w-80 h-60 text-lg p-4 focus:outline-none focus:border-black/20 dark:focus:border-white/20"></textarea>
+
+                    <div className='flex gap-5'>
+                        <button type='submit' className="bg-teal-500 px-6 w-60 text-lg py-3 rounded-lg text-white hover:scale-105 duration-100 cursor-pointer">Adicionar Tarefa</button>
+                    </div>
+                </div>
+            </div>
+        </Form>
+    )
+}
+</file>
+
+<file path="components/Header.tsx">
+import Image from "next/image"
+import Link from "next/link"
+import OpenMenuButton from "./OpenMenuButton"
+
+export default function Header() {
+
+    return (
+        <>
+            <header className="flex items-center justify-between px-4 py-4 lg:px-10 select-none">
+                <div className="w-32 lg:w-44">
+                    <Link href={"/dashboard"}>
+                        <Image src={"/LogoDesktopLight.svg"} width={180} height={38} alt="openNote" className="dark:hidden"></Image>
+                        <Image src={"/LogoDesktop.svg"} width={180} height={38} alt="openNote" className="hidden dark:block"></Image>
+                    </Link>
+                </div>
+                <div className="flex items-center gap-6 lg:gap-8">
+                    <button aria-label="Buscar" className="cursor-pointer">
+                        <Image src={"/Search.svg"} width={24} height={24} alt="" className="dark:invert"></Image>
+                    </button>
+                    <button aria-label="Adicionar" className="cursor-pointer">
+                        <Image src={"/Plus.svg"} width={24} height={24} alt="" className="dark:invert"></Image>
+                    </button>
+                    <OpenMenuButton />
+                </div>
+            </header>
+            <div className="h-px bg-black/15 dark:bg-white/15 mx-4 lg:mx-10"></div>
+        </>
+    )
+}
+</file>
+
+<file path="db/controller.ts">
+import { Pool } from 'pg';
+
+const globalForPg = globalThis as unknown as { pool: Pool | undefined };
+
+const pool =
+  globalForPg.pool ??
+  new Pool({
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: Number(process.env.DB_PORT) || 5432,
+    max: 10,
+    idleTimeoutMillis: 30000,
+  });
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForPg.pool = pool;
+}
+
+type QueryResultObject = {
+  text: string;
+  values: any[];
+};
+
+type QueryCommand = {
+  insert: (table: string) => QueryCommand;
+  values: (valuesData: Record<string, any>) => QueryCommand;
+  returning: (columns?: string) => QueryCommand;
+  resolve: () => QueryResultObject;
+  query: string;
+  params: any[];
+};
+
+function createQueryCommand(): QueryCommand {
+  const command: QueryCommand = {
+    query: '',
+    params: [],
+    insert(table: string) {
+      command.query += `INSERT INTO ${table} `;
+      return command;
+    },
+    values(valuesData: Record<string, any>) {
+      const entries = Object.entries(valuesData).filter(
+        ([_, val]) => val !== undefined
+      );
+      const keys = entries.map(([key]) => key);
+      const vals = entries.map(([_, val]) => val);
+
+      const placeholders = vals.map((_, index) => `$${index + 1}`);
+
+      command.query += `(${keys.join(', ')}) VALUES (${placeholders.join(', ')})`;
+      command.params = vals;
+      return command;
+    },
+    returning(columns = '*') {
+      command.query += ` RETURNING ${columns}`;
+      return command;
+    },
+    resolve() {
+      return {
+        text: `${command.query};`,
+        values: command.params,
+      };
+    },
+  };
+
+  return command;
+}
+
+async function runQuery<T = any>(
+  query: string | QueryResultObject,
+  values?: Array<any>
+): Promise<T[]> {
+  if (typeof query === 'object') {
+    const { rows } = await pool.query(query.text, query.values);
+    return rows;
+  }
+
+  const { rows } = values
+    ? await pool.query(query, values)
+    : await pool.query(query);
+  return rows;
+}
+
+const controller = {
+  createQueryCommand,
+  runQuery,
+};
+
+export default controller;
+</file>
+
+<file path="db/docker-compose.yml">
+services:
+  db:
+    image: postgres:18
+    container_name: opennote_db
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - pgdata:/var/lib/postgresql/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+</file>
+
+<file path="README.md">
+Template JS
+</file>
+
+<file path="app/(auth)/create/page.tsx">
+'use client'
+import Image from "next/image"
+import Link from "next/link"
+import { useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
+import { ReactNode } from "react"
+import { redirect } from "next/navigation";
+
+export default function Page() {
+
+    return <>
+        <main className="flex items-center gap-5 flex-col h-screen lg:flex-row">
+            <Logo />
+            <LoginBackground>
+
+
+                <div className="2xl:scale-125">
+                   <h1 className="text-black text-sm text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Criar conta</h1>
+
+                    <div className="bg-white dark:bg-[#1D1D1D] dark:border-white/25 dark:bg- border-2 w-84 h-114 border-black/25 rounded-4xl flex flex-col items-center lg:w-90 lg:h-110">
+
+                        <div className="text-xs w-full h-45 flex flex-col items-center justify-center gap-5 lg:mt-5">
+                            <input className=" bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-3 lg:w-70  " placeholder="Nome de usuário"></input>
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-3 lg:w-70  " placeholder="E-mail"></input>
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-3 lg:w-70 " type="password" placeholder="Senha"></input>
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-3 lg:w-70 " type="password" placeholder="Confimar senha"></input>
+                        </div>
+
+                        <a href="login">
+                            <input type="button" className="bg-blue-500/20 w-50 mt-5 p-3 text-center rounded-xl hover:scale-105 duration-200 cursor-not-allowed text-white/20" title="O serviço de criação de contas, na verdade, nunca estará disponível, pois ele não existe. Use sua conta Google." value={"Criar conta"}> 
+                            </input>
+                        </a>
+
+                        <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-3 "></div>
+
+                        <p className="text-black font-thin mt-3 dark:text-white ">ou</p>
+
+                        <button className="bg-white flex items-center gap-5 border p-1.5 px-3 border-black/15 rounded-4xl mt-3 cursor-pointer hover:scale-105 duration-200" onClick={() => { signIn("google", { callbackUrl: "/dashboard" }) }}>
+
+                            <Image src={"/google.svg"} width={30} height={30} alt="Google"></Image>
+                            <p className="text-black ">Continuar com Google</p>
+
+                        </button>
+                        <div className="flex text-sm gap-3 mt-5 lg:text-base lg:mb-5">
+
+                            <p className="text-black dark:text-white">Já tem uma conta?</p>
+                            <Link href={"/login"} className="text-blue-400 underline"> Fazer login</Link>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </LoginBackground>
+
+        </main>
+    </>
+}
+
+
+
+
+
+function Logo() {
+    return (
+        <div className="md:w-2/5 w-full flex justify-center lg:p-10 bg-[#1D1D1D] md:h-full h-36 items-center">
+            <div className="lg:hidden">
+                <Image src="/LogoDesktop.svg" width={220} height={47} alt="Logo" />
+            </div>
+
+            <div className="max-lg:hidden">
+                <Image src="/LogoDesktop.svg" width={450} height={100} alt="Logo" />
+            </div>
+        </div>
+    );
+}
+
+function LoginBackground({ children }: { children: ReactNode }) {
+    return (
+        <>
+            <div className="bg-white size-full flex flex-col items-center gap-10 dark:bg-[#1D1D1D] justify-center">
+                {children}
+            </div>
+        </>
+    )
+}
+</file>
+
+<file path="actions/createRoom.ts">
+"use server";
+import controller from "@/db/controller";
+import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
+import authOptions from "@/auth/authOptions";
+import path from "path";
+import { writeFile } from "fs/promises";
+
+type CreateRoomResult = {
+    success?: boolean;
+    error?: string;
+    roomId?: string;
+};
+
+export default async function createRoom(formData: FormData): Promise<CreateRoomResult> {
+    const session = await getServerSession(authOptions);
+    const lider_id = session?.user?.id;
+    const roomName = formData.get("roomName")?.toString().trim();
+    const rawTipo = formData.get("tipo")?.toString();
+    const tipo = rawTipo === "livre" ? "livre" : "restrita";
+    const file = formData.get("image") as File | null;
+
+    if (!session || !lider_id) {
+        return { error: "Usuário não autenticado." };
+    }
+
+    if (!roomName) {
+        return { error: "Informe o nome da sala." };
+    }
+
+    function validateImageFile(file: File | null) {
+        if (!file || file.size === 0) return false;
+        const sizeInMB = file.size / 1000000;
+        return sizeInMB <= 25 && file.type.includes("image");
+    }
+
+    async function createImageFileURL(file: File | null) {
+        if (file && validateImageFile(file)) {
+            const bytes = await file.arrayBuffer();
+            const buffer = Buffer.from(bytes);
+            const filePath = path.join(process.cwd(), "public", file.name);
+            await writeFile(filePath, buffer);
+            return `/${file.name}`;
+        }
+        return null;
+    }
+
+    try {
+        const iconeURL = await createImageFileURL(file);
+
+        const valuesData = {
+            nome: roomName,
+            lider_id: lider_id,
+            tipo: tipo,
+            icone_url: iconeURL
+        };
+
+        const querySala = controller
+            .createQueryCommand()
+            .insert("salas")
+            .values(valuesData)
+            .returning("id")
+            .resolve();
+
+        const [novaSala] = await controller.runQuery<{ id: string }>(querySala);
+
+        if (novaSala?.id) {
+            const queryMembro = controller
+                .createQueryCommand()
+                .insert("sala_membros")
+                .values({
+                    id_usuario: lider_id,
+                    id_sala: novaSala.id
+                })
+                .resolve();
+
+            await controller.runQuery(queryMembro);
+        }
+
+        revalidatePath("/dashboard");
+        revalidatePath("/rooms");
+
+        return { success: true, roomId: novaSala?.id };
+    } catch (error) {
+        console.error("Erro ao criar sala:", error);
+        return { error: "Não foi possível criar a sala." };
+    }
+}
+</file>
+
+<file path="app/layout.tsx">
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { Nunito_Sans } from "next/font/google"
+import ThemeProvider from "@/components/ThemeProvieder";
+const nunito = Nunito_Sans(
+  {
+    variable: "--font-Nunito_Sans",
+    subsets: [
+      "latin"
+    ]
+  }
+)
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "openNote",
+  description: "Organize suas tarefas, e dos seus colegas também",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning>
+      <body className={`min-h-full flex flex-col ${nunito.className}`}>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
+</file>
+
+<file path="app/page.tsx">
+export default function Home() {
+  return <></>
+}
+</file>
+
+<file path="db/testConnection.mjs">
+import { Pool } from "pg"
+const env = process.env
+
+const pool = new Pool({
+    host: "localhost",
+    user: env.DB_USER,
+    password: env.DB_PASSWORD,
+    database: env.DB_NAME,
+    port: 5432,
+    idleTimeoutMillis: 30000
+})
+
+pool.on('error', (error, client) => {
+    console.log(error)
+})
+
+async function check() {
+    console.log((await pool.query("SELECT NOW()")).rows)
+    console.log((await pool.query("SELECT * FROM usuarios")).rows)
+    console.log((await pool.query("SELECT * FROM sala_membros WHERE id_usuario = $1", ["01a2099d-0ebd-7584-b829-6efce93afa1c"])));
+    console.log((await pool.query("INSERT INTO usuarios (id, username, email) VALUES ('01a2099d-0ebd-7584-b829-6efce93afa1b', 'eardog2', 'ear@dog2.com');")));
+    console.log((await pool.query("INSERT INTO salas (nome, icone_url, lider_id) VALUES ('cachorro orelhas lair', null, '01a2099d-0ebd-7584-b829-6efce93afa1b')")));
+    
+}
+check()
+
+//node --env-file ../.env .\testConnection.mjs
+</file>
+
+<file path="package.json">
+{
+  "name": "opennote",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "lucide-react": "^1.78.0",
+    "next": "16.2.9",
+    "next-auth": "^4.24.15",
+    "next-themes": "^0.4.6",
+    "pg": "^8.23.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
+</file>
+
+<file path="components/DashboardMenu.tsx">
+'use client'
+import Image from "next/image"
+import Link from "next/link"
+import { signOut } from "next-auth/react"
+import { redirect, useSearchParams } from "next/navigation"
+import { useSession } from "next-auth/react"
+import { useTheme } from "next-themes"
+import { usePathname } from "next/navigation"
+
+
+export default function DashboardMenu() {
+    const {resolvedTheme, setTheme} = useTheme();
+    const searchParams = useSearchParams();
+    const isOpen = searchParams.get("isMenuOpen");
+    const pathname = usePathname();
+    const { data: session } = useSession();
+    function onClose() { redirect(pathname) }
+
+    return (
+        <div className={`fixed inset-0 z-50 ${isOpen ? "" : "pointer-events-none"}`}>
+            <div
+                className={`absolute inset-0 bg-black/30 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0"}`}
+                onClick={onClose}
+            ></div>
+
+            <div
+                className={`absolute right-0 top-0 h-full w-72 lg:w-80 bg-white dark:bg-[#1D1D1D] flex flex-col p-5 transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+            >
+                <div className="flex items-center justify-between mb-8">
+                    <span className="font-semibold text-black/50 dark:text-white/50 tracking-wide">MENU</span>
+                    <button onClick={onClose} aria-label="Fechar menu" className="cursor-pointer">
+                        <Image src={"/Close.svg"} width={20} height={20} alt="" className="dark:invert"></Image>
+                    </button>
+                </div>
+
+                <button
+                    className="flex items-center gap-4 py-3 text-left hover:scale-105 duration-200 cursor-pointer origin-left"
+                    onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+                >
+                    <Image src={"/Theme.svg"} width={22} height={22} alt="" className="dark:invert"></Image>
+                    <span className="text-black dark:text-white">Alternar tema</span>
+                </button>
+
+                <button className="flex items-center gap-4 py-3 text-left hover:scale-105 duration-200 cursor-pointer origin-left">
+                    <Image src={"/Settings.svg"} width={22} height={22} alt="" className="dark:invert"></Image>
+                    <span className="text-black dark:text-white">Configurações</span>
+                </button>
+
+                <div className="h-px bg-black/10 dark:bg-white/10 my-3"></div>
+
+                <button
+                    className="flex items-center gap-4 py-3 text-left hover:scale-105 duration-200 cursor-pointer origin-left"
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                >
+                    <Image src={"/Logout.svg"} width={22} height={22} alt=""></Image>
+                    <span className="text-[#FF005E]">Sair</span>
+                </button>
+
+                {session?.user ? (
+                    <Link
+                        href="/profile"
+                        className="mt-auto flex items-center gap-3 pt-5 border-t border-black/10 dark:border-white/10 hover:opacity-80 transition-opacity"
+                    >
+                        <div className="w-10 h-10 rounded-full bg-black/10 dark:bg-white/10 shrink-0 overflow-hidden flex items-center justify-center">
+                            {session.user.image ? (
+                                <Image src={session.user.image} loading="eager" alt="" className="w-full h-full object-cover" width={100} height={100} />
+                            ) : (
+                                <span className="text-sm font-medium text-black dark:text-white">{session.user.name?.[0] ?? "?"}</span>
+                            )}
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="font-medium truncate text-black dark:text-white">{session.user.name}</p>
+                            <p className="text-sm text-black/50 dark:text-white/50 truncate">{session.user.email}</p>
+                        </div>
+                    </Link>
+                ) : null}
+            </div>
+        </div>
+    )
+}
+</file>
+
+<file path="components/Rooms.tsx">
+import Image from "next/image"
+import Link from "next/link"
+import { Lock, LockOpen } from "lucide-react"
+
+type Room = {
+    nome: string,
+    id: string,
+    icone_url: string | null,
+    tipo: "livre" | "restrita"
+}
+
+export default function Rooms({ rooms }: { rooms: Array<Room> }) {
+
+    if (Array.isArray(rooms) && rooms.length > 0) {
+        return (
+            <div className="flex flex-col gap-3">
+                {rooms.map((room: Room) => {
+                    const isRestricted = room.tipo === "restrita";
+                    
+                    return (
+                    <Link
+                        key={room.id}
+                        href={`/rooms/${room.id}`}
+                        className="flex items-center gap-3 bg-[#E2E2E2] dark:bg-[#303030] rounded-xl p-3 text-left hover:scale-[1.02] duration-200 cursor-pointer"
+                    >
+                        {!room.icone_url ? (
+                            <div className="w-10 h-10 rounded-full bg-black/10 dark:bg-white/15 flex items-center justify-center font-medium text-black dark:text-white shrink-0">
+                                {room.nome.charAt(0).toUpperCase()}
+                            </div>
+                        ) : (
+                            <Image width={40} height={40} src={room.icone_url} className="w-10 h-10 rounded-full object-cover shrink-0" alt={room.nome} />
+                        )}
+
+                        <span className="flex-1 font-medium text-black dark:text-white">{room.nome}</span>
+
+                        <span
+                            title={isRestricted ? "Restrita" : "Livre"}
+                            aria-label={isRestricted ? "Restrita" : "Livre"}
+                            className={`p-1.5 text-center flex justify-center items-center rounded-full shrink-0 ${
+                                isRestricted
+                                    ? 'bg-[#E60000]/15 text-[#E60000] dark:bg-[#E60000]/20 dark:text-red-400'
+                                    : 'bg-[#139C1A]/15 text-[#139C1A] dark:bg-[#139C1A]/20 dark:text-green-400'
+                            }`}
+                        >
+                            {isRestricted ? <Lock className="w-4 h-4" /> : <LockOpen className="w-4 h-4" />}
+                        </span>
+
+                        <Image src={"/ChevronRight.svg"} width={20} height={20} alt="" className="dark:invert" />
+                    </Link>
+                )})}
+            </div>
+        )
+    }
+
+    return (
+        <p className="dark:text-white">Nada para ver aqui</p>
+    )
+}
+</file>
+
+<file path="app/rooms/page.tsx">
+import authOptions from "@/auth/authOptions";
+import DashboardMenu from "@/components/DashboardMenu";
+import Header from "@/components/Header";
+import RoomsRoomsPage from "@/components/RoomsRoomsPage";
+import controller from "@/db/controller";
+import { getServerSession } from "next-auth";
+import { Suspense } from "react";
+
+export const dynamic = "force-dynamic";
+
+type RoomRow = {
+    id: string;
+    nome: string;
+    icone_url: string | null;
+    tipo: string;
+    lider_id: string;
+};
+
+type RoomItem = {
+    id: string;
+    nome: string;
+    icone_url: string | null;
+    tipo: "livre" | "restrita";
+    isLeader: boolean;
+};
+
+export default async function Page() {
+    let parsedRooms: Array<RoomItem> = [];
+
+    try {
+        const session = await getServerSession(authOptions);
+        const userId = session?.user?.id;
+
+        if (userId) {
+            const query = `
+                SELECT DISTINCT s.id, s.nome, s.icone_url, s.tipo, s.lider_id, s.created_at
+                FROM salas s
+                LEFT JOIN sala_membros sm ON s.id = sm.id_sala
+                WHERE s.lider_id = $1 OR sm.id_usuario = $1
+                ORDER BY s.created_at DESC;
+            `;
+            const rows = await controller.runQuery<RoomRow>(query, [userId]);
+            parsedRooms = (rows || []).map((room) => ({
+                id: room.id,
+                nome: room.nome,
+                icone_url: room.icone_url,
+                tipo: room.tipo === "livre" ? "livre" : "restrita",
+                isLeader: room.lider_id === userId,
+            }));
+        }
+    } catch (error) {
+        console.error("Erro ao carregar salas.", error);
+    }
+
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-white dark:bg-[#1D1D1D]" />}>
+            <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
+                <Header />
+
+                <main className="px-4 py-6 lg:px-10 lg:max-w-5xl lg:mx-auto">
+                    <RoomsRoomsPage rooms={parsedRooms} />
+                </main>
+
+                <DashboardMenu />
+            </div>
+        </Suspense>
+    );
+}
+</file>
+
+<file path="components/AddRoomForm.tsx">
+'use client'
+import createRoom from '@/actions/createRoom'
+import joinRoom from '@/actions/joinRoom'
+import { ChangeEvent, useId, useState } from 'react'
+import { Url } from 'next/dist/shared/lib/router/router'
+import { useRouter } from 'next/navigation'
+
+export default function AddRoomForm({ visible, closeModal }: { visible: boolean, closeModal: () => void }) {
+    const router = useRouter();
+    const imageInputID = useId();
+    const [file, setFile] = useState<File | null>(null);
+    const [isRestricted, setIsRestricted] = useState(false);
+    const [createErrorMessage, setCreateErrorMessage] = useState<string | null>(null);
+    const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+    const [joinErrorMessage, setJoinErrorMessage] = useState<string | null>(null);
+    const [isJoiningRoom, setIsJoiningRoom] = useState(false);
+
+    function handleImagePick(event: ChangeEvent<HTMLInputElement>) {
+        if (event.target.files && event.target.files[0]) {
+            const pickedFile = event.target.files[0];
+            setFile(pickedFile)
+        }
+    }
+
+    function handleCloseModal() {
+        setFile(null);
+        setCreateErrorMessage(null);
+        setJoinErrorMessage(null);
+        closeModal();
+    }
+
+    async function handleCreateRoomSubmit(formData: FormData) {
+        setIsCreatingRoom(true);
+        setCreateErrorMessage(null);
+
+        const result = await createRoom(formData);
+
+        setIsCreatingRoom(false);
+
+        if (result?.error) {
+            setCreateErrorMessage(result.error);
+            return;
+        }
+
+        if (result?.success) {
+            handleCloseModal();
+            router.refresh();
+        }
+    }
+
+    async function handleJoinRoomSubmit(formData: FormData) {
+        setIsJoiningRoom(true);
+        setJoinErrorMessage(null);
+
+        const result = await joinRoom(formData);
+
+        setIsJoiningRoom(false);
+
+        if (result?.error) {
+            setJoinErrorMessage(result.error);
+            return;
+        }
+
+        if (result?.success) {
+            handleCloseModal();
+            router.refresh();
+        }
+    }
+
+    if (visible) {
+        return (
+            <>
+                <div className="bg-black/35 fixed inset-0 z-20 flex justify-center items-center p-4" onClick={event => {
+                    if (event.target == event.currentTarget) {
+                        handleCloseModal();
+                    }
+                }}>
+                    <div className='w-fit flex gap-5'>
+                        <form action={handleCreateRoomSubmit} className="bg-white w-105 h-150 flex items-center justify-center flex-col gap-5 rounded-xl dark:bg-[#1D1D1D]">
+                            <h1 className='text-4xl pt-2'>Criar uma sala</h1>
+                            <input name='roomName' className="bg-[#E2E2E2] w-2/3 h-14 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 block" placeholder="Nome da sala" required />
+                            <input id={imageInputID} className='hidden' name='image' onChange={handleImagePick} type='file' />
+                            <input type="hidden" name='tipo' value={isRestricted ? "restrita" : "livre"} />
+
+                            <div className='grid grid-cols-3 items-center justify-center w-2/3'>
+                              <p className={`${isRestricted ? 'opacity-0' : 'opacity-100'} text-end transition-opacity duration-200 cursor-default select-none`}>Sala Livre</p>
+                              <button type='button' role='switch' aria-checked={isRestricted} onClick={() => {setIsRestricted(previous => !previous)}} className={`relative w-15 h-7.5 ${isRestricted ? 'bg-[#E60000]' : 'bg-[#139C1A]'} rounded-full p-1 flex items-center cursor-pointer select-none justify-self-center`}>
+                              <div className={`rounded-full bg-[#E2E2E2] w-6 h-6 transition-transform duration-200 
+                                  ${isRestricted ? 'translate-x-7' : 'translate-x-0' }
+                                `}></div>
+                              </button>
+                              <p className={`${isRestricted ? 'opacity-100' : 'opacity-0'} text-start transition-opacity duration-200 cursor-default select-none`}>Sala Restrita</p>
+                            </div>
+
+                            <span className='italic font-light -mt-4'>{!isRestricted ? "Qualquer membro pode controlar tarefas" : "Apenas o líder pode controlar tarefas"}</span>
+
+                            <label htmlFor={imageInputID} className='w-50 h-10 text-white bg-blue-500 font-semibold text-center flex justify-center items-center rounded-md cursor-pointer hover:scale-105 duration-100'>Escolha o ícone</label>
+                            <label htmlFor={imageInputID} className='cursor-pointer hover:scale-105 duration-100'><ImagePicker file={file as File} /></label>
+                            {createErrorMessage && (
+                                <p role='alert' className='text-sm text-red-600 dark:text-red-400 text-center px-6'>
+                                    {createErrorMessage}
+                                </p>
+                            )}
+                            <div className='flex gap-5'>
+                                <button type='submit' disabled={isCreatingRoom} className="bg-teal-500 px-6 w-40 py-3 rounded-lg text-white hover:scale-110 duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                                    {isCreatingRoom ? "Adicionando..." : "Adicionar Sala"}
+                                </button>
+                                <button type='button' onClick={handleCloseModal} disabled={isCreatingRoom} className="border-box bg-teal-500/10 text-center border-2 border-teal-500 px-6 py-3 w-40 rounded-lg text-white hover:scale-110 duration-200 cursor-pointer disabled:opacity-50">Sair</button>
+                            </div>
+                        </form>
+                        <form action={handleJoinRoomSubmit} className="bg-white w-105 h-150 flex items-center justify-center flex-col gap-7 rounded-xl dark:bg-[#1D1D1D]">
+                            <h1 className='text-4xl pt-2'>Entrar em uma sala</h1>
+                            <span className='italic font-light text-center px-8'>Insira o ID da sala para participar</span>
+                            <input name='roomId' type='text' required pattern='^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' title='Informe um ID válido (ex: 0195a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b)' placeholder='ID da sala' className="bg-[#E2E2E2] w-2/3 h-14 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 px-5 block"
+                            />
+                            {joinErrorMessage && (
+                                <p role='alert' className='text-sm text-red-600 dark:text-red-400 text-center px-6'>
+                                    {joinErrorMessage}
+                                </p>
+                            )}
+                            <button type='submit' disabled={isJoiningRoom} className="bg-teal-500 px-6 w-48 py-3 rounded-lg text-white hover:scale-110 duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                                {isJoiningRoom ? "Entrando..." : "Entrar na Sala"}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </>
+        )
+    }
+}
+
+function ImagePicker({ file }: { file: File }) {
+    function fileToURL(file: File) {
+        const url = URL.createObjectURL(file);
+        return url as Url;
+    }
+
+    if (!!file && file.type.includes("image")) {
+        const url = fileToURL(file);
+        return (
+            <div className='select-none size-70 border-3 border-white/15 text-9xl text-center flex justify-center items-center rounded-2xl'>
+                <img src={url.toString()} alt={file.name} className='size-full rounded-2xl' />
+            </div>
+        )
+    }
+
+    return (
+        <div className='select-none size-48 border-3 border-white/15 text-9xl text-center flex justify-center items-center text-white/25 rounded-2xl'> + </div>
+    )
+}
+</file>
+
+<file path="components/Calendar.tsx">
+'use client'
+import { useState } from "react";
+import AddTaskForm from "./AddTaskForm";
+
+type taskType = {
+  id: string,
+  nome: string,
+  data_entrega: Date
+}
+
+export default function Calendar({ tasks }: { tasks: Array<taskType> }) {
+  const [date, setDate] = useState(new Date());
+  const currentYear = date.getFullYear();
+  const firstDayOfTheWeekOfTheMonth = getFirstDayOfTheWeekOfTheMonth();
+  const currentMonthNumber = date.getMonth();
+  const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+  const month = months[currentMonthNumber];
+  const [modalDate, setModalDate] = useState(new Date())
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  let currentMonthTasks: Array<taskType> = [];
+  if (tasks.length !== 0) {
+    currentMonthTasks = tasks.filter(task => {
+      const dueDate = task.data_entrega
+      const dueDateAsString = dueDate.toISOString()
+      const [year, month] = dueDateAsString.split("T")[0].split("-");
+      if (Number(year) === currentYear && Number(month) === currentMonthNumber + 1) {
+        return true
+      }
+    })
+  }
+  function generateDaysState(currentMonthTasks: Array<taskType>) {
+    const daysTaskState: Record<string, Array<taskType>> = {};
+    currentMonthTasks.forEach(task => {
+      const taskDueDay = task.data_entrega.toISOString().split("T")[0].split("-")[2];
+      if (daysTaskState[`${taskDueDay}`] == null) { daysTaskState[`${taskDueDay}`] = [] }
+      daysTaskState[`${taskDueDay}`].push(task)
+    })
+    return daysTaskState
+  }
+  const daysState = generateDaysState(currentMonthTasks)
+
+  function getMaxDaysOfTheMonth() {
+    const newDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    return newDate.getDate();
+  }
+  const maxDaysOfTheMonth = getMaxDaysOfTheMonth()
+
+  function getFirstDayOfTheWeekOfTheMonth() {
+    const firstDayDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    return firstDayDate.getDay()
+  }
+
+  function createTSXDays() {
+    const days = [];
+    for (let i = 1; i <= maxDaysOfTheMonth; i++) {
+      const key = `${date.getFullYear()}-${date.getMonth() + 1}-${i}`
+      function getHasTasks() {
+        return daysState[i]?.length > 0
+      }
+      const hasTasks = getHasTasks();
+      console.log(hasTasks, i)
+      const className = "aspect-square rounded-full duration-200 text-center cursor-pointer p-4" + (hasTasks ? " hover:bg-red bg-red-100" : " hover:bg-black/15")
+
+      function updateModalDate() {
+        const newDate = new Date(date.getFullYear(), date.getMonth(), i)
+        setModalDate(newDate)
+      }
+
+      function openModal() {
+        updateModalDate();
+        setIsTaskModalOpen(true);
+      }
+
+      days.push(<div onClick={openModal} key={key} style={i === 1 ? { gridColumnStart: firstDayOfTheWeekOfTheMonth + 1 } : undefined} className={className}>
+        <button className="cursor-pointer select-none">{i}</button>
+      </div>
+      )
+    }
+
+    return days;
+  }
+
+  function goToNextMonth() {
+    const newDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    newDate.setMonth(newDate.getMonth() + 1);
+    setDate(newDate)
+  }
+
+  function goToPreviousMonth() {
+    const newDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    newDate.setMonth(newDate.getMonth() - 1);
+    setDate(newDate);
+  }
+
+  function createTSXDaysOfTheWeek() {
+    const daysOfTheWeek = ["D", "S", "T", "Q", "Q", "S", "S"];
+    return daysOfTheWeek.map((day, index) => {
+      return <li key={`${index + 1}`} className="select-none mb-4 text-red-500">{day}</li>
+    })
+  }
+
+  return (
+    <>
+      <div className="flex mt-16 items-center gap-20 text-4xl">{date.getFullYear()}</div>
+      <div className="flex mt-10 justify-center gap-20">
+        <span onClick={goToPreviousMonth} className="font-semibold text-2xl select-none cursor-pointer"> &lt; </span>
+        <h1 className="text-center min-w-35 max-w-35 font-semibold text-2xl text-black dark:text-white">{month}</h1>
+        <span className="font-semibold text-2xl select-none cursor-pointer" onClick={goToNextMonth}> &gt; </span>
+      </div>
+      <div className="list-none grid grid-cols-7 gap-1 text-center text-xl mt-12 ">
+        {createTSXDaysOfTheWeek()}
+        {createTSXDays()}
+        <AddTaskModal isOpen={isTaskModalOpen} closeModal={() => { setIsTaskModalOpen(false) }} modalDate={modalDate} setModalDate={setModalDate} />
+      </div>
+
+    </>
+  )
+}
+
+function AddTaskModal({ isOpen, closeModal, modalDate, setModalDate }: { isOpen: boolean, closeModal: Function, modalDate: Date, setModalDate: Function }) {
+  if (isOpen) {
+    return (
+      <AddTaskForm closeModal={closeModal} modalDate={modalDate} setModalDate={setModalDate}></AddTaskForm>
+    )
+  } else {
+    <>
+    </>
+  }
+}
+</file>
+
+<file path="components/RoomsRoomsPage.tsx">
+'use client'
+
+import deleteRoom from "@/actions/deleteRoom";
+import leaveRoom from "@/actions/leaveRoom";
+import AddRoomButton from "@/components/AddRoomModal";
+import { ArrowLeft, Check, Copy, Lock, LockOpen, LogOut, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+type RoomType = "livre" | "restrita";
+type RoomTypeFilter = "todas" | RoomType;
+
+type Room = {
+    nome: string;
+    id: string;
+    icone_url: string | null;
+    tipo: RoomType;
+    isLeader: boolean;
+};
+
+export default function RoomsRoomsPage({ rooms }: { rooms: Array<Room> }) {
+    const router = useRouter();
+    const filterMenuRef = useRef<HTMLDivElement | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedType, setSelectedType] = useState<RoomTypeFilter>("todas");
+    const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+    const [roomPendingDeletion, setRoomPendingDeletion] = useState<Room | null>(null);
+    const [isDeletingRoom, setIsDeletingRoom] = useState(false);
+    const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(null);
+    const [roomPendingLeave, setRoomPendingLeave] = useState<Room | null>(null);
+    const [isLeavingRoom, setIsLeavingRoom] = useState(false);
+    const [leaveErrorMessage, setLeaveErrorMessage] = useState<string | null>(null);
+    const [copiedRoomIdentifier, setCopiedRoomIdentifier] = useState<string | null>(null);
+
+    const safeRooms = useMemo(() => (Array.isArray(rooms) ? rooms : []), [rooms]);
+
+    const roomCounts = useMemo(() => {
+        let freeCount = 0;
+        let restrictedCount = 0;
+
+        for (const room of safeRooms) {
+            if (room.tipo === "livre") {
+                freeCount += 1;
+            } else {
+                restrictedCount += 1;
+            }
+        }
+
+        return {
+            todas: safeRooms.length,
+            livre: freeCount,
+            restrita: restrictedCount,
+        };
+    }, [safeRooms]);
+
+    const filteredRooms = useMemo(() => {
+        const normalizedQuery = searchQuery.trim().toLowerCase();
+
+        return safeRooms.filter((room) => {
+            const matchesType = selectedType === "todas" || room.tipo === selectedType;
+            const matchesName = normalizedQuery.length === 0 || room.nome.toLowerCase().includes(normalizedQuery);
+            return matchesType && matchesName;
+        });
+    }, [safeRooms, searchQuery, selectedType]);
+
+    useEffect(() => {
+        if (!isFilterMenuOpen) {
+            return;
+        }
+
+        function handleClickOutside(event: MouseEvent) {
+            if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
+                setIsFilterMenuOpen(false);
+            }
+        }
+
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === "Escape") {
+                setIsFilterMenuOpen(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isFilterMenuOpen]);
+
+    function handleClearFilters() {
+        setSearchQuery("");
+        setSelectedType("todas");
+    }
+
+    function handleSelectFilterType(type: RoomTypeFilter) {
+        setSelectedType(type);
+        setIsFilterMenuOpen(false);
+    }
+
+    function handleOpenDeletePrompt(room: Room) {
+        setDeleteErrorMessage(null);
+        setRoomPendingDeletion(room);
+    }
+
+    function handleCancelDelete() {
+        if (isDeletingRoom) {
+            return;
+        }
+        setDeleteErrorMessage(null);
+        setRoomPendingDeletion(null);
+    }
+
+    async function handleConfirmDelete() {
+        if (!roomPendingDeletion || isDeletingRoom) {
+            return;
+        }
+
+        setIsDeletingRoom(true);
+        setDeleteErrorMessage(null);
+
+        const result = await deleteRoom(roomPendingDeletion.id);
+
+        setIsDeletingRoom(false);
+
+        if (result?.error) {
+            setDeleteErrorMessage(result.error);
+            return;
+        }
+
+        if (result?.success) {
+            setRoomPendingDeletion(null);
+            router.refresh();
+        }
+    }
+
+    function handleOpenLeavePrompt(room: Room) {
+        setLeaveErrorMessage(null);
+        setRoomPendingLeave(room);
+    }
+
+    function handleCancelLeave() {
+        if (isLeavingRoom) {
+            return;
+        }
+        setLeaveErrorMessage(null);
+        setRoomPendingLeave(null);
+    }
+
+    async function handleConfirmLeave() {
+        if (!roomPendingLeave || isLeavingRoom) {
+            return;
+        }
+
+        setIsLeavingRoom(true);
+        setLeaveErrorMessage(null);
+
+        const result = await leaveRoom(roomPendingLeave.id);
+
+        setIsLeavingRoom(false);
+
+        if (result?.error) {
+            setLeaveErrorMessage(result.error);
+            return;
+        }
+
+        if (result?.success) {
+            setRoomPendingLeave(null);
+            router.refresh();
+        }
+    }
+
+    async function handleCopyRoomLink(roomIdentifier: string) {
+        const roomInviteLink = `${window.location.origin}/rooms/${roomIdentifier}`;
+        try {
+            await navigator.clipboard.writeText(roomInviteLink);
+            setCopiedRoomIdentifier(roomIdentifier);
+            setTimeout(() => {
+                setCopiedRoomIdentifier((currentIdentifier) =>
+                    currentIdentifier === roomIdentifier ? null : currentIdentifier
+                );
+            }, 2067);
+        } catch (clipboardError) {
+            console.error("Erro ao copiar link da sala. ", clipboardError);
+        }
+    }
+
+    const hasActiveFilters = searchQuery.trim().length > 0 || selectedType !== "todas";
+
+    return (
+        <>
+            <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <Link
+                            href="/dashboard"
+                            className="inline-flex items-center gap-1.5 text-xs font-medium text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition-colors mb-2"
+                        >
+                            <ArrowLeft className="w-3 h-3" />
+                            <span className="fodase">Voltar</span>
+                        </Link>
+                        <div className="flex items-baseline gap-3">
+                            <h1 className="text-2xl font-semibold text-black dark:text-white">Salas</h1>
+                            <span className="text-xs font-medium text-black/50 dark:text-white/50">
+                                {filteredRooms.length} de {safeRooms.length}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col sm:shrink-0">
+                        <AddRoomButton />
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <div className="relative flex-1">
+                        <Search className="w-4 h-4 text-black/50 dark:text-white/50 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(event) => setSearchQuery(event.target.value)}
+                            placeholder="Buscar sala..."
+                            aria-label="Buscar sala"
+                            className="w-full bg-[#E2E2E2] dark:bg-[#303030] rounded-xl py-3 pl-10 pr-10 text-sm text-black dark:text-white placeholder:text-black/50 dark:placeholder:text-white/65 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                        />
+                        {searchQuery.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery("")}
+                                aria-label="Limpar busca"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-black/50 hover:text-black hover:bg-black/10 dark:text-white/50 dark:hover:text-white dark:hover:bg-white/10 transition-colors cursor-pointer"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+
+                    <div ref={filterMenuRef} className="relative shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => setIsFilterMenuOpen((previous) => !previous)}
+                            aria-expanded={isFilterMenuOpen}
+                            aria-haspopup="menu"
+                            aria-label="Filtrar por tipo de sala"
+                            title="Filtrar por tipo de sala"
+                            className={`relative p-3 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center ${
+                                selectedType === "livre"
+                                    ? "bg-[#139C1A]/20 text-[#139C1A] dark:bg-[#139C1A]/25 dark:text-green-400 ring-1 ring-[#139C1A]/40"
+                                    : selectedType === "restrita"
+                                      ? "bg-[#E60000]/20 text-[#E60000] dark:bg-[#E60000]/25 dark:text-red-400 ring-1 ring-[#E60000]/40"
+                                      : "bg-[#E2E2E2] dark:bg-[#303030] text-black/70 dark:text-white/70 hover:scale-[1.02]"
+                            }`}
+                        >
+                            <SlidersHorizontal className="w-5 h-5" />
+                            {selectedType !== "todas" && (
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-current" />
+                            )}
+                        </button>
+
+                        {isFilterMenuOpen && (
+                            <div
+                                role="menu"
+                                aria-label="Opções de filtro por tipo de sala"
+                                className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-[#1D1D1D] border border-black/10 dark:border-white/10 shadow-xl p-1.5 z-20 flex flex-col gap-1"
+                            >
+                                <button
+                                    type="button"
+                                    role="menuitemradio"
+                                    aria-checked={selectedType === "todas"}
+                                    onClick={() => handleSelectFilterType("todas")}
+                                    className={`w-full px-3 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between transition-colors cursor-pointer ${
+                                        selectedType === "todas"
+                                            ? "bg-teal-400/20 text-black dark:text-white"
+                                            : "text-black/75 dark:text-white/75 hover:bg-black/5 dark:hover:bg-white/10"
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <span>Todas</span>
+                                        <span className="text-xs opacity-65">({roomCounts.todas})</span>
+                                    </span>
+                                    {selectedType === "todas" && <Check className="w-4 h-4 text-teal-500" />}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    role="menuitemradio"
+                                    aria-checked={selectedType === "livre"}
+                                    onClick={() => handleSelectFilterType("livre")}
+                                    className={`w-full px-3 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between transition-colors cursor-pointer ${
+                                        selectedType === "livre"
+                                            ? "bg-[#139C1A]/15 text-[#139C1A] dark:bg-[#139C1A]/20 dark:text-green-400"
+                                            : "text-black/75 dark:text-white/75 hover:bg-black/5 dark:hover:bg-white/10"
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <LockOpen className="w-4 h-4" />
+                                        <span>Livre</span>
+                                        <span className="text-xs opacity-65">({roomCounts.livre})</span>
+                                    </span>
+                                    {selectedType === "livre" && <Check className="w-4 h-4" />}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    role="menuitemradio"
+                                    aria-checked={selectedType === "restrita"}
+                                    onClick={() => handleSelectFilterType("restrita")}
+                                    className={`w-full px-3 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between transition-colors cursor-pointer ${
+                                        selectedType === "restrita"
+                                            ? "bg-[#E60000]/15 text-[#E60000] dark:bg-[#E60000]/20 dark:text-red-400"
+                                            : "text-black/75 dark:text-white/75 hover:bg-black/5 dark:hover:bg-white/10"
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <Lock className="w-4 h-4" />
+                                        <span>Restrita</span>
+                                        <span className="text-xs opacity-65">({roomCounts.restrita})</span>
+                                    </span>
+                                    {selectedType === "restrita" && <Check className="w-4 h-4" />}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {filteredRooms.length > 0 ? (
+                    <div className="flex flex-col gap-3">
+                        {filteredRooms.map((room: Room) => {
+                            const isRoomLinkCopied = copiedRoomIdentifier === room.id;
+                            const isRestricted = room.tipo === "restrita";
+
+                            return (
+                                <div
+                                    key={room.id}
+                                    className="flex items-center gap-3 bg-[#E2E2E2] dark:bg-[#303030] rounded-xl p-3 text-left hover:scale-[1.01] duration-200"
+                                >
+                                    <Link
+                                        href={`/rooms/${room.id}`}
+                                        className="flex flex-1 items-center gap-3 min-w-0 cursor-pointer"
+                                    >
+                                        {!room.icone_url ? (
+                                            <div className="w-10 h-10 rounded-full bg-black/10 dark:bg-white/15 flex items-center justify-center font-medium text-black dark:text-white shrink-0">
+                                                {room.nome.charAt(0).toUpperCase()}
+                                            </div>
+                                        ) : (
+                                            <Image
+                                                width={40}
+                                                height={40}
+                                                src={room.icone_url}
+                                                className="w-10 h-10 rounded-full object-cover shrink-0"
+                                                alt={room.nome}
+                                            />
+                                        )}
+
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="font-medium text-black dark:text-white truncate">
+                                                {room.nome}
+                                            </span>
+                                            <span className="text-xs text-black/50 dark:text-white/50">
+                                                {room.isLeader ? "Líder" : "Membro"}
+                                            </span>
+                                        </div>
+                                    </Link>
+
+                                    <span
+                                        title={isRestricted ? "Sala restrita" : "Sala livre"}
+                                        aria-label={isRestricted ? "Restrita" : "Livre"}
+                                        className={`px-2.5 py-1 text-xs font-medium flex items-center gap-1.5 rounded-full shrink-0 ${
+                                            isRestricted
+                                                ? "bg-[#E60000]/15 text-[#E60000] dark:bg-[#E60000]/20 dark:text-red-400"
+                                                : "bg-[#139C1A]/15 text-[#139C1A] dark:bg-[#139C1A]/20 dark:text-green-400"
+                                        }`}
+                                    >
+                                        {isRestricted ? <Lock className="w-3.5 h-3.5" /> : <LockOpen className="w-3.5 h-3.5" />}
+                                        <span className="hidden sm:inline">{isRestricted ? "Restrita" : "Livre"}</span>
+                                    </span>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleCopyRoomLink(room.id)}
+                                        title={isRoomLinkCopied ? "Link copiado!" : "Copiar link da sala"}
+                                        aria-label={`Copiar link da sala ${room.nome}`}
+                                        className="p-1.5 rounded-lg text-black/60 hover:text-black hover:bg-black/10 dark:text-white/60 dark:hover:text-white dark:hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                                    >
+                                        {isRoomLinkCopied ? (
+                                            <Check className="w-4 h-4 text-[#139C1A] dark:text-green-400" />
+                                        ) : (
+                                            <Copy className="w-4 h-4" />
+                                        )}
+                                    </button>
+
+                                    {room.isLeader ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleOpenDeletePrompt(room)}
+                                            title="Excluir sala"
+                                            aria-label={`Excluir sala ${room.nome}`}
+                                            className="p-1.5 rounded-lg text-black/60 hover:text-[#E60000] hover:bg-[#E60000]/10 dark:text-white/60 dark:hover:text-red-400 dark:hover:bg-[#E60000]/20 transition-colors cursor-pointer shrink-0"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleOpenLeavePrompt(room)}
+                                            title="Sair da sala"
+                                            aria-label={`Sair da sala ${room.nome}`}
+                                            className="p-1.5 rounded-lg text-black/60 hover:text-[#E60000] hover:bg-[#E60000]/10 dark:text-white/60 dark:hover:text-red-400 dark:hover:bg-[#E60000]/20 transition-colors cursor-pointer shrink-0"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                        </button>
+                                    )}
+
+                                    <Link href={`/rooms/${room.id}`} aria-label={`Abrir sala ${room.nome}`} className="shrink-0 cursor-pointer">
+                                        <Image src={"/ChevronRight.svg"} width={20} height={20} alt="" className="dark:invert" />
+                                    </Link>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className="bg-[#E2E2E2]/60 dark:bg-[#303030]/60 rounded-xl p-8 flex flex-col items-center justify-center text-center gap-3">
+                        <p className="font-medium text-black dark:text-white">
+                            {hasActiveFilters
+                                ? "Nenhuma sala foi encontrada"
+                                : "Você ainda não participa de nenhuma sala"}
+                        </p>
+                        <p className="text-sm text-black/60 dark:text-white/60 max-w-md">
+                            {hasActiveFilters
+                                ? "Tente mudar o filtro ou pesquisar por outro nome."
+                                : "Crie uma nova sala ou entre em uma."}
+                        </p>
+                        {hasActiveFilters && (
+                            <button
+                                type="button"
+                                onClick={handleClearFilters}
+                                className="mt-1 px-4 py-2 rounded-xl bg-teal-400 text-black text-sm font-medium hover:scale-[1.02] duration-200 cursor-pointer"
+                            >
+                                Limpar filtros
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {roomPendingDeletion && (
+                <div
+                    className="fixed inset-0 z-30 bg-black/40 flex items-center justify-center p-4"
+                    onClick={(event) => {
+                        if (event.target === event.currentTarget) {
+                            handleCancelDelete();
+                        }
+                    }}
+                >
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="delete-room-title"
+                        className="bg-white dark:bg-[#1D1D1D] rounded-xl p-6 w-full max-w-sm shadow-xl flex flex-col gap-4 border border-black/10 dark:border-white/10"
+                    >
+                        <h2 id="delete-room-title" className="text-lg font-semibold text-black dark:text-white">
+                            Excluir sala
+                        </h2>
+                        <p className="text-sm text-black/70 dark:text-white/70">
+                            Tem certeza que deseja excluir a sala &ldquo;{roomPendingDeletion.nome}&rdquo;? Todas as tarefas, comentários e membros vinculados serão removidos permanentemente.
+                        </p>
+                        {deleteErrorMessage && (
+                            <p role="alert" className="text-sm text-[#E60000] dark:text-red-400">
+                                {deleteErrorMessage}
+                            </p>
+                        )}
+                        <div className="flex justify-end gap-3 mt-1">
+                            <button
+                                type="button"
+                                onClick={handleCancelDelete}
+                                disabled={isDeletingRoom}
+                                className="border-2 border-black/20 dark:border-white/20 px-4 py-2 rounded-lg text-sm font-medium text-black dark:text-white hover:scale-105 duration-200 cursor-pointer disabled:opacity-50"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmDelete}
+                                disabled={isDeletingRoom}
+                                className="bg-[#E60000] px-4 py-2 rounded-lg text-sm font-medium text-white hover:scale-105 duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isDeletingRoom ? "Excluindo..." : "Excluir"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {roomPendingLeave && (
+                <div
+                    className="fixed inset-0 z-30 bg-black/40 flex items-center justify-center p-4"
+                    onClick={(event) => {
+                        if (event.target === event.currentTarget) {
+                            handleCancelLeave();
+                        }
+                    }}
+                >
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="leave-room-title"
+                        className="bg-white dark:bg-[#1D1D1D] rounded-xl p-6 w-full max-w-sm shadow-xl flex flex-col gap-4 border border-black/10 dark:border-white/10"
+                    >
+                        <h2 id="leave-room-title" className="text-lg font-semibold text-black dark:text-white">
+                            Sair da sala
+                        </h2>
+                        <p className="text-sm text-black/70 dark:text-white/70">
+                            Tem certeza que deseja sair de &ldquo;{roomPendingLeave.nome}&rdquo;? Você poderá entrar novamente depois usando o UUID ou o link da sala.
+                        </p>
+                        {leaveErrorMessage && (
+                            <p role="alert" className="text-sm text-[#E60000] dark:text-red-400">
+                                {leaveErrorMessage}
+                            </p>
+                        )}
+                        <div className="flex justify-end gap-3 mt-1">
+                            <button
+                                type="button"
+                                onClick={handleCancelLeave}
+                                disabled={isLeavingRoom}
+                                className="border-2 border-black/20 dark:border-white/20 px-4 py-2 rounded-lg text-sm font-medium text-black dark:text-white hover:scale-105 duration-200 cursor-pointer disabled:opacity-50"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmLeave}
+                                disabled={isLeavingRoom}
+                                className="bg-[#E60000] px-4 py-2 rounded-lg text-sm font-medium text-white hover:scale-105 duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isLeavingRoom ? "Saindo..." : "Sair"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+}
+</file>
+
+<file path="db/schema.sql">
+CREATE TABLE usuarios (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    username VARCHAR(128) NOT NULL UNIQUE,
+    email VARCHAR(128) NOT NULL UNIQUE,
+    hash_senha VARCHAR(256),
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+    mirror_foto TEXT
+);
+
+CREATE TABLE categorias (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(128) NOT NULL,
+    cor VARCHAR(7) NOT NULL
+);
+
+CREATE TABLE salas (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    nome VARCHAR(128) NOT NULL,
+    tipo VARCHAR(32) NOT NULL DEFAULT 'restrita' CHECK (tipo IN ('restrita', 'livre')),
+    icone_url VARCHAR(1024),
+    lider_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    created_at TIMESTAMP default CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sala_membros (
+    id_usuario UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    id_sala UUID NOT NULL REFERENCES salas(id) ON DELETE CASCADE,
+    data_entrada TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_usuario, id_sala)
+);
+
+CREATE TABLE tarefas (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    nome VARCHAR(128) NOT NULL,
+    data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    data_entrega TIMESTAMP,
+    descricao TEXT,
+    id_categoria INT REFERENCES categorias(id) ON DELETE SET NULL,
+    id_sala UUID NOT NULL REFERENCES salas(id) ON DELETE CASCADE
+);
+
+CREATE TABLE anexos (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(128) NOT NULL,
+    url_anexo TEXT NOT NULL,
+    data_adicao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_tarefa UUID NOT NULL REFERENCES tarefas(id) ON DELETE CASCADE
+);
+
+CREATE TABLE threads (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(128) NOT NULL,
+    autor_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    id_tarefa UUID NOT NULL REFERENCES tarefas(id) ON DELETE CASCADE
+);
+
+CREATE TABLE comentarios (
+    id SERIAL PRIMARY KEY,
+    conteudo TEXT NOT NULL,
+    flagged BOOLEAN NOT NULL DEFAULT FALSE,
+    autor_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    responde_a INT REFERENCES comentarios(id) ON DELETE SET NULL,
+    pertence_a INT NOT NULL REFERENCES threads(id) ON DELETE CASCADE
+);
+</file>
+
+<file path="app/(auth)/login/page.tsx">
+'use client'
+import Image from "next/image"
+import Link from "next/link"
+import { signIn } from "next-auth/react";
+import { ReactNode } from "react"
+
+export default function Page() {
+    return <>
+        <main className="flex items-center gap-5 flex-col h-screen lg:flex-row">
+            <Logo />
+            <LoginBackground>
+
+
+                <div className="2xl:scale-125">
+                    <h1 className="text-black text-sm text-center lg:mb-5 dark:text-white lg:text-3xl max-lg:mb-5">Fazer Login</h1>
+
+                    <div className="bg-white dark:bg-[#1D1D1D] dark:border-white/25 dark:bg- border-2 w-84 h-114 border-black/25 rounded-4xl flex flex-col items-center lg:w-90 lg:h-110">
+
+                        <div className="w-full h-45 flex flex-col items-center justify-center gap-5 lg:mt-5">
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] placeholder:text-black/50 dark:placeholder:text-white/65 pl-5 lg:w-70  " placeholder="E-mail"></input>
+                            <input className="bg-[#E2E2E2] w-64 h-12 rounded-lg dark:bg-[#303030] dark:placeholder:text-white/65 placeholder:text-black/50 pl-5 lg:w-70 " type="password" placeholder="Senha"></input>
+                        </div>
+
+                        <Link href={"#"} className="text-center text-blue-400 underline">Esqueci minha senha</Link>
+
+                        <Link href={"dashboard"}>
+                            <input type="button" className="bg-blue-500/20 w-50 mt-5 p-3 text-center rounded-xl duration-200 cursor-not-allowed text-white/20" value={"Continuar"} title="O serviço de login está indisponível nesse momento. Por favor, use sua conta Google.">
+                            </input>
+                        </Link>
+
+                        <div className="w-3/4 h-0.5 bg-black/15 dark:bg-white/15 mt-5 "></div>
+
+                        <p className="text-black font-thin mt-3 dark:text-white ">ou</p>
+
+                        <button className="bg-white flex items-center gap-5 border p-1.5 px-3 border-black/15 rounded-4xl mt-3 cursor-pointer hover:scale-105 duration-200" onClick={() => { signIn("google", { callbackUrl: "/dashboard" }) }}>
+
+                            <Image src={"/google.svg"} width={30} height={30} alt="Google"></Image>
+                            <p className="text-black ">Continuar com Google</p>
+
+                        </button>
+                        <div className="flex text-sm gap-3 mt-5 lg:text-base lg:mb-5">
+
+                            <p className="text-black dark:text-white">Não tem uma conta?</p>
+                            <Link href={"/create"} className="text-blue-400 underline"> Crie uma Conta</Link>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </LoginBackground>
+
+        </main>
+    </>
+}
+
+
+
+function Logo() {
+    return (
+        <div className="md:w-2/5 w-full flex justify-center lg:p-10 bg-[#1D1D1D] md:h-full h-36 items-center">
+            <div className="lg:hidden">
+                <Image src="/LogoDesktop.svg" width={220} height={47} alt="Logo" />
+            </div>
+
+            <div className="max-lg:hidden">
+                <Image src="/LogoDesktop.svg" width={450} height={100} alt="Logo" />
+            </div>
+        </div>
+    );
+}
+
+function LoginBackground({ children }: { children: ReactNode }) {
+    return (
+        <>
+            <div className="bg-white size-full flex flex-col items-center gap-10 dark:bg-[#1D1D1D] justify-center">
+                {children}
+            </div>
+        </>
+    )
+}
+</file>
+
+<file path="app/dashboard/page.tsx">
+import { Suspense } from "react"
+import Image from "next/image"
+import DashboardMenu from "@/components/DashboardMenu"
+import Rooms from "@/components/Rooms"
+import { getServerSession } from "next-auth"
+import controller from "@/db/controller"
+import authOptions from "@/auth/authOptions"
+import Header from "@/components/Header"
+import AddRoomButton from "@/components/AddRoomModal"
+import Link from "next/link"
+import GenericWideButton from "@/components/GenericWideButton"
+
+export const dynamic = 'force-dynamic';
+
+const tasks = [
+    { title: "Tarefa 1", date: "28/03" },
+    { title: "Tarefa 2", date: "02/04" },
+    { title: "Tarefa 3", date: "05/05" },
+]
+
+export default async function Page() {
+    let rooms: Array<any> = [];
+    try {
+        const session = await getServerSession(authOptions);
+        if (session?.user?.id) {
+            const query = `
+                SELECT DISTINCT s.id, s.nome, s.icone_url, s.tipo, s.created_at
+                FROM salas s
+                LEFT JOIN sala_membros sm ON s.id = sm.id_sala
+                WHERE s.lider_id = $1 OR sm.id_usuario = $1 
+                ORDER BY s.created_at;
+            `;
+            const roomsData = await controller.runQuery(query, [session.user.id]);
+            rooms = roomsData || [];
+        }
+    } catch (error) {
+        console.error("Erro ao carregar salas no dashboard. ", error);
+    }
+
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-white dark:bg-[#1D1D1D]" />}>
+            <div className="min-h-screen bg-white dark:bg-[#1D1D1D]">
+                <Header />
+
+                <main className="px-4 py-6 lg:px-10 lg:max-w-5xl lg:mx-auto">
+                    <h1 className="text-2xl font-semibold mb-6 text-black dark:text-white">Início</h1>
+
+                    <div className="lg:grid lg:grid-cols-2 lg:gap-10">
+                        <section>
+                            <div className="flex items-baseline justify-between">
+                                <span className="text-xs font-medium text-black/50 dark:text-white/50 uppercase tracking-wide">Salas</span>
+                                <span className="text-xs text-black/50 dark:text-white/50">{rooms.length}</span>
+                            </div>
+                            <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">Salas recentes</h2>
+
+                            <div className="flex flex-col gap-3">
+                                <Rooms rooms={rooms.slice(-3).reverse()} />
+                                {rooms.length > 3 && <Link href="/rooms" className="self-end flex items-end justify-end w-fit"><span className="underline cursor-pointer text-xs font-medium text-black/50 dark:text-white/50 tracking-wide text-end">...e {rooms.length - 3} mais</span></Link>}
+                                <AddRoomButton />
+                                <GenericWideButton label="Ver Todas" href="/rooms"></GenericWideButton>
+                            </div>
+                        </section>
+
+                        <section className="mt-8 lg:mt-0 flex flex-col justify-between">
+                            <div>
+                                <span className="text-xs font-medium text-black/50 dark:text-white/50 uppercase tracking-wide">Agenda</span>
+                                <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">Próximos eventos</h2>
+
+                                <div className="flex flex-col gap-3">
+                                    {tasks.map((task) => (
+                                        <div
+                                            key={task.title}
+                                            className="flex items-center gap-3 bg-[#E2E2E2] dark:bg-[#303030] rounded-xl p-3"
+                                        >
+                                            <Image src={"/Task.svg"} width={24} height={24} alt="" className="dark:invert shrink-0" />
+                                            <span className="flex-1 font-medium text-black dark:text-white">{task.title}</span>
+                                            <span className="text-sm text-black/50 dark:text-white/50">{task.date}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <button className="mt-4 self-end bg-teal-400 text-white rounded-full pl-5 pr-4 py-3 flex items-center gap-1 font-semibold shadow-lg hover:scale-105 duration-200 cursor-pointer">
+                                Calendário
+                                <Image src={"/ChevronRight.svg"} width={18} height={18} alt="" className="invert" />
+                            </button>
+                        </section>
+                    </div>
+                </main>
+
+                <DashboardMenu />
+            </div>
+        </Suspense>
+    )
+}
+</file>
+
+</files>
